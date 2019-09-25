@@ -1,0 +1,88 @@
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+
+# Example code in package build process
+*-Ex.R
+
+# Output files from R CMD build
+/*.tar.gz
+
+# Output files from R CMD check
+/*.Rcheck/
+
+# RStudio files
+.Rproj.user/
+
+# produced vignettes
+vignettes/*.html
+vignettes/*.pdf
+
+# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
+.httr-oauth
+
+# knitr and R markdown default cache directories
+/*_cache/
+/cache/
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+
+# Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
+rsconnect/
+
+# ignore archive folder
+/archive/
+archive/
+Archive/
+*/archive/
+/*archive/
+*archive/
+*Archive/
+*/Archive/
+archive\
+
+# data and docs
+*.csv
+*.xlsx
+*.xls
+*.docx
+*.doc
+*.png
+*.pptx
+*.pdf
+*.jpeg
+*.bmp
+*.jpg
+*.html
+*.RData
+*.Rdata
+*.rdata
+*.potx
+*.db
+*.aux
+*.log
+*.nav
+*.out
+*.toc
+*.snm
+
+# ignore these script files which we will change regularly and don't need to deal with
+RUNME_Survey_OSAC_Model/OSAC_Summary_script.r
+RUNME_Survey_OSAC_Model/Survey_design_script.R
+RUNME_Survey_OSAC_Model/Survey_Summary_script.r
+RUNME_Survey_OSAC_Model/Update_script.r
+RUNME_Survey_OSAC_Model/Survey Summary Word_Spring.Rmd
+RUNME_Survey_OSAC_Model/Survey Summary Word_Spring_2018.Rmd
+RUNME_Survey_OSAC_Model/
+/RUNME_Survey_OSAC_Model/
+/markdown/
+markdown/
+markdown\
+
+*presentation.R
+*.tex

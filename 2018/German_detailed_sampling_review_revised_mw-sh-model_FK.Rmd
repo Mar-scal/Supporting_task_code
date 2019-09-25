@@ -1,0 +1,1100 @@
+---
+title: "A Review of German Bank Detailed Sampling"
+subtitle: "Seafood Producers of Nova Scotia"
+editor_options:
+  chunk_output_type: console
+output: 
+  powerpoint_presentation:
+    reference_doc: template.pptx
+    slide_level: 3
+---
+
+```{r, echo=F, message=F, warning=F, include=F}
+direct <- "Y:/Offshore scallop/Assessment/"
+mwger <- read.csv(paste0(direct, "Data/Survey_data/2018/Spring/Ger/mw_Data.csv"))
+mwger_0 <- read.csv(paste0(direct, "Data/Survey_data/2018/Spring/Ger/mw_Data_inclCommercial.csv"))
+
+shfger <- read.csv(paste0(direct, "Data/Survey_data/2018/Spring/Ger/Survey1985-2018.csv"))
+shfger_0 <- read.csv(paste0(direct, "Data/Survey_data/2018/Spring/Ger/Survey1985-2018_inclCommercial.csv"))
+
+load("C:/Documents/Offshore scallop/Assessment/Data/Survey_data/2018/Survey_summary_output/testing_results_GermanSurveyOnly.RData")
+HtWt.fit <- cf.data$Ger$HtWt.fit
+
+load("C:/Documents/Offshore scallop/Assessment/Data/Survey_data/2018/Survey_summary_output/testing_results_GermanInclCommercial.RData")
+HtWt.fit_0 <- cf.data$Ger$HtWt.fit
+
+direct <- "C:/Documents/Offshore scallop/Assessment/"
+
+require(ggplot2)
+require(plyr)
+require(dplyr)
+require(reshape2)
+require(pander)
+require(lme4)
+require(grid)
+require(gridExtra)
+require(sp)
+require(rgdal)
+require(maptools)
+require(raster)
+require(rgeos)
+require(fields)
+```
+
+# checking on Tow 0's for other banks
+```{r, echo=F, message=F, warning=F, include=F}
+#load("Y:/Offshore scallop/Assessment/Data/Survey_data/2018/Survey_summary_output/Survey_all_results.Rdata")
+
+banks <- names(survey.obj)
+banks <- banks[!grepl(x=banks,"-")]
+
+samplesyear <- list()
+for(i in 1:length(banks)){
+samplesyear[[i]] <- ddply(.data=cf.data[[banks[i]]]$CF.data, .(year),
+                     summarise,
+                     tows=length(unique(tow)))
+}
+
+names(samplesyear) <- banks
+
+samplesyeardf<- NULL
+for(i in 1:length(banks)){
+samplesyeardf <- rbind(samplesyeardf, data.frame(samplesyear[[i]], bank=banks[i]))
+}
+
+ggplot() + geom_line(data=samplesyeardf, aes(as.numeric(year), tows, colour=bank, group=bank)) + 
+  geom_vline(data=samplesyeardf, aes(xintercept=2010)) +
+  theme_bw() +
+  theme(panel.grid=element_blank())
+
+tow0 <- list()
+
+for(i in 1:length(banks)){
+  bank <- banks[[i]]
+  tows <- dim(surv.dat[[banks[i]]][surv.dat[[banks[i]]]$tow==0,])[1] # number of 0 tows in the SH data
+  cf <- dim(cf.data[[banks[i]]]$CF.data[cf.data[[banks[i]]]$CF.data$tow==0,])[1] # number of 0 tows in the MW data
+  #cfmonth <- dput(as.character(sort(unique(MW.dat[MW.dat$bank==banks[i] & MW.dat$tow==0,]$month)))) # months where tow 0 included
+  years <- ifelse(length(cf.data[[banks[i]]]$CF.data$year[cf.data[[banks[i]]]$CF.data$tow==0])>0, 
+                  paste(dput(unique(cf.data[[banks[i]]]$CF.data$year[cf.data[[banks[i]]]$CF.data$tow==0]))),
+                  NA)
+  tow0[[i]] <- data.frame(bank, tows, cf, #cfmonth, 
+                          years)
+}
+
+
+```
+
+```{r, echo=F, message=F, warning=F, include=F}
+## shape data
+makeGermanfigs <- function(shfger, mwger, runinla, ID) {
+  towtable <- ddply(.data=shfger[shfger$state=="live",], .(year, random),
+                    summarize,
+                    ntows=length(unique(ID)))
+  
+  towtable <- dcast(data = towtable, year ~ random, value.var="ntows")
+  towtable$totaltows <- apply(towtable[,c("1", "2", "3")], 1, function(x) sum(x, na.rm=T))
+  
+  mwger$sample <- 1:dim(mwger)[1]
+  
+  mwtable <- ddply(.data=mwger, .(year),
+                   summarize,
+                   nsamptows = length(unique(ID)),
+                   nsamples = length(unique(sample)),
+                   medmw = median(wmw),
+                   medsh = median(sh))
+  
+  endtable <- arrange(join(towtable, mwtable, type="full"), year)
+  emptyrows <- data.frame(year=min(mwtable$year):max(mwtable$year))
+  endtable <- join(endtable, emptyrows, type="full")
+  
+  endtable$proportionsampled <- endtable$nsamptows/endtable$totaltows
+  
+  endtable$gear[endtable$year<2008] <- "unlined"
+  endtable$gear[endtable$year>2007] <- "lined"
+  
+  shf <- cbind(year=shfger$year[shfger$state == "live"], shfger[shfger$state=="live",which(grepl(x=names(shfger), "h"))])
+  shf <- dplyr::select(shf, -depth, -CFh, -month)
+  shf <- melt(shf, id.vars = "year")
+  shf$variable <- gsub(x=shf$variable, "h", "")
+  
+  shf <- ddply(.data=shf, .(year, variable),
+               summarize,
+               total=sum(value))
+  
+  mwger$gear[mwger$year<2008] <- "unlined"
+  mwger$gear[mwger$year>2007] <- "lined"
+  
+  shfger$gear[shfger$year<2008] <- "unlined"
+  shfger$gear[shfger$year>2007] <- "lined"
+  
+  
+  samptows <- ddply(.data=mwger, .(year,tow),
+                    summarize,
+                    medmw=median(wmw),
+                    medsh = median(sh),
+                    nsamp = length(unique(sample)),
+                    meanmw = mean(wmw),
+                    meansh = mean(sh))
+  
+  #```
+  
+  
+  #```{r, message=F, echo=F, width=8.5, include=F}
+  #### summary table
+  pander::pander(dplyr::select(endtable[!is.na(endtable$totaltows),], -`1`, -`2`, -`3`), split.table=Inf)
+  #```
+  
+  
+  #```{r, echo=F, message=F, warning=F, include=F}
+  ##  shell height frequencies
+  shf1 <- ggplot() + 
+    geom_histogram(data=shf, aes(as.numeric(as.character(variable)), total), stat="identity") +
+    facet_wrap(~year)+
+    theme_bw() + theme(panel.grid=element_blank()) +
+    ylab("Frequency") +
+    xlab("Shell Heights of all tows (5mm bins)")+
+    ggtitle("all tows")
+  
+  # all tows - need to calculate l.bar and w.bar for full size range!!
+  source(paste0(direct,"/Assessment_fns/Survey_and_OSAC/surv.by.tow.R"))
+  survbytow <- surv.by.tow(shf.dat = shfger, years = unique(shfger$year), pre.ht=95, rec.ht=105, bar.ht=c(5,200), type="ALL", htwt.fit = HtWt.fit, mw.par="CF")
+  shfger$l.bar <- survbytow$l.bar
+  shfger$w.bar <- survbytow$w.bar
+  
+  shfger$gear <- factor(as.factor(shfger$gear), levels=c("unlined", "lined"))
+  mwger$gear <- factor(as.factor(mwger$gear), levels=c("unlined", "lined"))
+  
+  lbarall <- ggplot() + 
+    geom_boxplot(data=shfger[shfger$state=="live",], aes(year, l.bar, group=year, fill=gear)) +
+    theme_bw() + theme(panel.grid=element_blank())+
+    ggtitle("all tows") 
+  
+  wbarall <- ggplot() + 
+    geom_boxplot(data=shfger[shfger$state=="live",], aes(year, w.bar, group=year, fill=gear)) +
+    theme_bw() + theme(panel.grid=element_blank())+
+    ggtitle("all tows")
+  
+  lbarbox <- ggplot() + 
+    geom_boxplot(data=shfger[shfger$state=="live",], aes(gear, l.bar, group=gear)) +
+    theme_bw() + theme(panel.grid=element_blank())+
+    ggtitle("all tows")
+  
+  wbarbox <- ggplot() + 
+    geom_boxplot(data=shfger[shfger$state=="live",], aes(gear, w.bar, group=gear)) +
+    theme_bw() + theme(panel.grid=element_blank())+
+    ggtitle("all tows")
+  
+  
+  shfsamp <- ggplot() + 
+    geom_histogram(data=mwger, aes(sh, fill=gear), binwidth=5) +
+    geom_vline(data=mwger, aes(xintercept=95), colour="black", lty="dashed")+
+    geom_vline(data=mwger, aes(xintercept=109),colour="black", lty="dashed")+
+    facet_wrap(~year)+
+    scale_fill_manual(values=c("blue", "red"), guide=F) +
+    theme_bw() + theme(panel.grid=element_blank()) +
+    ylab("Frequency") +
+    xlab("Shell Heights of sampled tows (5mm bins)") +
+    ggtitle("sampled tows")
+  
+  Germanlist <- list(ID, mwger, shfger, shf1, shfsamp)
+  names(Germanlist) <- c("ID", "mwger", "shfger", "shf1", "shfsamp")
+  return(Germanlist)
+  
+}
+#   wmwyear <- ggplot() + geom_boxplot(data=mwger, aes(year, wmw, group=year, fill=gear)) +
+#     theme_bw() + theme(panel.grid=element_blank())
+#   
+#   shyear <- ggplot() + geom_boxplot(data=mwger, aes(year, sh, group=year, fill=gear)) +
+#     theme_bw() + theme(panel.grid=element_blank())
+#   
+#   wmwbox <- ggplot() + geom_boxplot(data=mwger, aes(gear, wmw, group=gear)) +
+#     theme_bw() + theme(panel.grid=element_blank())
+#   
+#   shbox <- ggplot() + geom_boxplot(data=mwger, aes(gear, sh, group=gear)) +
+#     theme_bw() + theme(panel.grid=element_blank())
+#   
+#   #```
+#   
+#   #```{r, echo=F, message=F, warning=F, include=F}
+#   ##  other plotting
+#   propsampdot <- ggplot() +  geom_point(data=endtable, aes(year, proportionsampled, colour=gear))+ geom_line(data=endtable, aes(year, proportionsampled, colour=gear)) +
+#     theme_bw() + theme(panel.grid=element_blank())
+#   
+#   if(!exists("nafodivs")){
+#     temp <- tempfile()
+#     download.file("https://www.nafo.int/Portals/0/GIS/Divisions.zip", temp)
+#     temp2 <- tempfile()
+#     unzip(zipfile=temp, exdir=temp2)
+#     nafodivs <- readOGR(paste0(temp2, "/Divisions/Divisions.shp"))
+#   }
+#   # Create the clipping polygon
+#   CP <- as(extent(-66.9, -65.4, 42.9, 43.8), "SpatialPolygons")
+#   proj4string(CP) <- CRS(proj4string(nafodivs))
+#   # Clip the map
+#   germanbank <- gIntersection(nafodivs, CP, byid=TRUE)
+#   germanbank <- fortify(germanbank)
+#   
+#   spatdot <- ggplot() + geom_polygon(data=germanbank, aes(long, lat, group=group), fill="white", colour="black") +
+#     coord_map(xlim=c(-66.9, -65.4), ylim=c(42.9, 43.8))+
+#     geom_point(data=unique(dplyr::select(mwger, ID, lon, lat, gear)), aes(lon, lat), alpha=0.2) + 
+#     theme_bw() + theme(panel.grid=element_blank(), panel.background=element_rect(fill="darkgrey")) +
+#     facet_wrap(~gear)
+#   
+#   nsampdot <- ggplot() + geom_point(data=endtable, aes(year, nsamples, colour=gear))+
+#     geom_line(data=endtable, aes(year, nsamples, colour=gear))+
+#     theme_bw() + theme(panel.grid=element_blank())
+#   
+#   mwsh2ax <- ggplot() + geom_point(data=mwtable, aes(year, medsh, colour="mm")) +
+#     geom_line(data=mwtable, aes(year, medsh, colour="mm")) +
+#     theme_bw() + theme(panel.grid=element_blank()) + 
+#     geom_point(data=mwtable, aes(year, medmw*4, colour="g"))+
+#     geom_line(data=mwtable, aes(year, medmw*4, colour="g")) +
+#     scale_y_continuous(sec.axis = sec_axis(~./4, name = "Median meat weight (g)\n"))+
+#     scale_colour_manual(values = c("blue", "red")) +
+#     labs(y = "Median shell height (mm)\n",
+#          x = "Year",
+#          colour = "Measurement") +
+#     theme(legend.position = c(0.9, 0.15))
+#   
+#   mwshyear <- ggplot() + geom_text(data=mwtable, aes(medsh, medmw, label=year, colour=year)) + 
+#     theme_bw() + theme(panel.grid=element_blank()) 
+#   
+#   mwshgear <- ggplot() + geom_point(data=mwger, aes(sh, wmw), alpha=0.05) + 
+#     theme_bw() + theme(panel.grid=element_blank()) +
+#     facet_wrap(~gear)
+#   #```
+#   
+#   
+#   #```{r, echo=F, message=F, warning=F, include=F}
+#   ### modelling
+#   # To mimic more closely what we do for offshore, make a sh^3 object in the data...
+#   mwger$sh3 <- (mwger$sh/100)^3
+#   fits <- data.frame(sh=seq(min(mwger$sh), max(mwger$sh), 0.5),sh3=seq(min((mwger$sh)/100), max((mwger$sh)/100), 0.005)^3)
+#   # FK changed "tow" to "ID" since we have multiple years of data here (same below). 
+#   # Also found a tiny typo that was causing the trouble below
+#   fits$unlined <- predict(object=lmer(data=mwger[mwger$gear=="unlined", ], formula = wmw ~ sh3  + (sh3|year/tow)), newdata=fits, re.form=NA)
+#   fits$lined <- predict(object=lmer(data=mwger[mwger$gear=="lined", ], formula = wmw ~ sh3  + (sh3|year/tow)), newdata=fits, re.form=NA)
+#   
+#   fits <- melt(fits, id.vars="sh", measure.vars = c("lined", "unlined"))
+#   names(fits) <- c("sh", "gear", "wmw")
+#   fits$sh.min <- "all"
+#   # ggplot() + geom_point(data=mwger, aes(sh, wmw)) + 
+#   #   geom_line(data=fits, aes(sh, wmw, colour=gear)) + 
+#   #   theme_bw() + theme(panel.grid=element_blank()) + 
+#   #   facet_wrap(~gear)+
+#   #   ylab("wmw")
+#   
+#   mod1 <- ggplot() + geom_point(data=mwger, aes(sh, wmw,colour=gear), size=0.2,alpha=0.5,position = "jitter") + 
+#     geom_line(data=fits, aes(sh, wmw, colour=gear), lwd=1) + 
+#     theme_bw() + theme(panel.grid=element_blank()) + 
+#     scale_color_manual(values = c("blue","darkgrey")) +
+#     geom_segment(data=fits, aes(y=fits$wmw[fits$sh==100&fits$gear=="lined"],
+#                                 yend=fits$wmw[fits$sh==100&fits$gear=="lined"], 
+#                                 x=-Inf,xend=100), 
+#                  lty="dashed", colour="darkgrey")+
+#     geom_segment(data=fits, aes(y=fits$wmw[fits$sh==100&fits$gear=="unlined"],
+#                                 yend=fits$wmw[fits$sh==100&fits$gear=="unlined"], 
+#                                 x=-Inf,xend=100), 
+#                  lty="dashed", colour="blue")+
+#     geom_segment(data=fits, aes(y=-Inf,
+#                                 yend=fits$wmw[fits$sh==100&fits$gear=="lined"], 
+#                                 x=100,xend=100), 
+#                  lty="dashed", colour="darkgrey")+
+#     geom_segment(data=fits, aes(y=-Inf,
+#                                 yend=fits$wmw[fits$sh==100&fits$gear=="unlined"], 
+#                                 x=100,xend=100), 
+#                  lty="dashed", colour="blue")+
+#     #facet_wrap(~gear)+
+#     ylab("Meat weight (g)") +ggtitle("All data, both gear types") + xlab("Shell height (mm)")+
+#     ylim(c(0,90))
+#   
+#   
+#   # So we see the fits for the unlined era is about 0.5 mm larger...
+#   fits.all.dat <- fits[fits$sh == 100,]
+#   
+#   ## only big stuff
+#   fits2 <- data.frame(sh=seq(90, max(mwger$sh), 0.5),sh3=seq(90/100, max((mwger$sh)/100), 0.005)^3)
+#   # tmp.unlined <- lmer(wmw ~ sh3 + (sh3|tow),data=mwger[mwger$gear=="unlined"& mwger$sh>89, ])
+#   # tmp.lined <- lmer(wmw ~ sh3 + (sh3|tow),data=mwger[mwger$gear=="lined"& mwger$sh>89, ])
+#   # fits$unlined  <- predict(tmp.unlined,newdata=fits,re.form = NA)
+#   # fits$lined  <- predict(tmp.lined,newdata=fits,re.form = NA)
+#   fits2$unlined <- predict(object=lmer(wmw ~ sh3 + (sh3|year/tow),data=mwger[mwger$gear=="unlined"& mwger$sh>89, ]), re.form=NA,
+#                            newdata=fits2)
+#   fits2$lined <- predict(object=lmer(wmw ~ sh3 + (sh3|year/tow),data=mwger[mwger$gear=="lined"& mwger$sh>89, ]), re.form=NA,
+#                          newdata=fits2)
+#   fits2 <- melt(fits2, id.vars="sh", measure.vars = c("lined", "unlined"))
+#   names(fits2) <- c("sh", "gear", "wmw")
+#   fits2$sh.min <- "90 mm"
+#   # So we see the fits with only the 90 + scallop is rather different
+#   fits.90mmplus.dat <- fits2[fits2$sh == 100,]
+#   
+#   
+#   # ggplot() + geom_point(data=mwger, aes(sh, wmw)) + 
+#   #   geom_line(data=fits, aes(sh, wmw, colour=gear)) + 
+#   #   theme_bw() + theme(panel.grid=element_blank()) + 
+#   #   facet_wrap(~gear)+
+#   #   ylab("wmw")
+#   
+#   mod2norm <- ggplot() + geom_point(data=mwger[mwger$sh>89,], aes(sh, wmw,colour=gear), size=0.2,alpha=0.5,position = "jitter") + 
+#     geom_line(data=fits2, aes(sh, wmw, colour=gear), lwd=1) + 
+#     theme_bw() + theme(panel.grid=element_blank()) + 
+#     scale_color_manual(values = c("darkgrey","blue")) +
+#     geom_segment(data=fits2, aes(y=fits2$wmw[fits2$sh==100&fits2$gear=="lined"],
+#                                  yend=fits2$wmw[fits2$sh==100&fits2$gear=="lined"], 
+#                                  x=-Inf,xend=100), 
+#                  lty="dashed", colour="darkgrey")+
+#     geom_segment(data=fits2, aes(y=fits2$wmw[fits2$sh==100&fits2$gear=="unlined"],
+#                                  yend=fits2$wmw[fits2$sh==100&fits2$gear=="unlined"], 
+#                                  x=-Inf,xend=100), 
+#                  lty="dashed", colour="blue")+
+#     geom_segment(data=fits2, aes(y=-Inf,
+#                                  yend=fits2$wmw[fits2$sh==100&fits2$gear=="lined"], 
+#                                  x=100,xend=100), 
+#                  lty="dashed", colour="darkgrey")+
+#     geom_segment(data=fits2, aes(y=-Inf,
+#                                  yend=fits2$wmw[fits2$sh==100&fits2$gear=="unlined"], 
+#                                  x=100,xend=100), 
+#                  lty="dashed", colour="blue")+
+#     #facet_wrap(~gear)+
+#     ylab("wmw")+
+#     ggtitle("only 90mm and up (both gear types)")
+#   
+#   
+#   
+#   
+#   ## only 90mm and up, lined time series only. I REALLY ALREADY DID THIS ABOVE... but this lets me plot it
+#   ## only big stuff
+#   fits3 <- data.frame(sh=seq(90, max(mwger$sh), 0.5),sh3=seq(90/100, max((mwger$sh)/100), 0.005)^3)
+#   # tmp.lined.all <- lmer(wmw ~ sh3 + (sh3|year/tow),data=mwger[mwger$gear=="lined", ])
+#   # tmp.lined.90p <- lmer(wmw ~ sh3 + (sh3|year/tow),data=mwger[mwger$gear=="lined"& mwger$sh>89, ])
+#   # fits$lined.all  <- predict(tmp.lined.all,newdata=fits,re.form = NA)
+#   # fits$lined.90p  <- predict(tmp.lined.90p,newdata=fits,re.form = NA)
+#   
+#   fits3$lined.all <- predict(object=lmer(wmw ~ sh3 + (sh3|year/tow),data=mwger[mwger$gear=="lined", ]), re.form=NA, newdata=fits3)
+#   fits3$lined.90p <- predict(object=lmer(wmw ~ sh3 + (sh3|year/tow),data=mwger[mwger$gear=="lined"& mwger$sh>89, ]), re.form=NA, newdata=fits3)
+#   fits3 <- melt(fits3, id.vars="sh", measure.vars = c("lined.all", "lined.90p"))
+#   names(fits3) <- c("sh", "sizes", "wmw")
+#   
+#   # ggplot() + geom_point(data=mwger, aes(sh, wmw)) + 
+#   #   geom_line(data=fits, aes(sh, wmw, colour=gear)) + 
+#   #   theme_bw() + theme(panel.grid=element_blank()) + 
+#   #   facet_wrap(~gear)+
+#   #   ylab("wmw")
+#   
+#   mod3 <- ggplot() + geom_point(data=mwger[mwger$gear=="lined",],  aes(sh, wmw), size=0.2,alpha=0.5,position = "jitter") + 
+#     geom_line(data=fits3, aes(sh, wmw, colour=sizes), lwd=1) + 
+#     theme_bw() + theme(panel.grid=element_blank()) + 
+#     ylab("wmw")+
+#     geom_segment(data=fits3, aes(y=fits3$wmw[fits3$sh==100&fits3$sizes=="lined.all"],
+#                                  yend=fits3$wmw[fits3$sh==100&fits3$sizes=="lined.all"], 
+#                                  x=-Inf,xend=100), 
+#                  lty="dashed", colour="darkgrey")+
+#     geom_segment(data=fits3, aes(y=fits3$wmw[fits3$sh==100&fits3$sizes=="lined.90p"],
+#                                  yend=fits3$wmw[fits3$sh==100&fits3$sizes=="lined.90p"], 
+#                                  x=-Inf,xend=100), 
+#                  lty="dashed", colour="blue")+
+#     geom_segment(data=fits3, aes(y=-Inf,
+#                                  yend=fits3$wmw[fits3$sh==100&fits3$sizes=="lined.all"], 
+#                                  x=100,xend=100), 
+#                  lty="dashed", colour="darkgrey")+
+#     geom_segment(data=fits3, aes(y=-Inf,
+#                                  yend=fits3$wmw[fits3$sh==100&fits3$sizes=="lined.90p"], 
+#                                  x=100,xend=100), 
+#                  lty="dashed", colour="blue")+
+#     ggtitle("Lined gear samples only") + scale_color_manual(values = c("darkgrey","blue"),
+#                                                             labels=c("All", ">89mm"), name="Shell heights") 
+#   
+#   
+#   # fitsunlined <- data.frame(year=min(mwger$year):2007)
+#   # fitsunlined$unlined <- predict(object=glm(data=mwger[mwger$gear=="unlined", ], formula = wmw ~ year, family = "gaussian"), type = "response",
+#   #         newdata=fitsunlined)
+#   # fitslined <- data.frame(year=2008:max(mwger$year))
+#   # fitslined$lined <- predict(object=glm(data=mwger[mwger$gear=="lined", ], formula = wmw ~ year, family = "gaussian"), type = "response",
+#   #         newdata=fitslined)
+#   # fitsunlined <- melt(fitsunlined, id.vars="year", measure.vars="unlined")
+#   # fitslined <- melt(fitslined, id.vars="year", measure.vars = "lined")
+#   # fits2 <- rbind(fitsunlined, fitslined)
+#   # names(fits2) <- c("year", "gear", "wmw")
+#   # 
+#   # ggplot() + geom_point(data=mwger, aes(year, wmw)) + 
+#   #   geom_line(data=fits2, aes(year, wmw, colour=gear), lwd=3) + 
+#   #   theme_bw() + theme(panel.grid=element_blank()) + 
+#   #   facet_wrap(~gear)+
+#   #   ylab("wmw")
+#   #```
+#   
+#   
+#   #```{r, echo=F, message=F, warning=F, include=F}
+#   # if you want to re-run the INLA model, change runinla to T below
+#   # runinla <- F
+#   
+#   if(runinla==T) {
+#     inlalist<-ls()
+#     
+#     ## INLA modelling is separate
+#     require(INLA)
+#     require(fields)
+#     require(viridis)
+#     
+#     ## set up the spatial boundaries
+#     newAreaPolys<-read.csv(paste(direct,"Data/Maps/approved/Fishing_Area_Borders/Offshore.csv",sep="")
+#                            ,stringsAsFactors = F,header=T)
+#     survey.bound.polys<-read.csv(paste0(direct,"Data/Maps/approved/Survey/survey_boundary_polygons.csv"), 
+#                                  header=T,stringsAsFactors = F)
+#     g.bnds <- survey.bound.polys[survey.bound.polys$label=="Ger",]
+#     Y.range <- range(g.bnds$Y,na.rm=T)
+#     X.range <- range(g.bnds$X,na.rm=T)
+#     g.tmp <- newAreaPolys[newAreaPolys$label=="SFA26",]
+#     g.tmp <- g.tmp[, c("PID", "POS", "X", "Y", "label", "bank")]
+#     g.tmp$X[g.tmp$X < X.range[1]] <- X.range[1]
+#     g.tmp$X[g.tmp$X > X.range[2]] <- X.range[2]
+#     g.tmp$Y[g.tmp$Y > Y.range[2]] <- Y.range[2]
+#     g.tmp$Y[g.tmp$Y < Y.range[1]] <- Y.range[1]
+#     # Now I want to insert a segemnt into the boundary to run a diagonal line from around 43?9/-66.755 to 43/-66?24
+#     g.tmp[2,] <- c(5,2,-66.4,Y.range[1],"SFA26","Ger")
+#     g.tmp <- as.data.frame(rbind(g.tmp[c(1,2),],c(5,2,X.range[1],43.15,"SFA26","Ger"),g.tmp[3:nrow(g.tmp),]))
+#     for(k in 1:4) g.tmp[,k] <- as.numeric(g.tmp[,k]) # Silly rbind making everything characters...
+#     g.tmp$POS <- 1:nrow(g.tmp)
+#     bound.poly.surv <- PBSmapping::as.PolySet(g.tmp,projection="LL")
+#     bound.poly.surv.sp <- maptools::PolySet2SpatialPolygons(bound.poly.surv)
+#     
+#     # data <- #mwger[mwger$gear=="lined",]
+#     #   #mwger[mwger$gear=="unlined",]
+#     #   mwger
+#     
+#     german.inla <- function(data=data, title=title) {## get tow locations
+#       loc <- cbind(data$lon, data$lat) ### TESTING
+#       
+#       # Convert the sp boundary object to a mesh boundary for INLA.
+#       bound <- inla.sp2segment(bound.poly.surv.sp)
+#       xyl <- rbind(x=range(bound$loc[,1]), y=range(bound$loc[,2])) # get the xy ranges of our survey extent.
+#       
+#       # build the mesh
+#       print(paste0("mesh start - ", Sys.time()))
+#       if (any(levels(as.factor(data$gear)) == "lined")) mesh <- inla.mesh.2d(loc, max.edge=c(1, 5)*0.03, offset=0.1,
+#                                                                              cutoff = 0.006) 
+#       if (!any(levels(as.factor(data$gear)) == "lined")) mesh <- inla.mesh.2d(loc, max.edge=c(1, 5)*0.03, offset=0.1,
+#                                                                               cutoff = 0.006) 
+#       print(paste0("mesh done - ", Sys.time()))
+#       
+#       # to add the spatial component:
+#       # Now make the A matrix
+#       A <- inla.spde.make.A(mesh, loc)
+#       
+#       spde <- inla.spde2.pcmatern(mesh, 
+#                                   prior.sigma=c(1,0.5), # The probabiliy that the marginal standard deviation (first number) is larger than second number
+#                                   prior.range=c(0.1,0.5)) # The Median range and the probability that the range is less than this..
+#       
+#       spat.index <- inla.spde.make.index(name="spatial.field", n.spde=spde$n.spde)
+#       
+#       # This is the stack for estimation from the INLA model
+#       print("stack")
+#       stk <- inla.stack(tag="est", data=list(wmw=data$wmw),
+#                         A = list(A, 1),
+#                         effects=list(
+#                           c(
+#                             spat.index, 
+#                             list(intercept=rep(1, spde$n.spde))
+#                           ), 
+#                           list(sh=data$sh,
+#                                year=data$year)
+#                         )
+#       )
+#       
+#       # re-specify the model
+#       # formula4 <- wmw ~ sh + f(year, model="iid") + f(spatial.field, model=spde)
+#       print(paste0("model start - ", Sys.time()))
+#       mod.res <- inla(wmw ~ 0 + intercept + sh + f(year, model="iid") + f(spatial.field, model=spde),
+#                       data=inla.stack.data(stk),
+#                       family="poisson",
+#                       control.predictor = list(
+#                         A = inla.stack.A(stk),
+#                         compute=TRUE
+#                       )
+#       )
+#       print(paste0("model end - ", Sys.time()))
+#       
+#       # Now that this is done we need to make a prediction grid for projection onto our mesh,
+#       print("projecting")
+#       proj <- inla.mesh.projector(mesh=mesh, 
+#                                   xlim=xyl[1, ], ylim=xyl[2,],
+#                                   dims = c(500,500)
+#       ) # 500 x 500 gives very fine results but is slow.        
+#       # Then make a matrix of the correct dimension
+#       mod.res.proj <- inla.mesh.project(proj=proj, exp(mod.res$summary.fixed$mean[1] + mod.res$summary.fixed$mean[2]*100 + mod.res$summary.random$spatial.field$mean + mod.res$summary.random$year$mean[11]))
+#       
+#       pred.in <- splancs::inout(proj$lattice$loc,bound$loc)
+#       mod.res.proj[!pred.in] <- NA
+#       
+#       inlalist <- list(proj=proj, mod.res=mod.res, mod.res.proj=mod.res.proj, mesh=mesh, bound.poly.surv.sp=bound.poly.surv.sp, title=title, data=data)
+#       inlalist
+#     }
+#     
+#     #windows(23, 7)
+#     #png(file="Y:/Offshore scallop/Assessment/Assessment_fns/One_off_scripts/2018/german INLA mean weight-shell height results.png")
+#     #par(mfrow=c(1,3))
+#     inla1 <- german.inla(data=mwger, title="all data")
+#     inla2 <- german.inla(data=mwger[mwger$gear=="lined",], title="lined-gear surveys")
+#     inla3 <- german.inla(data=mwger[mwger$gear=="unlined",], title="unlined-gear surveys")
+#     inlaplots <- list(inla1=inla1, inla2=inla2, inla3=inla3)
+#     
+#     save(inlaplots, file=paste0("Y:/Offshore scallop/Assessment/Assessment_fns/One_off_scripts/2018/GermanINLA_", ID,".RData"))
+#   }
+#   
+#   if(runinla==F) {
+#     load(paste0("Y:/Offshore scallop/Assessment/Assessment_fns/One_off_scripts/2018/GermanINLA_", ID,".RData"))
+#   }
+#   #dev.off()
+#   
+#   # plotting (needs editing to deal with new list obj)
+#   source(paste(direct,"Assessment_fns/Maps/ScallopMap.r",sep="")) 
+#   # ScallopMap("Ger",bathy.source=bath,isobath = iso,
+#   #            plot.bathy = F,plot.boundries=T,boundries="offshore",
+#   #            direct=direct,cex.mn=2,xlab="",ylab="",dec.deg = F,add.scale = T)
+#   image.plot(list(x=inlaplots$inla1$proj$x,
+#                   y=inlaplots$inla1$proj$y,
+#                   z=inlaplots$inla1$mod.res.proj), #axes=F, add=T, 
+#              legend.mar = 2)
+#   points(lat~lon,inlaplots$inla1$data, pch=20,bg='black',cex=0.8)
+#   plot(inlaplots$inla1$bound.poly.surv.sp,add=T,lwd=2)
+#   title("All surveys")
+#   inlaplot1 <- recordPlot()
+#   
+#   # ScallopMap("Ger",bathy.source=bath,isobath = iso,
+#   #            plot.bathy = F,plot.boundries=T,boundries="offshore",
+#   #            direct=direct,cex.mn=2,xlab="",ylab="",dec.deg = F,add.scale = T)
+#   image.plot(list(x=inlaplots$inla2$proj$x,
+#                   y=inlaplots$inla2$proj$y,
+#                   z=inlaplots$inla2$mod.res.proj), #axes=F, add=T, 
+#              legend.mar = 2)
+#   points(lat~lon,inlaplots$inla2$data, pch=20,bg='black',cex=0.8)
+#   plot(inlaplots$inla2$bound.poly.surv.sp,add=T,lwd=2)
+#   title("Surveys using lined gear")
+#   inlaplot2 <- recordPlot()
+#   
+#   # ScallopMap("Ger",bathy.source=bath,isobath = iso,
+#   #            plot.bathy = F,plot.boundries=T,boundries="offshore",
+#   #            direct=direct,cex.mn=2,xlab="",ylab="",dec.deg = F,add.scale = T)
+#   image.plot(list(x=inlaplots$inla3$proj$x,
+#                   y=inlaplots$inla3$proj$y,
+#                   z=inlaplots$inla3$mod.res.proj), #axes=F, add=T, 
+#              legend.mar = 2)
+#   points(lat~lon,inlaplots$inla3$data, pch=20,bg='black',cex=0.8)
+#   plot(inlaplots$inla3$bound.poly.surv.sp,add=T,lwd=2)
+#   title("Surveys using unlined gear")
+#   inlaplot3 <- recordPlot()
+#   
+#   
+#   # require(INLA)
+#   # require(fields)
+#   # require(viridis)
+#   # require(ggplot2)
+#   # source(paste0(direct, "Assessment_fns/Maps/pectinid_projector.R"))
+#   # source(paste0(direct, "Assessment_fns/Maps/add_alpha_function.R"))
+#   # source(paste0(direct, "Assessment_fns/Maps/convert_coords.R"))
+#   # clip <- fortify(inlaplots$inla1$bound.poly.surv.sp)
+#   # names(clip)[1:2] <- c("x", "y") 
+#   # pecjector(clip = clip,add_land =T,repo ="github",#add_EEZ='whatever',add_nafo=T, add_sfas = "both",add_strata = "both",
+#   #           colors = rev(magma(10)), field = exp(inlaplots$inla1$mod.res$summary.fixed$mean[1] + 
+#   #                                                  inlaplots$inla1$mod.res$summary.fixed$mean[2]*100 +
+#   #                                                  inlaplots$inla1$mod.res$summary.random$spatial.field$mean +
+#   #                                                  inlaplots$inla1$mod.res$summary.random$year$mean[11]),
+#   #           mesh = inlaplots$inla1$mesh,
+#   #           c_sys = "ll", add_bathy = NULL, zlim=NULL, lvls=seq(5, 16, 1), area=data.frame(x=c(min(clip$x), max(clip$x)), y=c(min(clip$y), max(clip$y)), proj="+init=epsg:4326"))#,
+#   # add_custom= "Y:/Offshore scallop/Assessment/Data/Maps/approved/Other_Borders/spa4stratadefs.csv")
+#   
+#   
+#   # vals <- inlaplots$inla3$mod.res.proj
+#   # vals <- as.data.frame(as.matrix(vals))
+#   # vals <- as(vals, "RasterLayer") 
+#   # ggplot() + gg(vals)
+#   # colnames(vals) <- inlaplots$inla3$proj$y
+#   # vals$x <- inlaplots$inla3$proj$x
+#   # 
+#   # inlarast <- melt(data=vals, id.vars="x")
+#   # names(inlarast) <- c("x", "y", "z")
+#   # 
+#   # inlarast$y <- as.numeric(as.character(inlarast$y))
+#   # 
+#   # inlarast <- inlarast[!is.na(inlarast$z),]
+#   # 
+#   # ggplot() + geom_polygon(data=germanbank, aes(long, lat, group=group), fill="white", colour="black") +
+#   #   geom_raster(data=inlarast, aes(x, y, fill=z)) +
+#   #   scale_fill_viridis(option="magma", name="INLA condition\nestimate")  +
+#   #   geom_polygon(data=fortify(bound.poly.surv.sp), aes(long, lat, group=group), fill=NA, colour="black") +
+#   #   theme_bw() + theme(panel.grid=element_blank(), panel.background=element_rect(fill="darkgrey")) +
+#   #   xlab("Longitude") +
+#   #   ylab("Latitude") +
+#   #   scale_x_continuous(expand=c(0,0))+
+#   #   scale_y_continuous(expand=c(0,0)) +
+#   #   geom_point(data=inlaplots$inla3$data, aes(lon,lat))
+#   
+#   
+#   
+#   
+#   # ## trying out dave's new thing:
+#   # data=mwger
+#   # source("Y:/Projects/GB_time_area_closure_SPERA/Scripts/functions/INLA_figures_function.R")
+#   # source("Y:/Projects/GB_time_area_closure_SPERA/Scripts/functions/add_alpha_function.R")
+#   # # run the inside of german.inla function above, but ignore plotting steps
+#   # Generic.plot.field(field=exp(inlaplots$inla1$mod.res$summary.fixed$mean[1] + 
+#   #                                inlaplots$inla1$mod.res$summary.fixed$mean[2]*100 +
+#   #                                inlaplots$inla1$mod.res$summary.random$spatial.field$mean +
+#   #                                inlaplots$inla1$mod.res$summary.random$year$mean[11]), 
+#   #                    mesh = inlaplots$inla1$mesh)
+#   
+#   Germanlist <- list(ID, mwger, shfger, shf1, shfsamp, lbarall, wbarall, lbarbox, wbarbox, wmwyear, shyear,
+#               wmwbox, shbox, propsampdot, nsampdot, spatdot, mwsh2ax, mwshyear, mwshgear,
+#               fits.all.dat, fits.90mmplus.dat, mod1, mod2norm, mod3, inlaplot1, inlaplot2, inlaplot3)
+#   names(Germanlist) <- c("ID", "mwger", "shfger", "shf1", "shfsamp", "lbarall", "wbarall", "lbarbox", "wbarbox", "wmwyear", "shyear",
+#               "wmwbox", "shbox", "propsampdot", "nsampdot", "spatdot", "mwsh2ax", "mwshyear", "mwshgear",
+#               "fits.all.dat", "fits.90mmplus.dat", "mod1", "mod2norm", "mod3", "inlaplot1", "inlaplot2", "inlaplot3")
+#   return(Germanlist)
+#   
+# } # end makeGermanfigs
+```
+
+
+```{r, echo=F, message=F, warning=F, include=F}
+surveyonly <- makeGermanfigs(shfger=shfger, mwger=mwger, runinla=F, ID="surveyonly")
+inclcommercial <- makeGermanfigs(shfger=shfger_0, mwger=mwger_0, runinla=F, ID="inclcommercial")
+```
+
+--- 
+
+
+```{r, echo=F, warning=F, fig.height=7, fig.width=9}
+propsampdotl <- ggplotGrob(surveyonly$propsampdot + xlab(NULL) + ylab("Proportion of tows sampled") + ggtitle(NULL) + scale_fill_discrete(name="Gear type", labels=c("Lined", "Unlined")))
+legend <- propsampdotl$grobs[[which(sapply(propsampdotl$grobs, function(x) x$name) == "guide-box")]]
+lwidth <- sum(legend$width)
+propsampdotg <- ggplotGrob(surveyonly$propsampdot + xlab(NULL) + ylab("Proportion of tows sampled") + ggtitle(NULL) + theme(legend.position="none"))
+nsampdotg <- ggplotGrob(surveyonly$nsampdot + xlab(NULL) + ylab("Number of samples") + ggtitle(NULL) + theme(legend.position="none"))
+width <- unit.pmax(propsampdotg$widths, nsampdotg$widths)
+propsampdotg$widths <- width
+nsampdotg$widths <- width
+grid.arrange(arrangeGrob(grobs = list(propsampdotg, nsampdotg), bottom=textGrob("Year")),
+             legend=legend,
+             ncol=2, 
+             widths=unit.c(unit(1, "npc") - lwidth, lwidth))
+
+```
+
+---
+
+```{r, echo=F, warning=F, fig.height=7, fig.width=9}
+propsampdotl <- ggplotGrob(inclcommercial$propsampdot + xlab(NULL) + ylab("Proportion of tows sampled") + ggtitle(NULL) + scale_fill_discrete(name="Gear type", labels=c("Lined", "Unlined")))
+legend <- propsampdotl$grobs[[which(sapply(propsampdotl$grobs, function(x) x$name) == "guide-box")]]
+lwidth <- sum(legend$width)
+propsampdotg <- ggplotGrob(inclcommercial$propsampdot + xlab(NULL) + ylab("Proportion of tows sampled") + ggtitle(NULL) + theme(legend.position="none"))
+nsampdotg <- ggplotGrob(inclcommercial$nsampdot + xlab(NULL) + ylab("Number of samples") + ggtitle(NULL) + theme(legend.position="none"))
+width <- unit.pmax(propsampdotg$widths, nsampdotg$widths)
+propsampdotg$widths <- width
+nsampdotg$widths <- width
+grid.arrange(arrangeGrob(grobs = list(propsampdotg, nsampdotg), bottom=textGrob("Year")),
+             legend=legend,
+             ncol=2, 
+             widths=unit.c(unit(1, "npc") - lwidth, lwidth))
+
+```
+
+---
+
+```{r, echo=F, fig.height=7, fig.width=9}
+### Shell Height Frequencies - all tows
+print(surveyonly$shf1 + ggtitle(NULL))
+```
+
+---
+
+```{r, echo=F, fig.height=7, fig.width=9}
+### Shell Height Frequencies - all tows
+print(inclcommercial$shf1 + ggtitle(NULL))
+```
+
+---
+
+```{r, echo=F, fig.height=7, fig.width=9}
+### Shell Height Frequencies - sampled tows only
+print(surveyonly$shfsamp + ggtitle(NULL))
+# 
+# g <- ggplot_gtable(ggplot_build(surveyonly$shfsamp + ggtitle(NULL)))
+# strip_both <- which(grepl('strip-', g$layout$name))
+# fills <- c("red", "red", # bottomrow
+#            rep("red", 5), #1rowup
+#            "blue", rep("red", 4), #2rowsup
+#            rep("blue", 5),#3rowsup
+#            rep("blue", 5)) #toprow
+# textcols <- c(rep("black", 2), # bottomrow
+#            rep("black", 5), #1rowup
+#            "white", rep("black", 4), #2rowsup
+#            rep("white", 5),#3rowsup
+#            rep("white", 5)) #toprow
+# k <- 1
+# for (i in strip_both) {
+#   print(i)
+#   print(k)
+#   j <- which(grepl('rect', g$grobs[[i]]$grobs[[1]]$childrenOrder))
+#   t <- which(grepl('title', g$grobs[[i]]$grobs[[1]]$childrenOrder))
+#   print(j)
+#   print(t)
+#   if(!g$grobs[[i]]$name == "NULL") {
+#     g$grobs[[i]]$grobs[[1]]$children[[j]]$gp$fill <- fills[k]
+#     w <-  which(grepl('text', g$grobs[[i]]$grobs[[1]]$children[[t]]$children))
+#     g$grobs[[i]]$grobs[[1]]$children[[t]]$children[[w]]$gp$col <- textcols[k]
+#     k <- k+1
+#   }
+# }
+# grid.draw(g)
+# 
+# png(paste0(direct, "/2019/Presentations/Special_industry_presentations/shfsamp_surveyonly.png"), height=7, width=9, units="in", res=420)
+# print(surveyonly$shfsamp + ggtitle(NULL))
+# dev.off()
+
+```
+
+---
+
+```{r, echo=F, fig.height=7, fig.width=9}
+### Shell Height Frequencies - sampled tows only
+print(inclcommercial$shfsamp + ggtitle(NULL))
+
+# g <- ggplot_gtable(ggplot_build(inclcommercial$shfsamp + ggtitle(NULL)))
+# strip_both <- which(grepl('strip-', g$layout$name))
+# fills <- c(rep("red", 4),# bottomrow
+#            rep("red", 5), #1rowup
+#            rep("blue", 3), rep("red", 2), #2rowsup
+#            rep("blue", 5),#3rowsup
+#            rep("blue", 5)) #toprow
+# textcols <- c(rep("black", 4),# bottomrow
+#            rep("black", 5), #1rowup
+#            rep("white", 3), rep("black", 2), #2rowsup
+#            rep("white", 5),#3rowsup
+#            rep("white", 5)) #toprow
+# k <- 1
+# for (i in strip_both) {
+#   print(i)
+#   print(k)
+#   j <- which(grepl('rect', g$grobs[[i]]$grobs[[1]]$childrenOrder))
+#   t <- which(grepl('title', g$grobs[[i]]$grobs[[1]]$childrenOrder))
+#   print(j)
+#   print(t)
+#   if(!g$grobs[[i]]$name == "NULL") {
+#     g$grobs[[i]]$grobs[[1]]$children[[j]]$gp$fill <- fills[k]
+#     w <-  which(grepl('text', g$grobs[[i]]$grobs[[1]]$children[[t]]$children))
+#     g$grobs[[i]]$grobs[[1]]$children[[t]]$children[[w]]$gp$col <- textcols[k]
+#     k <- k+1
+#   }
+# }
+# grid.draw(g)
+# 
+# png(paste0(direct, "/2019/Presentations/Special_industry_presentations/shfsamp_inclcomm.png"), height=7, width=9, units="in", res=420)
+# print(inclcommercial$shfsamp + ggtitle(NULL))
+# dev.off()
+```
+
+---
+
+# ```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+# # all tows
+# lbaralll <- ggplotGrob(lbarall + xlab(NULL) + ylab("Average SH per tow") + ggtitle(NULL) + scale_fill_discrete(name="Gear type", labels=c("Lined", "Unlined")))
+# lbarallg <- ggplotGrob(lbarall + xlab(NULL) + ylab("Average SH per tow (mm)") + ggtitle(NULL) + theme(legend.position="none"))
+# wbarallg <- ggplotGrob(wbarall + xlab(NULL) + ylab("Average MW per tow (g)") + ggtitle(NULL) + theme(legend.position="none"))
+# width <- unit.pmax(lbarallg$widths, wbarallg$widths)
+# legend <- lbaralll$grobs[[which(sapply(lbaralll$grobs, function(x) x$name) == "guide-box")]]
+# lwidth <- sum(legend$width)
+# lbarallg$widths <- width
+# wbarallg$widths <- width
+# grid.arrange(arrangeGrob(grobs = list(lbarallg, wbarallg), bottom=textGrob("Year")),
+#              legend=legend,
+#              widths=unit.c(unit(1, "npc") -lwidth, lwidth))
+# ```
+# ---
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+# all tows
+lbarboxg <- ggplotGrob(surveyonly$lbarbox + xlab(NULL) + ylab("Average SH per tow (mm)") + ggtitle(NULL) + theme(legend.position="none"))
+wbarboxg <- ggplotGrob(surveyonly$wbarbox + xlab(NULL) + ylab("Average MW per tow (g)") + ggtitle(NULL) + theme(legend.position="none"))
+width <- unit.pmax(lbarboxg$widths, wbarboxg$widths)
+lbarboxg$widths <- width
+wbarboxg$widths <- width
+grid.arrange(arrangeGrob(grobs = list(lbarboxg, wbarboxg), bottom=textGrob("Gear type")))
+```
+
+---
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+# all tows
+lbarboxg <- ggplotGrob(inclcommercial$lbarbox + xlab(NULL) + ylab("Average SH per tow (mm)") + ggtitle(NULL) + theme(legend.position="none"))
+wbarboxg <- ggplotGrob(inclcommercial$wbarbox + xlab(NULL) + ylab("Average MW per tow (g)") + ggtitle(NULL) + theme(legend.position="none"))
+width <- unit.pmax(lbarboxg$widths, wbarboxg$widths)
+lbarboxg$widths <- width
+wbarboxg$widths <- width
+grid.arrange(arrangeGrob(grobs = list(lbarboxg, wbarboxg), bottom=textGrob("Gear type")))
+```
+
+---
+
+# ```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+# wmwyearl <- ggplotGrob(wmwyear + xlab(NULL) + ylab("Meat weight of samples") + ggtitle(NULL) + scale_fill_discrete(name="Gear type", labels=c("Lined", "Unlined")))
+# wmwyearg <- ggplotGrob(wmwyear + xlab(NULL) + ylab("Meat weight of\nsamples (g)") + ggtitle(NULL) + theme(legend.position="none"))
+# shyearg <- ggplotGrob(shyear + xlab(NULL) + ylab("Shell heights of\nsamples (mm)") + ggtitle(NULL) + theme(legend.position="none"))
+# width <- unit.pmax(wmwyearg$widths, shyearg$widths)
+# legend <- wmwyearl$grobs[[which(sapply(wmwyearl$grobs, function(x) x$name) == "guide-box")]]
+# lwidth <- sum(legend$width)
+# wmwyearg$widths <- width
+# shyearg$widths <- width
+# grid.arrange(arrangeGrob(grobs = list(wmwyearg, shyearg), bottom=textGrob("Year")),
+#              legend=legend,
+#              widths=unit.c(unit(1, "npc") -lwidth, lwidth))
+# ```
+# 
+# ---
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+wmwboxg <- ggplotGrob(surveyonly$wmwbox + xlab(NULL) + ylab("Meat weight of\nsamples (g)") + ggtitle(NULL) + theme(legend.position="none"))
+shboxg <- ggplotGrob(surveyonly$shbox + xlab(NULL) + ylab("Shell heights of\nsamples (mm)") + ggtitle(NULL) + theme(legend.position="none"))
+width <- unit.pmax(wmwboxg$widths, shboxg$widths)
+wmwboxg$widths <- width
+shboxg$widths <- width
+grid.arrange(arrangeGrob(grobs = list(wmwboxg, shboxg), bottom=textGrob("Gear type")))
+```
+
+--- 
+
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+wmwboxg <- ggplotGrob(inclcommercial$wmwbox + xlab(NULL) + ylab("Meat weight of\nsamples (g)") + ggtitle(NULL) + theme(legend.position="none"))
+shboxg <- ggplotGrob(inclcommercial$shbox + xlab(NULL) + ylab("Shell heights of\nsamples (mm)") + ggtitle(NULL) + theme(legend.position="none"))
+width <- unit.pmax(wmwboxg$widths, shboxg$widths)
+wmwboxg$widths <- width
+shboxg$widths <- width
+grid.arrange(arrangeGrob(grobs = list(wmwboxg, shboxg), bottom=textGrob("Gear type")))
+```
+
+--- 
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+print(surveyonly$mwshyear+ xlab("Median shell height (mm)") + ylab("Median meat weight (g)"))
+```
+
+--- 
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+print(inclcommercial$mwshyear+ xlab("Median shell height (mm)") + ylab("Median meat weight (g)"))
+```
+
+--- 
+
+
+# ```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+# print(mwsh2ax)
+# ```
+# --- 
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+print(surveyonly$mwshgear + xlab("Shell height (mm)") +ylab("Meat weight (g)"))
+```
+
+--- 
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+print(inclcommercial$mwshgear + xlab("Shell height (mm)") +ylab("Meat weight (g)"))
+```
+
+--- 
+
+:::::: {.columns}
+::: {.column}
+```{r, echo=F, warning=F}
+fit.comp <- as.data.frame(rbind(surveyonly$fits.all.dat, surveyonly$fits.90mmplus.dat))
+fit.comp <- fit.comp[order(fit.comp$gear),]
+fit.comp <- fit.comp[, c("gear", "sh.min", "wmw")]
+fit.comp$sh.min <- gsub(x=fit.comp$sh.min, pattern="90 mm", replacement=">89mm")
+fit.comp$sh.min <- gsub(x=fit.comp$sh.min, pattern="all", replacement="All")
+names(fit.comp) <- c("Gear type", "Shell heights", "Estimated meat weight (g)")
+row.names(fit.comp) <- NULL
+pander::pander(fit.comp, caption="Prediction including and excluding scallop below 90 mm")
+```
+:::
+::: {.column}
+```{r, echo=F, warning=F}
+## proportion of scallop below 90 mm
+propbelow90_unlined <- length(unique(surveyonly$mwger$sample[surveyonly$mwger$gear=="unlined" & surveyonly$mwger$sh < 90]))/
+  length(unique(surveyonly$mwger$sample[surveyonly$mwger$gear=="unlined"]))
+
+propbelow90_lined <- length(unique(surveyonly$mwger$sample[surveyonly$mwger$gear=="lined" & surveyonly$mwger$sh < 90]))/
+  length(unique(surveyonly$mwger$sample[surveyonly$mwger$gear=="lined"]))
+
+below90 <- data.frame(gear=c("Unlined", "Lined"), `proportion of samples below 90 mm`=c(propbelow90_unlined,
+                                                          propbelow90_lined))
+names(below90) <- c("Gear type", "Proportion of samples <90mm")
+pander::pander(below90, caption="Proportion of scallop below 90 mm")
+
+```
+:::
+::::::
+
+---
+
+
+:::::: {.columns}
+::: {.column}
+```{r, echo=F, warning=F}
+fit.comp <- as.data.frame(rbind(inclcommercial$fits.all.dat, inclcommercial$fits.90mmplus.dat))
+fit.comp <- fit.comp[order(fit.comp$gear),]
+fit.comp <- fit.comp[, c("gear", "sh.min", "wmw")]
+fit.comp$sh.min <- gsub(x=fit.comp$sh.min, pattern="90 mm", replacement=">89mm")
+fit.comp$sh.min <- gsub(x=fit.comp$sh.min, pattern="all", replacement="All")
+names(fit.comp) <- c("Gear type", "Shell heights", "Estimated meat weight (g)")
+row.names(fit.comp) <- NULL
+pander::pander(fit.comp, caption="Prediction including and excluding scallop below 90 mm")
+```
+:::
+::: {.column}
+```{r, echo=F, warning=F}
+## proportion of scallop below 90 mm
+propbelow90_unlined <- length(unique(inclcommercial$mwger$sample[inclcommercial$mwger$gear=="unlined" & inclcommercial$mwger$sh < 90]))/
+  length(unique(inclcommercial$mwger$sample[inclcommercial$mwger$gear=="unlined"]))
+
+propbelow90_lined <- length(unique(inclcommercial$mwger$sample[inclcommercial$mwger$gear=="lined" & inclcommercial$mwger$sh < 90]))/
+  length(unique(inclcommercial$mwger$sample[inclcommercial$mwger$gear=="lined"]))
+
+below90 <- data.frame(gear=c("Unlined", "Lined"), `proportion of samples below 90 mm`=c(propbelow90_unlined,
+                                                          propbelow90_lined))
+names(below90) <- c("Gear type", "Proportion of samples <90mm")
+pander::pander(below90, caption="Proportion of scallop below 90 mm")
+
+```
+:::
+::::::
+
+---
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+print(surveyonly$mod1 + ggtitle("All shell heights, both gear types"))
+```
+
+--- 
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+print(inclcommercial$mod1 + ggtitle("All shell heights, both gear types"))
+```
+
+--- 
+
+<!-- ```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F} -->
+<!-- print(mod2norm + ylab("Meat weight (g)") + xlab("Shell height (mm)") + ggtitle("Shell heights >89mm, both gear types")) -->
+<!-- ``` -->
+
+<!-- ---  -->
+
+<!-- ```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F} -->
+<!-- print(mod3 + ylab("Meat weight (g)") + xlab("Shell height (mm)")) -->
+<!-- ``` -->
+
+<!-- ---  -->
+
+```{r, echo=F, warning=F, message=F,fig.height=7, fig.width=9}
+print(surveyonly$spatdot + ggtitle(NULL) + ylab("Latitude")+ xlab("Longitude"))
+```
+
+--- 
+
+```{r, echo=F, warning=F, message=F,fig.height=7, fig.width=9}
+print(inclcommercial$spatdot + ggtitle(NULL) + ylab("Latitude")+ xlab("Longitude"))
+```
+
+--- 
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+print(surveyonly$inlaplot1)
+```
+
+--- 
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+print(inclcommercial$inlaplot1)
+```
+
+--- 
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+print(surveyonly$inlaplot2)
+```
+
+--- 
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+print(inclcommercial$inlaplot2)
+```
+
+--- 
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+print(surveyonly$inlaplot3)
+```
+
+--- 
+
+```{r, echo=F, fig.height=7, fig.width=9, message=F, warning=F}
+print(inclcommercial$inlaplot3)
+```
+
+--- 
+
+
+```{r, echo=F, message=F, warning=F, include=F, eval=F}
+## time series modelling?? Just for fun/practice really...
+require(forecast)
+samptows <- arrange(samptows, year, tow)
+# par(mfrow=c(1,2)); acf(samptows$medmw); pacf(samptows$medmw)
+# par(mfrow=c(1,2)); acf(samptows$medsh); pacf(samptows$medsh)
+# par(mfrow=c(1,2)); acf(samptows$meanmw); pacf(samptows$meanmw)
+# par(mfrow=c(1,2)); acf(samptows$meansh); pacf(samptows$meansh)
+# par(mfrow=c(1,2)); acf(samptows$nsamp); pacf(samptows$nsamp)
+#
+#
+# tseries::adf.test(samptows$medmw, alternative="stationary")
+
+fitarimamw <- Arima(samptows[, c("medmw")], order = c(1,1,1))
+fitarimash <- Arima(samptows[, c("medsh")], order = c(1,1,1))
+fitarimamwmean <- Arima(samptows[, c("meanmw")], order = c(1,1,1))
+fitarimashmean <- Arima(samptows[, c("meansh")], order = c(1,1,1))
+fitarimantows <- Arima(samptows[, c("nsamp")], order = c(1,1,1))
+
+par(mfrow=c(3,2))
+plot(fitarimamw$x)
+lines(fitted(fitarimamw), col="red")
+plot(fitarimash$x)
+lines(fitted(fitarimash), col="red")
+plot(fitarimamwmean$x)
+lines(fitted(fitarimamwmean), col="red")
+plot(fitarimashmean$x)
+lines(fitted(fitarimashmean), col="red")
+plot(fitarimantows$x)
+lines(fitted(fitarimantows), col="red")
+```
+ 
+
+```{r, message=F, warning=F, echo=F, fig.height=10, fig.width=10, include=F, eval=F}
+##  plotly stuff
+require(plotly)
+myplot <-  ggplot() + 
+  geom_histogram(data=mwger, aes(sh), binwidth=5) +
+  facet_wrap(~year)+
+  theme_bw() + theme(panel.grid=element_blank()) +
+  ylab("Frequency") +
+  xlab("Shell Heights (5mm bins)") +
+  ggtitle("sampled tows")+
+  theme(panel.spacing = unit(1, "lines"), plot.margin=unit(c(2,1,2,2), "lines"))
+# myplotaes <- plotly_build(myplot)
+# myplotaes$x$layout$margin$r <- 10
+# myplotaes$x$layout$margin$b <- 50
+# myplotaes$x$layout$margin$l <- 50
+
+plotly::ggplotly(myplot) %>%
+  layout(
+    margin=list(t=40, r=10, b=10, l=10),
+    yaxis=list(tickprefix=".        ."))
+```
+

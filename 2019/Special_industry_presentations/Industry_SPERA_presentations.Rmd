@@ -1,0 +1,35 @@
+---
+title: "Current Offshore Scallop Research"
+subtitle: "Seafood Producers of Nova Scotia (SPANS)"
+date: "`r Sys.time()`"
+output:
+  powerpoint_presentation:
+    reference_doc: template.pptx
+    slide_level: 3
+  beamer_presentation: default
+  slidy_presentation: default
+
+editor_options:
+  chunk_output_type: console
+---
+
+```{r, echo=F, message=F, warning=F, include=F}
+direct <- "Y:/Offshore scallop/Assessment/"
+
+require(ggplot2)
+require(plyr)
+require(dplyr)
+require(reshape2)
+require(pander)
+require(lme4)
+require(grid)
+require(gridExtra)
+require(sp)
+require(rgdal)
+require(maptools)
+require(raster)
+require(rgeos)
+require(fields)
+```
+
+
