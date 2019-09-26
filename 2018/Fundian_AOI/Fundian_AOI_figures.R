@@ -1,15 +1,14 @@
 # This script is used to pull all the log records for trips within an AOI being discussion with the folks in oceans.
 
 # Set the working directory and bring in functions/data as necessary.
-direct <- "Y:/Offshore scallop/Assessment/"
+direct <- "d:/r/"
 library(PBSmapping)
-library(lubridate)
 source(paste(direct,"Assessment_fns/Maps/ScallopMap.r",sep=""))
 source(paste(direct,"Assessment_fns/Fishery/logs_and_fishery_data.r",sep="")) #logs_and_fish is function call
-fundian.aoi <- read.csv(paste0(direct,"2019/Supporting_tasks/Fundian_AOI/fundian_georgebasin_coords.csv"))
-years <- 1980:2018
+fundian.aoi <- read.csv(paste0(direct,"2018/Misc/Fundian_AOI/fundian_georgebasin_coords.csv"))
+years <- 1980:2017
 # Get the fishery data
-logs_and_fish(loc="offshore",year = years,un=un.ID,pw=pwd.ID,db.con=db.con)
+logs_and_fish(loc="offshore",year = years,un=un.ID,pw=pwd.ID,db.con=db.con,direct.off=direct)
 fish.dat<-merge(new.log.dat,old.log.dat,all=T)
 fish.dat$ID<-1:nrow(fish.dat)
 # Get fishery locations of PBSmapping
@@ -18,17 +17,14 @@ fish.locs <- na.omit(fish.locs)
 # Now find all the data within these polygons
 key <-findPolys(fish.locs, fundian.aoi)
 # And pull the data
-inside.dat <- fish.dat[1:nrow(fish.dat) %in% key$EID,c("lon","lat","pro.repwt","year","depth.m","depth","vesid","vrnum","kg.hm","hm",'date')]
-inside.dat$month <- month(inside.dat$date)
+inside.dat <- fish.dat[1:nrow(fish.dat) %in% key$EID,c("lon","lat","pro.repwt","year","depth.m","depth","vesid","vrnum","kg.hm","hm")]
+
 # How many vessels on the bank each year...
 aggregate(pro.repwt ~ year + vrnum,inside.dat,length)
-aggregate(pro.repwt ~ month+year,inside.dat,function(x) sum(x,na.rm=T))
-
-
 
 table(aggregate(pro.repwt ~ year + vesid,inside.dat,length)$year)
 
-write.csv(inside.dat,paste0(direct,"2018/Supporting_tasks/Fundian_AOI/FGB_fishery_locations.csv"))
+write.csv(inside.dat,paste0(direct,"2018/Misc/Fundian_AOI/FGB_fishery_locations.csv"))
 
 table(inside.dat$year)
 # here is all the data...
@@ -69,7 +65,7 @@ text(-67.75,41.6,paste("n =",length(inside.dat$lon[inside.dat$year %in% 2010:201
 text(-67.2,41.6,paste("catch =",round(sum(inside.dat$pro.repwt[inside.dat$year %in% 2010:2017]/1000,na.rm = T),digits=0)),cex=1.5)
 
 # Run this for each year and produce the figure
-pdf(file=paste(direct,"2018/Supporting_tasks/Fundian_AOI/Fundian_fishery_by_year.pdf",sep=""),onefile=T)
+pdf(file=paste(direct,"2018/Misc/Fundian_AOI/Fundian_fishery_by_year.pdf",sep=""),onefile=T)
 for(i in 1:length(years))
 {
   ScallopMap(xlim=c(-68,-65),ylim=c(41.5,42.8),plot.bathy = T,plot.boundries = T,title = paste0("Fishery data (",years[i],")"),cex.mn = 2)
