@@ -19,5 +19,5 @@ rasterobj <- raster(list(x=proj$x, y=proj$y, z=mod.res$`FR-spatial`), # specify 
 
 image(rasterobj) # now we have a raster object with our coordinates!
 
-class(rasterobj) 
+class(rasterobj) # the class says "raster" now!
 
