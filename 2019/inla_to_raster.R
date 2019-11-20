@@ -1,5 +1,5 @@
 # load in georges bank scallop survey model output (from super coarse spatial resolution model)
-load("C:/Documents/Offshore scallop/Assessment/Data/Survey_data/2019/Survey_summary_output/GB_figures_res_25-25.RData")
+load("Y:/Offshore scallop/Assessment/Data/Survey_data/2019/Survey_summary_output/GBa_figures_res_250-250.RData")
 
 # check out the different parts of the inla data
 names(proj)
