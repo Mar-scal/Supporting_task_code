@@ -1,13 +1,34 @@
 # Supporting_task_code
 
-This code is developed for work we do each year related to the assessment process but isn't a recurring theme in the assessments. This includes work on Frameworky like questions, little requests for odd assessment related questions, etc.
+To install Git: https://git-scm.com/download/win
 
-Things to note:
+Some tips/best practices: https://guides.github.com/introduction/flow/
 
-1:  This repo was devleoped in 2019, due to re-organization of file structure code developed in 2018 and previous will need some TLC as we have undoubtly broken links in many of these scripts.
+We have modified the typical GitHub workflow so that we can work from our network and users can access their scripts from a remote VPN connection. Our general idea for a workflow comes from here https://nvie.com/files/Git-branching-model.pdf, with some revisions to work from a network and minimize uncessary duplication.
 
-2: The re-organization also moved the location of *data products* into this same folder (these data products are ignored by github for a number of reasons (privacy, storage constraints, etc).  They were generally (but not consistently) stored in the "Data" folder but the decision was made to keep this data folder clean to retain only direct assessment related products.
+The workflow is as follows
 
-3: Non-data outputs (e.g. figures, tables, etc) are found in the ...Year/Supporting_tasks/... subfolders located outside of this repo, consistent with where we store our non-data outputs for our direct assessment related work.
+1: New users should be added as collaborators (talk to Dave or Freya)
 
-4: Larger research projects (generally things funded either via external partners or via B-based) are not included in this repo
+2: FORK the Mar-scal MASTER to your personal github account
+
+This is your personal DEVELOPMENT version of the MASTER repo housed in Mar-scal.
+3: On your computer you will clone your FORK repo to Y:\Github\Offshore\Supporting_task_code\YOUR_NAME.
+
+This directory is where you will work on revisions.
+WE NEVER WORK in the directory where the MASTER resides (i.e. Y:\Offshore\Assessment\Supporting_task_code)
+4: All independent work is to be performed on a branch inside your personal FORK that resides in Y:\Github....
+
+Please name you branch something informative, e.g. Mapping update, survey bugfix, etc.
+5: When you have completed your revisions COMMIT the revisions to your branch
+
+6: Create a PULL REQUEST to merge the data into your FORK.
+
+Within your fork you can take care of your own pull requests.
+7: Test your changes to ensure there are no bugs within your FORK
+
+8: You can now submit a PULL REQUEST from your FORK to the Mar-scal MASTER
+
+For now DK/FK will review the PULL REQUEST to ensure it does not cause any issues. -DK/FK will also identify any ISSUES that need to be opened and/or closed, and integrated with pull requests too.
+If you are aware of ISSUES being resolved/opened feel free to integrate these into the PULL REQUEST yourself
+Collaborators CAN merge their pull requests independently, but complicated edits MUST be discussed before being merged with the master on Mar-scal as these are now immediately implemented on our shared network.
