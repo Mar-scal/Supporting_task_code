@@ -1,5 +1,7 @@
 # Supporting_task_code
 
+This houses the offshore scripts developed that aren't core to the assessment or framework.  These are often functions/scripts for specific tasks but may be useful for other future work.
+
 To install Git: https://git-scm.com/download/win
 
 Some tips/best practices: https://guides.github.com/introduction/flow/
