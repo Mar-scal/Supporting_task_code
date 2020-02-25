@@ -1,0 +1,65 @@
+---
+title: "Sustainability surveys 2018"
+runtime: shiny
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+require(crosstalk)
+require(DT)
+require(tidyverse)
+require(shiny)
+require(tidyr)
+
+surveys <- read.csv("Y:/Offshore/Assessment/2020/Supporting_tasks/Sustainability_survey/2018_survey_data_en.csv")
+
+head(surveys)
+names(surveys)
+
+
+
+surveys[,names(surveys)[!names(surveys) %in% c("Stock.Name", "Species.Group", "Region", "Stock.Type")]] <- map_df(surveys[,names(surveys)[!names(surveys) %in% c("Stock.Name", "Species.Group", "Region", "Stock.Type")]], as.character)
+
+surveys <- pivot_longer(surveys, cols = names(surveys)[!names(surveys) %in% c("Stock.Name", "Species.Group", "Region", "Stock.Type")])
+
+surveys$response <- paste0(surveys$name, ":      ", surveys$value)
+
+surveys$response <- gsub(x = surveys$response, pattern = "X.", replacement = "", fixed=T)
+surveys$response <- gsub(x = surveys$response, pattern = ".", replacement = " ", fixed=T)
+
+```
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+### Select:
+
+```{r}
+selectInput("Stock.Name", "Stock.Name",  surveys$Stock.Name)
+selectInput("Species.Group", "Species.Group",  surveys$Species.Group)
+selectInput("Region", "Region",  surveys$Region)
+selectInput("Stock.Type", "Stock.Type",  surveys$Stock.Type)
+
+```
+
+Row {data-height=600}
+-----------------------------------------------------------------------
+
+### Responses
+
+```{r}
+renderDataTable({
+datatable(surveys[surveys$Stock.Name %in% input$Stock.Name |
+                    surveys$Species.Group %in% input$Species.Group |
+                    surveys$Region %in% input$Region | 
+                    surveys$Stock.Type %in% input$Stock.Type, "response"], extensions="Scroller", style="bootstrap", class="compact", width="100%",
+    options=list(deferRender=TRUE, scrollY = 600, scroller=TRUE))
+})
+
+
+```
+
