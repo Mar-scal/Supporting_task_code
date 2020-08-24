@@ -7,26 +7,26 @@ require(tidyverse)
 ban.surv <- surv.dat$Ban %>% 
   dplyr::select(ID, year, bank, tow, lon, lat, state, species, pre, rec, com, tot) %>%
   filter(state=="live") %>%
-  arrange(year, tow)
+  arrange(year, tow)%>%
+  rename(pre_recruit_npertow = pre,
+         recruit_npertow = rec,
+         commercial_npertow = com,
+         total_npertow = tot)
 
 head(ban.surv)
 
 banice.surv <- surv.dat$BanIce %>% 
   dplyr::select(ID, year, bank, tow, lon, lat, state, species, pre, rec, com, tot) %>%
   filter(state=="live") %>%
-  arrange(year, tow)
-
-head(banice.surv)
-
-ban.surv.both <- rbind(ban.surv, banice.surv)
-
-ban.surv.both <- ban.surv.both %>%
+  mutate(species="icelandic") %>%
+  arrange(year, tow)%>%
   rename(pre_recruit_npertow = pre,
          recruit_npertow = rec,
          commercial_npertow = com,
          total_npertow = tot)
 
-write.csv(ban.surv.both, "C:/Users/keyserf/Documents/Version_control_pandemic/Offshore/Data Requests/2020/MSP_request/Banquereau_scallop_survey_1989-2019.csv ")
+write.csv(ban.surv, "C:/Users/keyserf/Documents/Version_control_pandemic/Offshore/Data Requests/2020/MSP_request/Banquereau_seascallop_survey_1989-2019.csv ")
+write.csv(banice.surv, "C:/Users/keyserf/Documents/Version_control_pandemic/Offshore/Data Requests/2020/MSP_request/Banquereau_icelandscallop_survey_2006-2019.csv ")
 
 
 ############ fishery too... covered by CDD request though!
@@ -45,20 +45,23 @@ names(old.log.dat)
 ban.new <- new.log.dat %>%
   filter(bank=="Ban") %>%
   dplyr::select(year, date, tripnum, nafo, sfa, bank, lon, lat, watch, pro.repwt, hm) %>%
-  rename(kg=pro.repwt) %>%
+  rename(kg=pro.repwt) %>% ### DATES ARE BREAKING IN CSV
   arrange(year, date, tripnum)
+
+ban.new$date <- as.character(ban.new$date)
 
 ban.old <- old.log.dat %>%
   filter(bank=="Ban") %>%
-  dplyr::select(year, date, tripnum, nafo, bank, lon, lat, pro.repwt, hm) %>%
-  rename(kg=pro.repwt) %>%
+  dplyr::select(year, date, trip.id, nafo, bank, lon, lat, pro.repwt, hm) %>%
+  rename(kg=pro.repwt, tripnum=trip.id) %>%
   mutate(sfa=NA, watch=NA) %>%
   dplyr::select(year, date, tripnum, nafo, sfa, bank, lon, lat, watch, kg, hm) %>%
   arrange(year, date, tripnum)
 
-ban.fish <- dim(rbind(ban.old, ban.new))
+ban.fish <- rbind(ban.old, ban.new)
 
+min(ban.fish$year)
 
-write.csv(ban.fish, "C:/Users/keyserf/Documents/Version_control_pandemic/Offshore/Data Requests/2020/MSP_request/Banquereau_scallop_fishery_1989-2019.csv ")
+write.csv(ban.fish, "C:/Users/keyserf/Documents/Version_control_pandemic/Offshore/Data Requests/2020/MSP_request/Banquereau_scallop_fishery_1989-2019.csv")
 
 
