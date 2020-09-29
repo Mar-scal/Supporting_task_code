@@ -56,20 +56,22 @@ inshore.dat <- in.dat.sf %>% dplyr::filter(sfa.marfis != "EOB")
 Ban <- pecjector(area = "Ban",c_sys = 4269, 
           add_layer = list(land = 'grey',eez='eez',sfa = 'offshore',survey = c('offshore','outline')),
           add_custom = list(obj = ecca.sf))
-Ban.fish <- Ban + geom_sf(data=fish.dat.sf) + ggtitle("Scallop fishery 2017- August 2020")
+Ban.fish <- Ban + geom_sf(data=ban.dat.sf) + ggtitle("Scallop fishery 2017- August 2020")
+
+ggsave("Y:/Offshore/Assessment/2020/Supporting_tasks/ECCA_and_Ban_fishery_2017_to_aug_2020.png",Ban.fish,width=11,height=8,units='in')
 
 # Next up the Fundian Channel.
 Fun <- pecjector(area = "WSS",c_sys = 4269, 
                  add_layer = list(land = 'grey',eez='eez',sfa = 'offshore',survey = c('offshore','outline')),
                  add_custom = list(obj = fund.chan))
-Fun.fish <- Fun + geom_sf(data=fun.dat.sf) + ggtitle("Scallop fishery 2017- June 2020")
+Fun.fish <- Fun + geom_sf(data=fun.dat.sf) + ggtitle("Scallop fishery 2017- August 2020")
 
 
 # Here's where the Eastern Shore is...
 S29E <- pecjector(area = list(y=c(43,47.9),x=c(-66.00,-59.00),crs = 4269),c_sys = 4269, 
                  add_layer = list(land = 'grey',eez='eez',sfa = 'inshore'),
                  add_custom = list(obj = east.shore))
-S29E.fish <- S29E + geom_sf(data=in.29E.dat) + ggtitle("Scallop fishery 2017- June 2020")
+S29E.fish <- S29E + geom_sf(data=in.29E.dat) + ggtitle("Scallop fishery 2017- August 2020")
 
 # Here's the overall network 
 MPAn <- pecjector(area = "NFLD",c_sys = 4269, 
