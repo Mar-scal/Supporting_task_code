@@ -14,6 +14,7 @@ title: "2 year projections"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 options(dplyr.summarise.inform = FALSE)
+options(dplyr.join.inform = FALSE)
 require(purrr)
 
 ```
@@ -23,10 +24,10 @@ require(purrr)
 
 source("./two_year_projections_offshore.R")
 
-scenario <- list(0, 0.1, NULL)
-out <- map(scenario, function(x) two_year_projections_offshore(area="BBn",
+SPscenario <- list(0, 0.1, NULL)
+out <- map(SPscenario, function(x) two_year_projections_offshore(area="BBn",
                                                                year=2019, 
-                                                               exploitation=0.25, 
+                                                               exploitation=0.15, 
                                                                runtype=c("Decision tables and plots"), #"Decision tables only"),
                                                                plot=c("Standard boxplot"), #"Functional boxplot"),
                                                                surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
@@ -34,143 +35,72 @@ out <- map(scenario, function(x) two_year_projections_offshore(area="BBn",
                                                                path="Repo working directory (fast)", 
                                                                save=T))
 
-
-## 
-source("./decision_impact.R")
-impact <- map(1:length(scenario), function(x) decision_impact(out[[x]], save=T, area="GBa", surplus=scenario[x], mu=0.25))
+SPscenario <- list(0, 0.1, NULL)
+out <- map(SPscenario, function(x) two_year_projections_offshore(area="GBa",
+                                                               year=2019, 
+                                                               exploitation=0.25, 
+                                                               runtype=c("Decision tables and plots"), #"Decision tables only"),
+                                                               plot=c(#"Standard boxplot"
+                                                                 "Functional boxplot"),
+                                                               surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
+                                                               sample=0.1,
+                                                               path="Repo working directory (fast)", 
+                                                               save=T))
 
 ```
 
 
-# Zero surplus production scenario: 
-
-## Realized projection evaluation
+# Results
 ```{r}
-print(out[[1]]$realized$pred.eval)
+for(i in 1:length(out)) {
+  
+  if(i==1) print("Zero surplus production scenario")
+  if(i==2) print("Median surplus production scenario")
+  if(i==3) print("Last year's surplus production scenario")
+  
+  
+  
+  print("Realized projection evaluation")
+  
+  print(out[[i]]$realized$pred.eval)
+  
+  print(out[[i]]$realized$zoom.pred.eval)
+  
+  print(out[[i]]$realized$evaluation1)
+  
+  print(out[[i]]$realized$evaluation2)
+  
+  
+  
+  print("Exploitation-based projection evaluation")
+  
+  print(out[[1]]$exploit.based$pred.eval)
+  
+  print(out[[1]]$exploit.based$zoom.pred.eval)
+  
+  print(out[[1]]$exploit.based$evaluation1)
+  
+  print(out[[1]]$exploit.based$evaluation2)
+  
+  
+  print("Realized decision from y1 (2020)")
+  
+  print(out[[1]]$decision.1)
+  
+  
+  print("Range of exploitations for decision for y2 (2021) (based on y1 realized removals)")
+  
+  print(out[[1]]$decision.2[out[[1]]$decision.2$year==2020,])
+  
+  
+  
+  
+  print("Decision impact")
+  
+  print(out[[1]]$evaluation3)
+}
 
-print(out[[1]]$realized$zoom.pred.eval)
-
-print(out[[1]]$realized$evaluation1)
-
-print(out[[1]]$realized$evaluation2)
-```
-
-## Exploitation-based projection evaluation (mu=0.15)
-```{r}
-print(out[[1]]$exploit.based$pred.eval)
-
-print(out[[1]]$exploit.based$zoom.pred.eval)
-
-print(out[[1]]$exploit.based$evaluation1)
-
-print(out[[1]]$exploit.based$evaluation2)
-```
-
-## Realized decision from y1 (2020)
-```{r}
-print(out[[1]]$decision.1)
-```
-
-## Range of exploitations for decision for y2 (2021) (based on y1 realized removals)
-```{r}
-print(out[[1]]$decision.2)
-```
-
-## Decision impact
-```{r}
-print(impact[[1]]$evaluation3)
-
-```
-
-
-
-
-
-
-# Median surplus production scenario: 
-
-## Realized projection evaluation
-```{r}
-print(out[[2]]$realized$pred.eval)
-
-print(out[[2]]$realized$zoom.pred.eval)
-
-print(out[[2]]$realized$evaluation1)
-
-print(out[[2]]$realized$evaluation2)
-```
-
-## Exploitation-based projection evaluation (mu=0.15)
-```{r}
-print(out[[2]]$exploit.based$pred.eval)
-
-print(out[[2]]$exploit.based$zoom.pred.eval)
-
-print(out[[2]]$exploit.based$evaluation1)
-
-print(out[[2]]$exploit.based$evaluation2)
-```
-
-## Realized decision from y1 (2020)
-```{r}
-print(out[[2]]$decision.1)
-```
-
-## Range of exploitations for decision for y2 (2021) (based on y1 realized removals)
-```{r}
-print(out[[2]]$decision.2)
-```
-
-## Decision impact
-```{r}
-print(impact[[2]]$evaluation3)
 
 ```
-
-
-
-
-
-# Last year's surplus production scenario: 
-
-## Realized projection evaluation
-```{r}
-print(out[[3]]$realized$pred.eval)
-
-print(out[[3]]$realized$zoom.pred.eval)
-
-print(out[[3]]$realized$evaluation1)
-
-print(out[[3]]$realized$evaluation2)
-```
-
-## Exploitation-based projection evaluation (mu=0.15)
-```{r}
-print(out[[3]]$exploit.based$pred.eval)
-
-print(out[[3]]$exploit.based$zoom.pred.eval)
-
-print(out[[3]]$exploit.based$evaluation1)
-
-print(out[[3]]$exploit.based$evaluation2)
-```
-
-## Realized decision from y1 (2020)
-```{r}
-print(out[[3]]$decision.1)
-```
-
-## Range of exploitations for decision for y2 (2021) (based on y1 realized removals)
-```{r}
-print(out[[3]]$decision.2)
-```
-
-## Decision impact
-```{r}
-print(impact[[3]]$evaluation3)
-
-```
-
-
 
 
