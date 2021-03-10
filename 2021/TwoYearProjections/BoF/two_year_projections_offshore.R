@@ -24,7 +24,7 @@ two_year_projections_offshore <- function(
   }
   
   if(path == "Repo working directory (fast)"){
-    if(area %in% c("GBa", "BBn")) mod.res <- get(load(file = paste0("./Offshore/Final_model_results_", area, ".RData")))
+    if(area %in% c("GBa", "BBn")) mod.res <- get(load(file = paste0("./Final_model_results_", area, ".RData")))
   } 
   
   if(area %in% c("GBa", "BBn")) mod.res <- list(data=mod.res[[area]], summary = DD.out[[area]]$summary, sims.matrix=DD.out[[area]]$sims.list)
@@ -137,14 +137,20 @@ two_year_projections_offshore <- function(
   # to use an exploitation value for the 1st year projection, set exp = c(0.15, NA)
   # to use an exploitation value for the 2nd year projection, set exp = c(NA, 0.15)
   # to use exploitation values for BOTH years, set exp = c(0.15, 0.15)
-  source("./Offshore/proj_eval_plot.R")
+  source("./proj_eval_plot.R")
   # note, proj_eval_plot uses process_2y_proj inside!
   realized <- proj_eval_plot(object=mod.res, area=area, surplus=surplus, mu=c(NA, NA), plot=plot, ref.pts=RP, save=save)
 
+  exploit.based <- proj_eval_plot(object=mod.res, area=area, surplus=surplus, mu=c(NA, exploitation), plot=plot, ref.pts=RP, save=save)
+
+
+
+
   
+
   # run projections using a range of exploitation values
   message("generating decision tables")
-  source("./Offshore/process_2y_proj_offshore.R")
+  source("./process_2y_proj_offshore.R")
   exp.range <- seq(0, 0.3, 0.01)
   
   checktable <- do.call(rbind, map_df(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(x, NA), decisiontable=T))$B.next1)
@@ -186,42 +192,32 @@ two_year_projections_offshore <- function(
   decision.2 <- map_df(3:length(unique(decision.df$year)), function(x) 
     decisiontable(decision.df, proj=2, year=unique(decision.df$year)[x], LRP=LRP, USR=USR))
   
-  
-  HCRscenario1 <- decision.2 %>%
-    dplyr::group_by(year) %>%
-    dplyr::filter(mu == exploitation) %>%
-    dplyr::select(year, mu, catch, p.USR) %>%
-    dplyr::summarise(mu = max(mu)) %>%
-    dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
-    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "Fmort", "B.change", "pB0", "p.LRP", "p.USR"))
-  
-  
   HCRscenario2 <- decision.2 %>%
     dplyr::group_by(year) %>%
     dplyr::filter(p.USR>0.75) %>%
     dplyr::filter(mu <= exploitation) %>%
     dplyr::select(year, mu, catch, p.USR) %>%
     dplyr::summarise(mu = max(mu)) %>%
-    dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
-    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "Fmort", "B.change", "pB0", "p.LRP", "p.USR"))
+    dplyr::left_join(., decision.2) %>%
+    dplyr::full_join(., decision.1)
   
-
+  
+  
   
   
   ################## Decision impact ####################
   message("running decision impact analysis")
-  source("./Offshore/decision_impact.R")
-  impact_HCR1 <- decision_impact(HCRscenario1, save=save, area=area, surplus=surplus, HCRscenario = 1)
+  source("./decision_impact.R")
+  impact_HCR1 <- decision_impact(exploit.based$results_process, save=save, area=area, surplus=surplus, HCRscenario = 1)
   if(!area=="BBn") impact_HCR2 <- decision_impact(HCRscenario2, save=save, area=area, surplus=surplus, HCRscenario = 2)
   if(area=="BBn") impact_HCR2 <- NULL
   
-  print("*******Done this scenario run!*******")
   
   return(list(checktable=checktable,
               decision.1=decision.1,
               decision.2=decision.2, 
               realized=realized,
-              #exploit.based = exploit.based,
+              exploit.based = exploit.based,
               impact_HCR1=impact_HCR1,
               impact_HCR2=impact_HCR2))
 }

@@ -1,8 +1,7 @@
 proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
  
-  require(patchwork)
   # this will loop through years to run projections for boxplots
-  source("./Offshore/process_2y_proj_offshore.R")
+  source("./process_2y_proj_offshore.R")
   results_process <- process_2y_proj(object=object, area=area, surplus=surplus, mu=mu, decisiontable=F)
   
   # tidy up the output
@@ -29,22 +28,12 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
     dplyr::rename(actual = `0`,
                   yr1 = `1`,
                   yr2 = `2`) %>%
-    dplyr::mutate(actualdiff = yr2 - actual,
-                  actualprop = yr2/actual,
-                  projdiff = yr2 - yr1,
-                  projprop = yr2/yr1) %>%
+    dplyr::mutate(actualdiff = actual - yr2,
+                  actualprop = actual/yr2,
+                  projdiff = yr1 - yr2,
+                  projprop = yr1/yr2) %>%
     dplyr::select(year, actualdiff, actualprop, projdiff, projprop) %>%
     tidyr::pivot_longer(cols=c("actualdiff", "actualprop", "projdiff", "projprop"))
-  
-  
-  # labelling:
-  if(!is.null(surplus)){
-    if(surplus==0) tag1 <- "surplus0"
-    if(!surplus==0) tag1 <- "surplus_other"
-  }
-  if(is.null(surplus)) tag1 <- "surplus_lastyear"
-  if(!is.na(mu[2]) & is.na(mu[1])) tag2 <- "y2exploit"
-  if(is.na(mu[2])) tag2 <- "realized"
   
   
   # boxplot code here
@@ -56,8 +45,7 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
       ylab("Fully recruited biomass estimate (metric tonnes)") +
       xlab("Year") +
       scale_fill_brewer(type = "qual", palette = "Paired", name="Estimate type", direction=-1) +
-      theme(panel.grid=element_blank(), text = element_text(size=18))+
-      ggtitle(paste0(area), subtitle=tag1)
+      theme(panel.grid=element_blank(), text = element_text(size=18))#+
     
     zoom.pred.eval <- ggplot() +
       geom_boxplot(data=all_sum[all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),],
@@ -68,8 +56,7 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
       scale_fill_brewer(type = "qual", palette = "Paired", name="Estimate type", direction=-1) +
       theme(panel.grid=element_blank(), text = element_text(size=18))+
       geom_hline(data=ref.pts[ref.pts$area == area,], aes(yintercept=as.numeric(LRP)), linetype="dashed", colour="red", lwd=1) +
-      geom_hline(data=ref.pts[ref.pts$area == area,], aes(yintercept=as.numeric(USR)), linetype="dashed", colour="forestgreen", lwd=1)+
-      ggtitle(paste0(area), subtitle=tag1)
+      geom_hline(data=ref.pts[ref.pts$area == area,], aes(yintercept=as.numeric(USR)), linetype="dashed", colour="forestgreen", lwd=1)
   }
   
   
@@ -88,8 +75,7 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
       theme(panel.grid=element_blank()) +
       annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Bands are 50% IQR,\nsolid line are medians,\ndashed lines are means") +
       scale_x_continuous(breaks=unique(all_sum$year)) +
-      theme(panel.grid=element_blank(), text = element_text(size=18))+
-      ggtitle(paste0(area), subtitle=tag1)
+      theme(panel.grid=element_blank(), text = element_text(size=18))
     
     zoom.pred.eval <- ggplot() +
       geom_ribbon(data=all_sum[all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),],
@@ -106,60 +92,62 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
       annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Bands are 50% IQR,\nsolid line are medians,\ndashed lines are means") +
       scale_x_continuous(breaks=unique(all_sum$year)) +
       geom_hline(data=ref.pts[ref.pts$area == area,], aes(yintercept=as.numeric(LRP)), linetype="dashed", colour="red", lwd=1) +
-      geom_hline(data=ref.pts[ref.pts$area == area,], aes(yintercept=as.numeric(USR)), linetype="dashed", colour="forestgreen", lwd=1)+
-      ggtitle(paste0(area), subtitle=tag1)
+      geom_hline(data=ref.pts[ref.pts$area == area,], aes(yintercept=as.numeric(USR)), linetype="dashed", colour="forestgreen", lwd=1)
   }
   
   
   evaluation1 <- ggplot() +
-    geom_bar(data=diffs[diffs$name %in% c("projdiff") & !is.na(diffs$value),],
-             aes(x=as.factor(year), value, group=name),
+    geom_bar(data=diffs[diffs$name %in% c("projdiff"),],
+             aes(x=as.factor(year), value, fill=name),
              stat="identity",
-             width=0.7,
-             fill="grey", colour="black") +
-    geom_hline(data = diffs[diffs$name %in% c("projdiff") & !is.na(diffs$value),], aes(yintercept=0))+
+             position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
+    scale_fill_brewer(type = "qual", palette = "Paired", name="Estimate type", labels=c("yr1 - yr2"), direction=-1) +
     xlab("Year") +
     theme_bw() +
     theme(panel.grid=element_blank(), text = element_text(size=18)) +
-    ylab("Difference in biomass (mt)") +
-    ggtitle(paste0(area, " - ", tag1), subtitle=expression(y[2]-y[1]))
+    ylab("Difference in biomass (mt)")
   
   evaluation2 <- ggplot() +
-    geom_bar(data=diffs[diffs$name %in% c("projprop") & !is.na(diffs$value),],
-             aes(x=as.factor(year), value, group=name),
+    geom_bar(data=diffs[diffs$name %in% c("projprop"),],
+             aes(x=as.factor(year), value, fill=name),
              stat="identity",
-             width=0.7,
-             fill="grey", colour="black") +
-    geom_hline(data = diffs[diffs$name %in% c("projdiff") & !is.na(diffs$value),], aes(yintercept=0))+
+             position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
+    scale_fill_brewer(type = "qual", palette = "Paired", name="Estimate type", labels=c(expression(paste(frac("yr1","yr2")))), direction=-1) +
     xlab("Year") +
     theme_bw() +
     theme(panel.grid=element_blank(), text = element_text(size=18)) +
-    ylab("Proportional difference in biomass (mt)")+
-    ggtitle(paste0(area, " - ", tag1), subtitle=expression(y[2]/y[1]))
-  
+    ylab("Proportional difference in biomass (mt)")
   
   if(save==T){
-
-    tag <- paste0(tag1, "_", tag2)
-
-    if(!dir.exists(paste0("./Offshore/", area, "/", tag1))) dir.create(paste0("./Offshore/", area, "/", tag1))
     
-    png(filename = paste0("./Offshore/", area, "/", tag1, "/pred_eval_", tag, ".png"), width=11, height=8.5, units="in", res=400)
+    if(!is.null(surplus)){
+      if(surplus==0) tag1 <- "surplus0"
+      if(!surplus==0) tag1 <- "surplus_other"
+    }
+    if(is.null(surplus)) tag1 <- "surplus_lastyear"
+    if(!is.na(mu[2]) & is.na(mu[1])) tag2 <- "y2exploit"
+    if(is.na(mu[2])) tag2 <- "realized"
+    
+    tag <- paste0(tag1, "_", tag2)
+    
+    if(!dir.exists(paste0("./", area, "/", tag1))) dir.create(paste0("./", area, "/", tag1))
+    
+    png(filename = paste0("./", area, "/", tag1, "/pred_eval_", tag, ".png"), width=11, height=8.5, units="in", res=400)
     print(pred.eval)
     dev.off()
     
     
-    png(filename = paste0("./Offshore/", area, "/", tag1, "/zoom_pred_eval_", tag, ".png"), width=11, height=8.5, units="in", res=400)
+    png(filename = paste0("./", area, "/", tag1, "/zoom_pred_eval_", tag, ".png"), width=11, height=8.5, units="in", res=400)
     print(zoom.pred.eval)
     dev.off()
     
     
-    png(filename = paste0("./Offshore/", area, "/", tag1, "/evaluation1_", tag, ".png"), width=11, height=8.5, units="in", res=400)
+    png(filename = paste0("./", area, "/", tag1, "/evaluation1_", tag, ".png"), width=11, height=8.5, units="in", res=400)
     print(evaluation1)
     dev.off()
     
     
-    png(filename = paste0("./Offshore/", area, "/", tag1, "/evaluation2_", tag, ".png"), width=11, height=8.5, units="in", res=400)
+    png(filename = paste0("./", area, "/", tag1, "/evaluation2_", tag, ".png"), width=11, height=8.5, units="in", res=400)
     print(evaluation2)
     dev.off()
   }

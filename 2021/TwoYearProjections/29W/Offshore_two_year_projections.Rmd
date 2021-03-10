@@ -1,0 +1,176 @@
+---
+title: "2 year projections"
+# output: pdf
+#   # flexdashboard::flex_dashboard:
+#     # theme: bootstrap
+# orientation: columns
+# vertical_layout: fill
+
+# storyboard: true
+#runtime: shiny
+#runtime: shiny_prerendered #  This is supposed to render all the plots right off the bat, so slower first time, but makes moving between pages really quick...
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(dplyr.summarise.inform = FALSE)
+require(purrr)
+
+```
+
+```{r}
+## run the projections
+
+source("./two_year_projections_offshore.R")
+
+scenario <- list(0, 0.1, NULL)
+out <- map(scenario, function(x) two_year_projections_offshore(area="BBn",
+                                                               year=2019, 
+                                                               exploitation=0.25, 
+                                                               runtype=c("Decision tables and plots"), #"Decision tables only"),
+                                                               plot=c("Standard boxplot"), #"Functional boxplot"),
+                                                               surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
+                                                               sample=0.1,
+                                                               path="Repo working directory (fast)", 
+                                                               save=T))
+
+
+## 
+source("./decision_impact.R")
+impact <- map(1:length(scenario), function(x) decision_impact(out[[x]], save=T, area="GBa", surplus=scenario[x], mu=0.25))
+
+```
+
+
+# Zero surplus production scenario: 
+
+## Realized projection evaluation
+```{r}
+print(out[[1]]$realized$pred.eval)
+
+print(out[[1]]$realized$zoom.pred.eval)
+
+print(out[[1]]$realized$evaluation1)
+
+print(out[[1]]$realized$evaluation2)
+```
+
+## Exploitation-based projection evaluation (mu=0.15)
+```{r}
+print(out[[1]]$exploit.based$pred.eval)
+
+print(out[[1]]$exploit.based$zoom.pred.eval)
+
+print(out[[1]]$exploit.based$evaluation1)
+
+print(out[[1]]$exploit.based$evaluation2)
+```
+
+## Realized decision from y1 (2020)
+```{r}
+print(out[[1]]$decision.1)
+```
+
+## Range of exploitations for decision for y2 (2021) (based on y1 realized removals)
+```{r}
+print(out[[1]]$decision.2)
+```
+
+## Decision impact
+```{r}
+print(impact[[1]]$evaluation3)
+
+```
+
+
+
+
+
+
+# Median surplus production scenario: 
+
+## Realized projection evaluation
+```{r}
+print(out[[2]]$realized$pred.eval)
+
+print(out[[2]]$realized$zoom.pred.eval)
+
+print(out[[2]]$realized$evaluation1)
+
+print(out[[2]]$realized$evaluation2)
+```
+
+## Exploitation-based projection evaluation (mu=0.15)
+```{r}
+print(out[[2]]$exploit.based$pred.eval)
+
+print(out[[2]]$exploit.based$zoom.pred.eval)
+
+print(out[[2]]$exploit.based$evaluation1)
+
+print(out[[2]]$exploit.based$evaluation2)
+```
+
+## Realized decision from y1 (2020)
+```{r}
+print(out[[2]]$decision.1)
+```
+
+## Range of exploitations for decision for y2 (2021) (based on y1 realized removals)
+```{r}
+print(out[[2]]$decision.2)
+```
+
+## Decision impact
+```{r}
+print(impact[[2]]$evaluation3)
+
+```
+
+
+
+
+
+# Last year's surplus production scenario: 
+
+## Realized projection evaluation
+```{r}
+print(out[[3]]$realized$pred.eval)
+
+print(out[[3]]$realized$zoom.pred.eval)
+
+print(out[[3]]$realized$evaluation1)
+
+print(out[[3]]$realized$evaluation2)
+```
+
+## Exploitation-based projection evaluation (mu=0.15)
+```{r}
+print(out[[3]]$exploit.based$pred.eval)
+
+print(out[[3]]$exploit.based$zoom.pred.eval)
+
+print(out[[3]]$exploit.based$evaluation1)
+
+print(out[[3]]$exploit.based$evaluation2)
+```
+
+## Realized decision from y1 (2020)
+```{r}
+print(out[[3]]$decision.1)
+```
+
+## Range of exploitations for decision for y2 (2021) (based on y1 realized removals)
+```{r}
+print(out[[3]]$decision.2)
+```
+
+## Decision impact
+```{r}
+print(impact[[3]]$evaluation3)
+
+```
+
+
+
+

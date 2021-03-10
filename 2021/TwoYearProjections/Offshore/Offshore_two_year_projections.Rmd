@@ -22,28 +22,20 @@ require(purrr)
 ```{r}
 ## run the projections
 
-source("./two_year_projections_offshore.R")
+source("./Offshore/two_year_projections_offshore.R")
+SP <- read.csv("Y:/Projects/CSAS/2y_Projection_RAP/data/SP_by_areas_by_DK.csv")
+HCRs <- data.frame(area = c("BBn", "GBa"), exploitation = c(0.15, 0.25))
 
-SPscenario <- list(0, 0.1, NULL)
-out <- map(SPscenario, function(x) two_year_projections_offshore(area="BBn",
+area <- "BBn"
+
+SPscenario <- list(0, SP$mn[SP$Subarea==area], NULL)
+out <- map(SPscenario, function(x) two_year_projections_offshore(area=area,
                                                                year=2019, 
-                                                               exploitation=0.15, 
+                                                               exploitation=HCRs$exploitation[HCRs$area==area], 
                                                                runtype=c("Decision tables and plots"), #"Decision tables only"),
                                                                plot=c("Standard boxplot"), #"Functional boxplot"),
                                                                surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
-                                                               sample=0.1,
-                                                               path="Repo working directory (fast)", 
-                                                               save=T))
-
-SPscenario <- list(0, 0.1, NULL)
-out <- map(SPscenario, function(x) two_year_projections_offshore(area="GBa",
-                                                               year=2019, 
-                                                               exploitation=0.25, 
-                                                               runtype=c("Decision tables and plots"), #"Decision tables only"),
-                                                               plot=c(#"Standard boxplot"
-                                                                 "Functional boxplot"),
-                                                               surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
-                                                               sample=0.1,
+                                                               sample=0.001,
                                                                path="Repo working directory (fast)", 
                                                                save=T))
 
@@ -52,6 +44,32 @@ out <- map(SPscenario, function(x) two_year_projections_offshore(area="GBa",
 
 # Results
 ```{r}
+
+require(patchwork)
+# plot_grid(plot_drt_cod$drt + xlab(NULL), plot_drt_had$drt + ylab(NULL) + xlab(NULL), plot_drt_ytf$drt +ylab(NULL) + xlab(NULL), plot_dt_cod$dt, plot_dt_had$dt + ylab(NULL), plot_dt_ytf$dt + ylab(NULL), ncol=3, align="v")
+
+# pred.eval
+png(paste0("./Offshore/", area, "/pred.eval.png"))
+
+out[[1]]$realized$pred.eval + out[[2]]$realized$pred.eval + out[[3]]$realized$pred.eval 
+
+
+out[[1]]$realized$zoom.pred.eval + out[[2]]$realized$zoom.pred.eval + out[[3]]$realized$zoom.pred.eval
+
+
+out[[1]]$realized$evaluation1 + out[[2]]$realized$evaluation1 + out[[3]]$realized$evaluation1 
+
+
+out[[1]]$realized$evaluation2 + out[[2]]$realized$evaluation2 + out[[3]]$realized$evaluation2
+
+
+out[[1]]$impact_HCR1$evaluation3 + out[[2]]$impact_HCR1$evaluation3 + out[[3]]$impact_HCR1$evaluation3
+
+
+out[[1]]$impact_HCR2$evaluation3 + out[[2]]$impact_HCR2$evaluation3 + out[[3]]$impact_HCR2$evaluation3
+
+
+
 for(i in 1:length(out)) {
   
   if(i==1) print("Zero surplus production scenario")
