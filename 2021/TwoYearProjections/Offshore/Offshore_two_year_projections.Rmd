@@ -28,16 +28,20 @@ HCRs <- data.frame(area = c("BBn", "GBa"), exploitation = c(0.15, 0.25))
 
 area <- "BBn"
 
-SPscenario <- list(0, SP$mn[SP$Subarea==area], NULL)
+SPscenario <- list(0, SP$med[SP$Subarea==area], NULL)
 out <- map(SPscenario, function(x) two_year_projections_offshore(area=area,
                                                                year=2019, 
                                                                exploitation=HCRs$exploitation[HCRs$area==area], 
                                                                runtype=c("Decision tables and plots"), #"Decision tables only"),
-                                                               plot=c("Standard boxplot"), #"Functional boxplot"),
+                                                               plot=c("Standard boxplot"), #
+                                                                 #"Functional boxplot"),
                                                                surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
-                                                               sample=0.001,
+                                                               sample=0.1,
                                                                path="Repo working directory (fast)", 
                                                                save=T))
+
+
+save(out, file = paste0("./Offshore/", area, "/twoyearprojections.RData"))
 
 ```
 
@@ -45,78 +49,60 @@ out <- map(SPscenario, function(x) two_year_projections_offshore(area=area,
 # Results
 ```{r}
 
+load(paste0("./Offshore/", area, "/twoyearprojections.RData"))
+
 require(patchwork)
+require(cowplot)
 # plot_grid(plot_drt_cod$drt + xlab(NULL), plot_drt_had$drt + ylab(NULL) + xlab(NULL), plot_drt_ytf$drt +ylab(NULL) + xlab(NULL), plot_dt_cod$dt, plot_dt_had$dt + ylab(NULL), plot_dt_ytf$dt + ylab(NULL), ncol=3, align="v")
 
 # pred.eval
-png(paste0("./Offshore/", area, "/pred.eval.png"))
 
-out[[1]]$realized$pred.eval + out[[2]]$realized$pred.eval + out[[3]]$realized$pred.eval 
+# Using the realized catch for all projections (except 2021), we get biomass posterior distributions which we can compare between projection timings. 
+png(paste0("./Offshore/", area, "/pred_eval.png"), height=6, width=22, res=400, units="in")
+plot_grid(out[[1]]$realized$pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+          out[[2]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+          out[[3]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
+          ncol=3, align="v")
+dev.off()
+# GBa 150000 and 150000
+# BB 30000 and 10000
+
+# This simply shows the biomass projections for the most recent year. 
+png(paste0("./Offshore/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
+plot_grid(out[[1]]$realized$zoom.pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+          out[[2]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+          out[[3]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
+          ncol=3, align="v")
+dev.off()
 
 
-out[[1]]$realized$zoom.pred.eval + out[[2]]$realized$zoom.pred.eval + out[[3]]$realized$zoom.pred.eval
+# the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
+png(paste0("./Offshore/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+plot_grid(out[[1]]$realized$evaluation1, 
+          out[[2]]$realized$evaluation1+ ylab(NULL) , 
+          out[[3]]$realized$evaluation1+ ylab(NULL) ,
+          out[[1]]$realized$evaluation2, 
+          out[[2]]$realized$evaluation2+ ylab(NULL) , 
+          out[[3]]$realized$evaluation2+ ylab(NULL) , 
+          ncol=3, align="v")
+dev.off()
+# GBa 20000 and 1.2
+# BBn 4000 and 0.8
 
+# A HCR is used to select catch for year 1 and year 2. 
+png(paste0("./Offshore/", area, "/catch_diff_eval_HCR1.png"))
+plot_grid(out[[1]]$impact_HCR1$evaluation3, out[[2]]$impact_HCR1$evaluation3, out[[3]]$impact_HCR1$evaluation3,
+          out[[1]]$impact_HCR1$evaluation4, out[[2]]$impact_HCR1$evaluation4, out[[3]]$impact_HCR1$evaluation4, ncol=3, align="v")
+dev.off()
+# GBa 10000 and 3
+# BBn 1000 and 4
 
-out[[1]]$realized$evaluation1 + out[[2]]$realized$evaluation1 + out[[3]]$realized$evaluation1 
-
-
-out[[1]]$realized$evaluation2 + out[[2]]$realized$evaluation2 + out[[3]]$realized$evaluation2
-
-
-out[[1]]$impact_HCR1$evaluation3 + out[[2]]$impact_HCR1$evaluation3 + out[[3]]$impact_HCR1$evaluation3
-
-
-out[[1]]$impact_HCR2$evaluation3 + out[[2]]$impact_HCR2$evaluation3 + out[[3]]$impact_HCR2$evaluation3
-
-
-
-for(i in 1:length(out)) {
-  
-  if(i==1) print("Zero surplus production scenario")
-  if(i==2) print("Median surplus production scenario")
-  if(i==3) print("Last year's surplus production scenario")
-  
-  
-  
-  print("Realized projection evaluation")
-  
-  print(out[[i]]$realized$pred.eval)
-  
-  print(out[[i]]$realized$zoom.pred.eval)
-  
-  print(out[[i]]$realized$evaluation1)
-  
-  print(out[[i]]$realized$evaluation2)
-  
-  
-  
-  print("Exploitation-based projection evaluation")
-  
-  print(out[[1]]$exploit.based$pred.eval)
-  
-  print(out[[1]]$exploit.based$zoom.pred.eval)
-  
-  print(out[[1]]$exploit.based$evaluation1)
-  
-  print(out[[1]]$exploit.based$evaluation2)
-  
-  
-  print("Realized decision from y1 (2020)")
-  
-  print(out[[1]]$decision.1)
-  
-  
-  print("Range of exploitations for decision for y2 (2021) (based on y1 realized removals)")
-  
-  print(out[[1]]$decision.2[out[[1]]$decision.2$year==2020,])
-  
-  
-  
-  
-  print("Decision impact")
-  
-  print(out[[1]]$evaluation3)
-}
+png(paste0("./Offshore/", area, "/catch_diff_eval_HCR2.png"))
+plot_grid(out[[1]]$impact_HCR2$evaluation3, out[[2]]$impact_HCR2$evaluation3, out[[3]]$impact_HCR2$evaluation3,
+          out[[1]]$impact_HCR2$evaluation4, out[[2]]$impact_HCR2$evaluation4, out[[3]]$impact_HCR2$evaluation4, ncol=3, align="v")
+dev.off()
+# GBa 10000 and 3
+# BBn NA
 
 
 ```
