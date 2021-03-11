@@ -10,6 +10,7 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
     tidyr::pivot_wider(names_from=proj, values_from=catch) %>%
     dplyr::rename("real"=`1`, "proj"=`2`) %>%
     dplyr::mutate(missedout = proj - real,
+                  missedout.p = (proj/real) - 1,
                   year=as.numeric(as.character(year)))
   
   # labelling
@@ -19,7 +20,17 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
   }
   if(is.null(surplus[[1]])) tag1 <- "surplus_lastyear"
   
-
+  
+  # limits
+  if(area=="GBa") {
+    break1 <- seq(-12000, 12000, 3000)
+    break2 <- seq(-3, 3, 1) 
+  }
+  if(area=="BBn") {
+    break1 <- seq(-1000, 1000, 250)
+    break2 <- seq(-4, 4, 1) 
+  }
+  
   evaluation3 <- 
     ggplot() +
     geom_bar(data=decisions[!is.na(decisions$missedout),],
@@ -29,9 +40,24 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
     xlab("Year") +
     theme_bw() +
     theme(panel.grid=element_blank(), text = element_text(size=18)) +
-    ylab("Difference in catch (mt)") +
+    ylab("Difference in catch potential (mt)") +
     annotate(geom="text", label=HCRscenario, hjust=0) +
-    ggtitle(paste0(area, " - ", tag1), subtitle=expression(C[y[2]]/C[y[1]]))
+    ggtitle(paste0(area, " - ", tag1), subtitle=expression(C[y[2]]-C[y[1]]))+
+    scale_y_continuous(breaks=break1, limits=c(min(break1), max(break1)))
+  
+  evaluation4 <- 
+    ggplot() +
+    geom_bar(data=decisions[!is.na(decisions$missedout.p),],
+             aes(x=year, missedout.p),
+             stat="identity", fill="grey", colour="black")+
+    geom_hline(data = decisions[!is.na(decisions$missedout.p),], aes(yintercept=0))+
+    xlab("Year") +
+    theme_bw() +
+    theme(panel.grid=element_blank(), text = element_text(size=18)) +
+    ylab("Difference in catch potential (mt)") +
+    annotate(geom="text", label=HCRscenario, hjust=0) +
+    ggtitle(paste0(area, " - ", tag1), subtitle=expression((C[y[2]]/C[y[1]])-1))+
+    scale_y_continuous(breaks=break2, limits=c(min(break2), max(break2)))
   
 
 
@@ -43,8 +69,12 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
     print(evaluation3)
     dev.off()
     
+    png(filename = paste0("./Offshore/", area, "/", tag1, "/decision_impact2_", tag1, "_HCRScenario_", HCRscenario, ".png"), width=11, height=8.5, units="in", res=400)
+    print(evaluation4)
+    dev.off()
+    
   }
   
   
-  return(list(decisions=decisions, evaluation3 = evaluation3))
+  return(list(decisions=decisions, evaluation3 = evaluation3, evaluation4 = evaluation4))
 }

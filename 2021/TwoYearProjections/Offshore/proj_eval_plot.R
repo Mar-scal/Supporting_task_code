@@ -5,6 +5,8 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
   source("./Offshore/process_2y_proj_offshore.R")
   results_process <- process_2y_proj(object=object, area=area, surplus=surplus, mu=mu, decisiontable=F)
   
+  options(scipen = 999)
+  
   # tidy up the output
   B.next0 <- do.call(rbind, results_process$B.next0)
   B.next1 <- do.call(rbind, results_process$B.next1)
@@ -30,9 +32,9 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
                   yr1 = `1`,
                   yr2 = `2`) %>%
     dplyr::mutate(actualdiff = yr2 - actual,
-                  actualprop = yr2/actual,
+                  actualprop = yr2/actual - 1,
                   projdiff = yr2 - yr1,
-                  projprop = yr2/yr1) %>%
+                  projprop = yr2/yr1 - 1) %>%
     dplyr::select(year, actualdiff, actualprop, projdiff, projprop) %>%
     tidyr::pivot_longer(cols=c("actualdiff", "actualprop", "projdiff", "projprop"))
   
@@ -46,6 +48,20 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
   if(!is.na(mu[2]) & is.na(mu[1])) tag2 <- "y2exploit"
   if(is.na(mu[2])) tag2 <- "realized"
   
+  # limits:
+  if(area=="GBa") {
+    break1 <- seq(0,150000, 25000)
+    break2 <- seq(0,150000, 25000)
+    break3 <- seq(-20000,20000, 5000)
+    break4 <- seq(-1.2, 1.2, 0.6)
+  }
+  if(area=="BBn") {
+    break1 <- seq(0,30000, 5000)
+    break2 <- seq(0,10000, 2000)
+    break3 <- seq(0,4000, 800)
+    break4 <- seq(-0.8, 0.8, 0.4)
+  }
+  
   
   # boxplot code here
   if(plot == "Standard boxplot"){
@@ -55,9 +71,10 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
       theme_bw() +
       ylab("Fully recruited biomass estimate (metric tonnes)") +
       xlab("Year") +
-      scale_fill_brewer(type = "qual", palette = "Paired", name="Estimate type", direction=-1) +
+      scale_fill_brewer(type = "qual", palette = "Paired", name=NULL, direction=-1, labels=c("actual", "year 1", "year 2")) +
       theme(panel.grid=element_blank(), text = element_text(size=18))+
-      ggtitle(paste0(area), subtitle=tag1)
+      ggtitle(paste0(area), subtitle=tag1) +
+      scale_y_continuous(breaks=break1, limits=c(min(break1), max(break1)))
     
     zoom.pred.eval <- ggplot() +
       geom_boxplot(data=all_sum[all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),],
@@ -65,11 +82,12 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
       theme_bw() +
       ylab("Fully recruited biomass estimate (metric tonnes)") +
       xlab("Year") +
-      scale_fill_brewer(type = "qual", palette = "Paired", name="Estimate type", direction=-1) +
+      scale_fill_brewer(type = "qual", palette = "Paired", name=NULL, direction=-1, labels=c("actual", "year 1", "year 2")) +
       theme(panel.grid=element_blank(), text = element_text(size=18))+
       geom_hline(data=ref.pts[ref.pts$area == area,], aes(yintercept=as.numeric(LRP)), linetype="dashed", colour="red", lwd=1) +
       geom_hline(data=ref.pts[ref.pts$area == area,], aes(yintercept=as.numeric(USR)), linetype="dashed", colour="forestgreen", lwd=1)+
-      ggtitle(paste0(area), subtitle=tag1)
+      ggtitle(paste0(area), subtitle=tag1)+
+      scale_y_continuous(breaks=break2, limits=c(min(break2), max(break2)))
   }
   
   
@@ -83,13 +101,14 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
       theme(panel.grid=element_blank()) +
       ylab("Fully recruited biomass estimate (metric tonnes)") +
       xlab("Year") +
-      scale_fill_brewer(type = "qual", palette = "Set2", name="Estimate type") +
-      scale_colour_brewer(type = "qual", palette = "Set2", name="Estimate type") +
+      scale_fill_brewer(type = "qual", palette = "Set2", name=NULL, labels=c("actual", "year 1", "year 2")) +
+      scale_colour_brewer(type = "qual", palette = "Set2", name=NULL, labels=c("actual", "year 1", "year 2")) +
       theme(panel.grid=element_blank()) +
       annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Bands are 50% IQR,\nsolid line are medians,\ndashed lines are means") +
       scale_x_continuous(breaks=unique(all_sum$year)) +
       theme(panel.grid=element_blank(), text = element_text(size=18))+
-      ggtitle(paste0(area), subtitle=tag1)
+      ggtitle(paste0(area), subtitle=tag1)+
+      scale_y_continuous(breaks=break1, limits=c(min(break1), max(break1)))
     
     zoom.pred.eval <- ggplot() +
       geom_ribbon(data=all_sum[all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),],
@@ -97,17 +116,18 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
       geom_line(data=all_sum[all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),], aes(year, colour=as.factor(proj), y=med), lwd=2) +
       geom_line(data=all_sum[all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),], aes(year, colour=as.factor(proj), y=meanB), lwd=2, lty=3) +
       theme_bw() +
-      theme(panel.grid=element_blank()) +
+      theme(panel.grid=element_blank(), text = element_text(size=18))+
       ylab("Fully recruited biomass estimate (metric tonnes)") +
       xlab("Year") +
-      scale_fill_brewer(type = "qual", palette = "Set2", name="Estimate type") +
-      scale_colour_brewer(type = "qual", palette = "Set2", name="Estimate type") +
+      scale_fill_brewer(type = "qual", palette = "Set2", name=NULL, labels=c("actual", "year 1", "year 2")) +
+      scale_colour_brewer(type = "qual", palette = "Set2", name=NULL, labels=c("actual", "year 1", "year 2")) +
       theme(panel.grid=element_blank()) +
       annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Bands are 50% IQR,\nsolid line are medians,\ndashed lines are means") +
       scale_x_continuous(breaks=unique(all_sum$year)) +
       geom_hline(data=ref.pts[ref.pts$area == area,], aes(yintercept=as.numeric(LRP)), linetype="dashed", colour="red", lwd=1) +
       geom_hline(data=ref.pts[ref.pts$area == area,], aes(yintercept=as.numeric(USR)), linetype="dashed", colour="forestgreen", lwd=1)+
-      ggtitle(paste0(area), subtitle=tag1)
+      ggtitle(paste0(area), subtitle=tag1)+
+      scale_y_continuous(breaks=break2, limits=c(min(break2), max(break2)))
   }
   
   
@@ -122,8 +142,9 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
     theme_bw() +
     theme(panel.grid=element_blank(), text = element_text(size=18)) +
     ylab("Difference in biomass (mt)") +
-    ggtitle(paste0(area, " - ", tag1), subtitle=expression(y[2]-y[1]))
-  
+    ggtitle(paste0(area, " - ", tag1), subtitle=expression(y[2]-y[1]))+
+    scale_y_continuous(breaks=break3, limits=c(min(break3), max(break3)))
+
   evaluation2 <- ggplot() +
     geom_bar(data=diffs[diffs$name %in% c("projprop") & !is.na(diffs$value),],
              aes(x=as.factor(year), value, group=name),
@@ -135,12 +156,15 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
     theme_bw() +
     theme(panel.grid=element_blank(), text = element_text(size=18)) +
     ylab("Proportional difference in biomass (mt)")+
-    ggtitle(paste0(area, " - ", tag1), subtitle=expression(y[2]/y[1]))
+    ggtitle(paste0(area, " - ", tag1), subtitle=expression((y[2]/y[1])-1))+
+    scale_y_continuous(breaks=break4, limits=c(min(break4), max(break4)))
   
   
   if(save==T){
 
     tag <- paste0(tag1, "_", tag2)
+    
+    if(plot=="Functional boxplot") tag <- paste0(tag, "_F")
 
     if(!dir.exists(paste0("./Offshore/", area, "/", tag1))) dir.create(paste0("./Offshore/", area, "/", tag1))
     

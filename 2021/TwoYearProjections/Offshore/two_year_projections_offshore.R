@@ -118,6 +118,7 @@ two_year_projections_offshore <- function(
   
   # cut down the number of iterations to use in the projections in order to improve run time
   if(!sample == "100") {
+    set.seed(1)
     ntokeep <- dim(mod.res$sims.matrix)[1]*as.numeric(as.character(sample))
     keeprows <- sample(1:dim(mod.res$sims.matrix)[1], ntokeep)
     mod.res$sims.matrix <- mod.res$sims.matrix[keeprows,]
@@ -149,7 +150,7 @@ two_year_projections_offshore <- function(
   
   checktable <- do.call(rbind, map_df(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(x, NA), decisiontable=T))$B.next1)
   
-  decision <- map(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(NA, x), decisiontable=F))
+  decision <- map(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(exploitation, x), decisiontable=F))
   
   # tidy up the output
   decision.df <- NULL
@@ -160,7 +161,7 @@ two_year_projections_offshore <- function(
     process <- rbind(B.next0, B.next1, B.next2)
     decision.df <- rbind(decision.df, process)
   }
-  
+  browser()
   decisiontable <- function(object, proj, year, LRP, USR){
     object <- object[object$proj==proj & object$year == year,]
     return(
