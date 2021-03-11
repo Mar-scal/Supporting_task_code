@@ -2,7 +2,8 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
  
   require(patchwork)
   # this will loop through years to run projections for boxplots
-  source("./Offshore/process_2y_proj_offshore.R")
+  if(area %in% c("GBa", "BBn")) folder <- "Offshore"
+  source("./", folder, "/process_2y_proj.R")
   results_process <- process_2y_proj(object=object, area=area, surplus=surplus, mu=mu, decisiontable=F)
   
   options(scipen = 999)
@@ -50,15 +51,15 @@ proj_eval_plot <- function(object, area, surplus, mu, plot, ref.pts, save){
   
   # limits:
   if(area=="GBa") {
-    break1 <- seq(0,150000, 25000)
-    break2 <- seq(0,150000, 25000)
-    break3 <- seq(-20000,20000, 5000)
+    break1 <- seq(0,140000, 20000)
+    break2 <- seq(0,140000, 20000)
+    break3 <- seq(-30000,30000, 5000)
     break4 <- seq(-1.2, 1.2, 0.6)
   }
   if(area=="BBn") {
     break1 <- seq(0,30000, 5000)
     break2 <- seq(0,10000, 2000)
-    break3 <- seq(0,4000, 800)
+    break3 <- seq(-5000,5000, 1000)
     break4 <- seq(-0.8, 0.8, 0.4)
   }
   

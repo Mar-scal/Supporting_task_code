@@ -1,5 +1,5 @@
-two_year_projections_offshore <- function(
-  area="GBa",
+two_year_projections <- function(
+  area="1A",
   year=2019, 
   exploitation=0.15, 
   runtype=c("Decision tables and plots"), #"Decision tables only"),
@@ -14,20 +14,23 @@ two_year_projections_offshore <- function(
   require(purrr)
   require(dplyr)
   
+  if(area %in% c("GBa", "BBn")) folder <- "Offshore"
+  if(area %in% c("1A", "1B", "3", "4", "6")) folder <- "BoF"
+  if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"
   
   #################### Load data ###################
   
-  direct_off <- "//142.2.93.33/Offshore/Assessment/Data/Model"
+  direct_bof <- "//DCNSBIONA01A/edc_v1_shr/MARFIS/Shares/ESS/INSHORE SCALLOP/BoF"
   
   if(path == "Network (slow)") {
-    if(area %in% c("GBa", "BBn")) mod.res <- get(load(file = paste0(direct_off,"/2020/", area, "/Results/Final_model_results.RData")))
+    load(file = paste0(direct_bof,"/2020/Assessment/Data/Model/SPA", area, "/SPA", area, "_Model_2019.RData"))
   }
   
   if(path == "Repo working directory (fast)"){
-    if(area %in% c("GBa", "BBn")) mod.res <- get(load(file = paste0("./Offshore/Final_model_results_", area, ".RData")))
+    load(file = paste0("./", folder, "/SPA", area, "_Model_2019.RData"))
   } 
   
-  if(area %in% c("GBa", "BBn")) mod.res <- list(data=mod.res[[area]], summary = DD.out[[area]]$summary, sims.matrix=DD.out[[area]]$sims.list)
+  mod.res <- get(ls()[which(grepl(x=ls(), paste0("Spa", area)))])
   
   if(path == "Repo working directory (fast)") message_txt <- paste0("Loading RData file from ", getwd())
   if(path == "Network (slow)") message_txt <- paste0("Loading RData file from ESS or Sky")
@@ -156,10 +159,10 @@ two_year_projections_offshore <- function(
   
   # tidy up the output
   decision.df <- NULL
-  for(i in 1:length(decision)){
-    B.next0 <- do.call(rbind, decision[[i]]$B.next0)
-    B.next1 <- do.call(rbind, decision[[i]]$B.next1)
-    B.next2 <- do.call(rbind, decision[[i]]$B.next2)
+  for(i in 1:length(decision2)){
+    B.next0 <- do.call(rbind, decision2[[i]]$B.next0)
+    B.next1 <- do.call(rbind, decision2[[i]]$B.next1)
+    B.next2 <- do.call(rbind, decision2[[i]]$B.next2)
     process <- rbind(B.next0, B.next1, B.next2)
     decision.df <- rbind(decision.df, process)
   }

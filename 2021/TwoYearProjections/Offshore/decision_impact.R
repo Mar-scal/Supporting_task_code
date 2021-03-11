@@ -20,15 +20,14 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
   }
   if(is.null(surplus[[1]])) tag1 <- "surplus_lastyear"
   
-  
   # limits
   if(area=="GBa") {
-    break1 <- seq(-12000, 12000, 3000)
-    break2 <- seq(-3, 3, 1) 
+    break1 <- seq(-8000, 8000, 2000)
+    break2 <- seq(-1.5, 1.5, 0.5) 
   }
   if(area=="BBn") {
-    break1 <- seq(-1000, 1000, 250)
-    break2 <- seq(-4, 4, 1) 
+    break1 <- seq(-800, 800, 200)
+    break2 <- seq(-1, 1, 0.5) 
   }
   
   evaluation3 <- 
@@ -54,7 +53,7 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
     xlab("Year") +
     theme_bw() +
     theme(panel.grid=element_blank(), text = element_text(size=18)) +
-    ylab("Difference in catch potential (mt)") +
+    ylab("Proportional difference in catch potential") +
     annotate(geom="text", label=HCRscenario, hjust=0) +
     ggtitle(paste0(area, " - ", tag1), subtitle=expression((C[y[2]]/C[y[1]])-1))+
     scale_y_continuous(breaks=break2, limits=c(min(break2), max(break2)))
