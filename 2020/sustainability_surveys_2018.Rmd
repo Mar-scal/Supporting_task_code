@@ -15,7 +15,7 @@ require(tidyverse)
 require(shiny)
 require(tidyr)
 
-surveys <- read.csv("Y:/Offshore/Assessment/2020/Supporting_tasks/Sustainability_survey/2018_survey_data_en.csv")
+surveys <- read.csv("C:/Users/keyserf/Documents/Offshore/Assessment/2020/Supporting_tasks/Sustainability_survey/2018_survey_data_en.csv")
 
 head(surveys)
 names(surveys)

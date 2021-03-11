@@ -1,0 +1,401 @@
+---
+title: "2 year projections"
+output: pdf_document
+---
+
+```{r, echo=F, message=F, warning=F}
+# set up
+require(readxl)
+require(tidyverse)
+require(dplyr)
+require(knitr)
+
+refresh <- F
+knitr::opts_chunk$set(out.height="95%", out.width="95%")
+
+```
+
+
+```{r}
+i <- "GBa"
+
+load(paste0("./Projection_dashboard_", i, "_DT_boxplots.Rdata"))
+decisiondata$pred.eval$layers[[2]] <- NULL
+print(decisiondata$pred.eval + ylab("Commercial biomass (meats, metric tonnes)")) 
+
+decisiondata$zoom.pred.eval$layers[[2]] <- NULL
+print(decisiondata$zoom.pred.eval + ylab("Commercial biomass (meats, metric tonnes)")) 
+
+decisiondata$`2019`$decisiontable$Next.year
+
+decisiondata$`2019`$decisiontable2$Next.year
+
+```
+
+
+
+```{r, echo=F, message=F, warning=F}
+# create output figures after running dashboard
+if(refresh==T){
+  for(i in c("1A", "1B", "3", "4", "6")){
+    load(paste0("./Projection_dashboard_", i, "_boxplot.Rdata"))
+    png(filename = paste0("Process_boxplot_", i, ".png"), width=14, height=6, res=400, units="in", bg="transparent")
+    decisiondata$pred.eval$layers[[2]] <- NULL
+    print(decisiondata$pred.eval + ylab("Commercial biomass (meats, metric tonnes)")) 
+    dev.off()
+    
+    # png(filename = paste0("Simple_boxplot_", i, ".png"), width=14, height=6, res=400, units="in")
+    # print(decisiondata$simple.pred.eval)
+    # dev.off()
+    # 
+    # png(filename = paste0("Method_comparison_", i, ".png"), width=14, height=6, res=400, units="in")
+    # print(decisiondata$method.comparison)
+    # dev.off()
+  }
+  
+  
+  for(i in c("1A", "1B", "3", "4", "6")){
+    load(paste0("./Projection_dashboard_", i, "_func.Rdata"))
+    png(filename = paste0("Absolute_f_boxplot_", i, ".png"), width=14, height=6, res=400, units="in")
+    print(decisiondata$diff2)
+    dev.off()
+    
+    png(filename = paste0("Proportional_f_boxplot_", i, ".png"), width=14, height=6, res=400, units="in")
+    print(decisiondata$diff1)
+    dev.off()
+  }
+  
+  for(i in c("1A", "1B", "3", "4", "6")){
+    load(paste0("./Projection_dashboard_", i, "_boxplot.Rdata"))
+    png(filename = paste0("Zoom_boxplot_", i, ".png"), width=12, height=6, res=400, units="in", bg="transparent")
+    decisiondata$zoom.pred.eval$layers[[2]] <- NULL
+    print(decisiondata$zoom.pred.eval + ylab("Commercial biomass (meats, metric tonnes)"))
+    dev.off()
+    
+    # png(filename = paste0("Method_comparison_", i, ".png"), width=18, height=6, res=400, units="in")
+    # print(decisiondata$method.comparison)
+    # dev.off()
+  }
+  
+  for(i in c("1A", "1B", "3", "4", "6")){
+    model.data <- read_excel(paste0("Z:/INSHORE SCALLOP/BoF/2020/Assessment/Data/Model/SPA", i, "/SPA", i, "_ModelData_R.xlsx"))
+    
+    png(filename = paste0("growth_ts_", i, ".png"), width=8, height=4, res=400, units="in")
+    print(
+      model.data %>%
+        select(YearSurvey, g, gR) %>%
+        filter(YearSurvey>2011) %>%
+        pivot_longer(cols = c(g, gR)) %>%
+        ggplot(aes(YearSurvey, value, colour=name)) + 
+        geom_point() +
+        geom_line(lty=2) +
+        theme_bw()  
+    )
+    dev.off()
+    
+    png(filename = paste0("rec_ts_", i, ".png"), width=8, height=4, res=400, units="in")
+    print(
+      model.data %>%
+        filter(YearSurvey>2011) %>%
+        ggplot(aes(YearSurvey, IR)) + 
+        geom_point() +
+        geom_line(lty=2) +
+        theme_bw()
+    )
+    dev.off()
+    
+  }
+  
+  
+  for(i in c("1A", "1B", "3", "4", "6")){
+    model.data <- read_excel(paste0("Z:/INSHORE SCALLOP/BoF/2020/Assessment/Data/Model/SPA", i, "/SPA", i, "_ModelData_R.xlsx"))
+    
+    png(filename = paste0("mort_ts_", i, ".png"), width=8, height=4, res=400, units="in")
+    print(
+      model.data %>%
+        filter(YearSurvey>2011) %>%
+        ggplot(aes(YearSurvey, clappers)) + 
+        geom_point() +
+        geom_line(lty=2) +
+        theme_bw()
+    )
+    dev.off()
+    
+  }
+  
+}
+```
+
+
+# Scallop Productivity and Recruitment in the Bay of Fundy
+
+These are just placeholder figures that I did very quickly. I think Jessica has much grander plans for these first sections! :) 
+
+```{r, echo=F}
+print("1A")
+knitr::include_graphics(paste0("./growth_ts_1A.png"))
+
+print("1B")
+knitr::include_graphics(paste0("./growth_ts_1B.png"))
+
+print("3")
+knitr::include_graphics(paste0("./growth_ts_3.png"))
+
+print("4")
+knitr::include_graphics(paste0("./growth_ts_4.png"))
+
+print("6")
+knitr::include_graphics(paste0("./growth_ts_6.png"))
+
+print("1A")
+knitr::include_graphics(paste0("./rec_ts_1A.png"))
+
+print("1B")
+knitr::include_graphics(paste0("./rec_ts_1B.png"))
+
+print("3")
+knitr::include_graphics(paste0("./rec_ts_3.png"))
+
+print("4")
+knitr::include_graphics(paste0("./rec_ts_4.png"))
+
+print("6")
+knitr::include_graphics(paste0("./rec_ts_6.png"))
+```
+
+
+# Scallop Mortality in the Bay of Fundy
+
+```{r, echo=F}
+print("1A")
+knitr::include_graphics(paste0("./mort_ts_1A.png"))
+
+print("1B")
+knitr::include_graphics(paste0("./mort_ts_1B.png"))
+
+print("3")
+knitr::include_graphics(paste0("./mort_ts_3.png"))
+
+print("4")
+knitr::include_graphics(paste0("./mort_ts_4.png"))
+
+print("6")
+knitr::include_graphics(paste0("./mort_ts_6.png"))
+```
+
+
+# Zero Surplus Production Scenario
+
+For the purposes of this briefing, a zero surplus production scenario will be used. We are making the assumption that for the second year of the two year projections (e.g. 2021, projected based on 2019 survey data), recruitment and growth are equivalent to mortality, and therefore cancel each other out. While this is an assumption, it is reasonable for these stocks given trends in recent years (see above). 
+
+## Two approaches to project biomass in two years
+
+Historically, one-year projections of scallop biomass have used the interim TAC, the current year estimates of growth and recruitment, and the average natural mortality over the last 5 years. To evaluate the impact of the following year's interim TAC decisions, a range of exploitation rates are applied to the one-year biomass projection, without any consideration of growth, recruitment, or natural mortality. For the purposes of this analysis, we will call these "simple" projections.
+
+These simple projections require assumptions of similarity between the two upcoming years being projected. While an estimate of certainty for the one year projection is possible, it is not carried through to the second year, which is misleading since less is known about the second year than the first year. To mitigate this, instead of performing the simple methodology for the second year, it is necessary to propagate the process error from the first year into the second year. 
+
+To do this, we took the projected biomass one year out, and re-projected it using catch, recruitment, mortality and growth information like we did for the original projection. For the zero surplus production scenario, we assume mortality, recruitment, and commercial growth to be 0. The one-year projections using the simple and process error methods are identical, while for the two year projections, the uncertainty is greater using the process error method.
+
+```{r, echo=F}
+print("1A")
+knitr::include_graphics(paste0("./Method_comparison_1A.png"))
+
+print("1B")
+knitr::include_graphics(paste0("./Method_comparison_1B.png"))
+
+print("3")
+knitr::include_graphics(paste0("./Method_comparison_3.png"))
+
+print("4")
+knitr::include_graphics(paste0("./Method_comparison_4.png"))
+
+print("6")
+knitr::include_graphics(paste0("./Method_comparison_6.png"))
+```
+
+The Process Error projections are more realistic because they account for uncertainty, so we moved ahead with this method. These boxplot figures are useful for comparing projections against the realized values for a give year (intra-annually). In most years and SPAs, the second year's projected biomass was below the realized biomass; exceptions were for SPA 3 in 2016 and 2017, SPA 4 in 2017, and SPA 6 in 2017 and 2018. ??? These under-estimates may be due to the zero surplus production assumption required for the projections (But it is not clear to me yet why... The experts (Jessica and Dave) say the BoF scallop fishery has been in a slightly negative surplus production situation for the last few years, so higher mortality than productivity, but I think this means we would expect the realized values to be LOWER than projected, not the other way around) ???
+
+```{r, echo=F}
+print("1A")
+knitr::include_graphics(paste0("./Process_boxplot_1A.png"))
+
+print("1B")
+knitr::include_graphics(paste0("./Process_boxplot_1B.png"))
+
+print("3")
+knitr::include_graphics(paste0("./Process_boxplot_3.png"))
+
+print("4")
+knitr::include_graphics(paste0("./Process_boxplot_4.png"))
+
+print("6")
+knitr::include_graphics(paste0("./Process_boxplot_6.png"))
+```
+
+Anyway, to better visualize the overall trends in projection precision and bias inter-annually, across the longer time series, functional boxplots were developed. 
+
+```{r, echo=F}
+print("1A")
+knitr::include_graphics(paste0("./Process_f_boxplot_1A.png"))
+
+print("1B")
+knitr::include_graphics(paste0("./Process_f_boxplot_1B.png"))
+
+print("3")
+knitr::include_graphics(paste0("./Process_f_boxplot_3.png"))
+
+print("4")
+knitr::include_graphics(paste0("./Process_f_boxplot_4.png"))
+
+print("6")
+knitr::include_graphics(paste0("./Process_f_boxplot_6.png"))
+```
+
+However, for the Technical Briefing, we are most interested in projection performance in recent years, and the decision making relative to the LRP and USR (for the appropriate areas). For these purposes, the standard boxplots are ideal.
+
+```{r, echo=F}
+print("1A")
+knitr::include_graphics(paste0("./Zoom_boxplot_1A.png"))
+
+print("1B")
+knitr::include_graphics(paste0("./Zoom_boxplot_1B.png"))
+
+print("3")
+knitr::include_graphics(paste0("./Zoom_boxplot_3.png"))
+
+print("4")
+knitr::include_graphics(paste0("./Zoom_boxplot_4.png"))
+
+print("6")
+knitr::include_graphics(paste0("./Zoom_boxplot_6.png"))
+```
+
+And here are the decision tables for 2020...
+
+```{r, echo=F, include=F, message=F, warning=F}
+table <- NULL
+
+lvls <- seq(0, 1000, 10)
+
+for (i in c("1A", "1B", "3", "4", "6", "29A", "29B", "29C", "29D", "BBn", "GBa")){
+  load(paste0("./Projection_dashboard_DT_", i, ".Rdata"))
+  print(i)
+  if(!i == "GBa") table[[i]] <- decisiondata$`2019`$decisiontable$Next.year[decisiondata$`2019`$decisiontable$Next.year$Catch %in% lvls,]
+  if(i == "GBa") table[[i]] <- decisiondata$`2019`$decisiontable$Next.year[decisiondata$`2019`$decisiontable$Next.year$Catch %in% (lvls*10),]
+  table[[i]]$Exploit <- round(table[[i]]$Exploit, 2)
+  if(!i %in% c("6", "29A", "BBn")) {
+    table[[i]] %>%
+      group_by(Exploit) %>%
+      dplyr::summarize(Catch=mean(Catch), 
+                       B.change=mean(B.change),
+                       pB0=mean(pB0),
+                       p.LRP=mean(p.LRP),
+                       p.USR=mean(p.USR)) %>%
+      dplyr::select(Catch, Exploit, B.change, pB0, p.LRP, p.USR) %>%
+      subset(Exploit>0.10 & Exploit<0.2)
+  }
+  if(i %in% c("6", "29A", "BBn")) {
+    table[[i]] %>%
+      group_by(Exploit) %>%
+      dplyr::summarize(Catch=mean(Catch), 
+                       B.change=mean(B.change),
+                       pB0=mean(pB0)) %>%
+      dplyr::select(Catch, Exploit, B.change, pB0) %>%
+      subset(Exploit>0.10 & Exploit<0.2)
+  }
+}
+```
+
+```{r, echo=F}
+print("1A")
+kable(table[["1A"]])
+
+print("1B")
+kable(table[["1B"]])
+
+print("3")
+kable(table[["3"]])
+
+print("4")
+kable(table[["4"]])
+
+print("6")
+kable(table[["6"]])
+
+print("29A")
+kable(table[["29A"]])
+
+print("29B")
+kable(table[["29B"]])
+
+print("29C")
+kable(table[["29C"]])
+
+print("29D")
+kable(table[["29D"]])
+
+print("GBa")
+kable(table[["GBa"]])
+
+print("BBn")
+kable(table[["BBn"]])
+
+# GBa and BBn decision tables do not match documents! B changes are negative here, but not in document. 
+# Same for 29. dashboard exploitations are too high. 
+```
+
+And for 2021!
+
+```{r, echo=F, include=F, message=F, warning=F}
+table2 <- NULL
+ 
+# values from tables in document
+limits <- data.frame(area=c("1A", "1B", "3", "4", "6"), 
+           upr=c(0.18, 0.19, 0.15, 0.16, 0.19),
+           lwr=c(0.12, 0.12, 0.05, 0.08, 0.10))
+
+for (i in c("1A", "1B", "3", "4", "6", "29A", "29B", "29C", "29D", "BBn", "GBa")){
+  load(paste0("./Projection_dashboard_DT_", i, ".Rdata"))
+  print(i)
+  
+  if(!i == "GBa") table2[[i]] <- decisiondata$`2019`$decisiontable2$Next.year[decisiondata$`2019`$decisiontable2$Next.year$Catch %in% lvls,]
+  if(i == "GBa") table2[[i]] <- decisiondata$`2019`$decisiontable2$Next.year[decisiondata$`2019`$decisiontable2$Next.year$Catch %in% (lvls*10),]
+}
+
+```
+
+```{r, echo=F}
+print("1A")
+kable(table2[["1A"]][table2[["1A"]]$Catch %in% seq(240, 360, 20),])
+
+print("1B")
+kable(table2[["1B"]][table2[["1B"]]$Catch %in% seq(340, 440, 20),])
+
+print("3")
+kable(table2[["3"]][table2[["3"]]$Catch %in% seq(100, 310, 10),])
+
+print("4")
+kable(table2[["4"]][table2[["4"]]$Catch %in% seq(100, 200, 20),])
+
+print("6")
+kable(table2[["6"]][table2[["6"]]$Catch %in% seq(90, 170, 20),])
+
+print("29A")
+kable(table2[["29A"]][table2[["29A"]]$Catch %in% 0:25,])
+
+print("29B")
+kable(table2[["29B"]][table2[["29B"]]$Catch %in% seq(0, 90, 10),])
+
+print("29C")
+kable(table2[["29C"]][table2[["29C"]]$Catch %in% seq(0, 20, 5),])
+
+print("29D")
+kable(table2[["29D"]][table2[["29D"]]$Catch %in% seq(0, 40, 10),])
+
+print("GBa")
+kable(table2[["GBa"]][table2[["GBa"]]$Catch %in% seq(1000, 7500, 500),])
+
+print("BBn")
+kable(table2[["BBn"]][table2[["BBn"]]$Catch %in% seq(100, 600, 50),])
+
+```

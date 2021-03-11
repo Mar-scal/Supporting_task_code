@@ -1,0 +1,1264 @@
+---
+title: "2 year projections"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: bootstrap
+orientation: columns
+vertical_layout: fill
+
+# storyboard: true
+runtime: shiny
+#runtime: shiny_prerendered #  This is supposed to render all the plots right off the bat, so slower first time, but makes moving between pages really quick...
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#direct_fns <- "C:/Users/keyserf/Documents/GitHub/BoF/"
+direct_bof <- "//DCNSBIONA01A/edc_v1_shr/MARFIS/Shares/ESS/INSHORE SCALLOP/BoF"
+direct_off <- "//142.2.93.33/Offshore/Assessment/Data/Model"
+direct_29 <- "//DCNSBIONA01A/edc_v1_shr/MARFIS/Shares/ESS/INSHORE SCALLOP/SFA29"
+#setwd("D:/R/Inshore/BoF")
+
+# this is the year with the most recent model data
+yr <- 2019
+
+#required packages
+#install.packages("D:/software/RPkgsFrStephen_2017/SSModel/", repos = NULL, type = "source")
+#install.packages("D:/software/RPkgsFrStephen_2017/SSModeltest/", repos = NULL, type = "source")
+library(SSModel) #v 1.0-3
+library(SSModeltest) #v 1.0-3 # for 29W
+library(openxlsx)
+library(shiny)
+library(shinyWidgets)
+library(flexdashboard)
+library(readr)
+library(leaflet)
+library(DT)
+library(tidyverse)
+library(lubridate)
+library(plotly)
+library(sf)
+library(data.table)
+library(units)
+library(cowplot)
+library(knitr)
+library(animation)
+library(RCurl)
+library(boot)
+require(RColorBrewer)
+require(gridExtra)
+require(purrr)
+require(MALDIquant)
+source("./SSModel_plot_median.r")
+source("./SSModel_predict_summary_median_notes.r")
+source("./SSModeltest_predict_summary_median.r")
+source("./SSModel_predict_2y.R")
+source("./SSModeltest_predict_2y.R")
+source("./simple_2y_proj.R")
+source("./process_2y_proj.R")
+
+#input <- data.frame(area="GBa",  DTyear=2019, mort=0, mtype="Set value", rec=0, rtype="Set value", gtype="Set value", gparm=1, gRtype="Set value", gRparm=0, catch=10000, catchbreak=100, LRP=530, USR=750, RRP=0.15, runtype="Decision tables only", sample=0.01, catch2type="Realized", catch2=1000, exploitation=FALSE, plot="Standard boxplot", scenario="0_surplus")
+
+```
+
+
+Sidebar {data-width=300 .sidebar}
+=======================================================
+
+
+### Data parameters
+
+```{r, echo=F}
+awesomeRadio(inputId = "area", label = "Which area?",
+             choices = c("1A",
+                         "1B",
+                         "3",  
+                         "4",
+                         "6", 
+                         "29A",
+                         "29B",
+                         "29C",
+                         "29D",
+                         "GBa",
+                         "BBn"),
+             selected = "4")
+
+awesomeRadio("path", "Load from?",
+             choices = c("Repo working directory (fast)",
+                         "Network (slow)"))
+
+actionButton("load_data",label="Load 2020 RData file",icon =icon("database"))
+```
+
+### Dashboard parameters
+
+```{r, echo=F}
+
+sliderInput("DTyear", label = "Year",
+            min = 1980, max = year(Sys.Date()), value = 2019, step = 1)
+
+awesomeRadio("runtype","What would you like to see?",
+             choices = c("Decision tables only",
+                         "Decision tables and plots"),
+             selected = "Decision tables and plots")
+
+awesomeRadio("sample", label = "% of model iterations to keep. Keeping a higher % of iterations means slower processing, but increased certainty.",
+             choices = c(100,
+                         10, 
+                         1,
+                         0.1,
+                         0.01),
+             selected = 0.01)
+
+awesomeRadio("plot", label ="Select plot type",
+             choices=c("Standard boxplot", 
+                       "Functional boxplot"), selected = "Standard boxplot")
+
+```
+
+
+### Projection parameters
+
+You may choose a specific scenario or specify your own parameters for the two-year projections. For one-year projections, mortality, growth, and recruitment values are estimated from current year, but for two-year projections, you may specify a multiplier or a set value to modify these parameters.
+
+**Scenario**: Choose a scenario from pre-established options.
+
+```{r, echo=F}
+awesomeRadio("scenario", NULL,
+             selected = "0_surplus",
+             choices=c("Zero surplus production"="0_surplus",
+                       "Same parameters as last year"="same",
+                       "I'll specify my own parameters below"="specify"))
+```
+
+**Mortality**: Multiplier or set value? Specify value.
+
+```{r, echo=F}
+awesomeRadio("mtype", NULL,
+             choices=c("Multiplier", "Set value"))
+
+numericInput("mort", NULL, value = NULL)
+```
+
+**Recruitment**: Multiplier or set value? Specify value.
+
+```{r, echo=F}
+awesomeRadio("rtype", NULL,
+             choices=c("Multiplier", "Set value"))
+
+numericInput("rec", NULL, value = NULL)
+```
+
+**Commercial Growth Rate**: Multiplier or set value? Specify value.
+
+```{r, echo=F}
+awesomeRadio("gtype", NULL,
+             choices=c("Multiplier", "Set value"))
+
+numericInput("gparm", NULL, value = NULL)
+```
+
+**Recruit Growth Rate**: Multiplier or set value? Specify value.
+
+```{r, echo=F}
+awesomeRadio("gRtype", NULL,
+             choices=c("Multiplier", "Set value"))
+
+numericInput("gRparm", NULL, value = NULL)
+```
+
+
+**Catch**
+
+```{r, echo=F}
+shinyWidgets::sliderTextInput("catch","Maximum catch (mt)",
+                              choices=c(0, 10, 50, 100, 250, 500, 750, 1000, 5000, 10000),
+                              selected=1000, grid = T)
+
+sliderInput("catchbreak", label = "Catch breaks (mt)",
+            min = 0, max = 100, value=10, step = 5)
+
+awesomeRadio("catch2type", label="Catch for the second year",
+             #choices=c("Assume current year", "Assign value", "Realized"), selected="Realized")
+             choices=c("Realized"), selected="Realized")
+
+# numericInput("catch2", label = "Assigned catch value (mt)",
+#              value=NULL)
+numericInput("RRP", label = "RRP",
+             min = 0, max = 1, value = 0.15)#, step = 0.01)
+
+```
+
+**Run & Download**
+
+```{r, echo=F}
+actionButton("go_out",label="",icon =icon("redo"))
+
+textInput(inputId = "file", label="File path and name",
+          value="./Projection_dashboard.RData")
+
+actionButton("export",label="",icon =icon("download"))
+```
+
+
+### 
+```{r, echo=F}
+# get 2020 model data
+loaddata <- eventReactive(input$load_data, {
+  if(input$path == "Network (slow)") {
+    if(input$area %in% c("1A", "1B", "3", "4", "6")) load(file = paste0(direct_bof,"/2020/Assessment/Data/Model/SPA", input$area, "/SPA", input$area, "_Model_2019.RData"))
+    if(input$area %in% c("GBa", "BBn")) mod.res <- get(load(file = paste0(direct_off,"/2020/", input$area, "/Results/Final_model_results.RData")))
+    if(input$area %in% c("29A", "29B", "29C", "29D")) load(file = paste0(direct_29,"/2020/model/SFA", input$area, "_results/SFA_", input$area, "_2019.RData"))
+  }
+  
+  if(input$path == "Repo working directory (fast)"){
+    if(input$area %in% c("1A", "1B", "3", "4", "6")) load(file = paste0("./SPA", input$area, "_Model_2019.RData"))
+    if(input$area %in% c("GBa", "BBn")) mod.res <- get(load(file = paste0("./Final_model_results_", input$area, ".RData")))
+    if(input$area %in% c("29A", "29B", "29C", "29D")) load(file = paste0("./SFA_", input$area, "_2019.RData"))
+  } 
+  
+  if(input$area %in% c("1A", "1B", "3", "4", "6")) mod.res <- get(ls()[which(grepl(x=ls(), paste0("Spa", input$area)))])
+  if(input$area %in% c("GBa", "BBn")) mod.res <- list(data=mod.res[[input$area]], summary = DD.out[[input$area]]$summary, sims.matrix=DD.out[[input$area]]$sims.list)
+  if(input$area %in% c("29A", "29B", "29C", "29D")) mod.res <- get(ls()[which(grepl(x=ls(), paste0("mod.res")))])
+  
+  return(mod.res)
+})
+
+renderPrint({
+  if(input$path == "Repo working directory (fast)") message_txt <- paste0("Loading RData file from ", getwd())
+  if(input$path == "Network (slow)") message_txt <- paste0("Loading RData file from ESS or Sky")
+  withProgress(message = message_txt, value = 0, {
+    invisible(loaddata())
+  })
+})
+```
+
+```{r, echo=F}
+decisiondata <- eventReactive(input$go_out, {
+  
+  assign(x = "mod.res", value=isolate(loaddata()))
+  
+  RP <- data.frame(area = c("1A", "1B", "3", "4", "6", "29A", "29B", "29C", "29D", "GBa", "BBn"),
+                   LRP = c(480, 880, 600, 530, 500, NA, 1.12, 1.41, 1.3, 7137, NA),
+                   USR = c(1000, 1800, 1000, 750, 600, NA, 2.24, 2.82, 2.6, 13284, NA))
+  
+  LRP <- RP$LRP[RP$area == as.character(input$area)]
+  USR <- RP$USR[RP$area == as.character(input$area)]
+  
+  if(is.null(mod.res$Years)) mod.res$Years <- mod.res$data$year
+  
+  # for 2020 projections, use 2020 landings. # Asked JS whether to update BoF landings.
+  # from JS: 
+  # The BoF technical briefing used landings for 2019-20  that would have covered the full fishing year for "2020" since the fishery ends Sept 30 and restarts Oct 1 - although we would have stated them being "preliminary". That said, I don't think I explicit wrote down what the landings in the model area for SPA 6 was in the briefing.. just that it was 76% of the total landings.. Anyhow, removals for the 1year projections for the 2019-20 season (i.e. "2020") should be: 
+  # 	
+  #   1A - 415
+  # 	1B - 545
+  # 	3 - 108
+  # 	4 - 113
+  # 	6 - 164
+  # 
+  # For the "2021" projections (which for BoF is the 2020-21 season) we can use the final TAC decisions which were: 
+  # (and also can be found here: ess:\INSHORE SCALLOP\BoF\2021\Resource Management\ISAC)
+  # 
+  #   SPA 1A – 270 t
+  # 	SPA 1B – 400 t
+  # 	SPA 3 – 200 t
+  # 	SPA 4&5 – 175 t
+  # 	SPA 6 – 210 t
+  
+  if(max(mod.res$Years)==2019){
+    landings2020 <- data.frame(area=c("1A", "1B", "3", "4", "6", "29A", "29B", "29C", "29D", "GBa", "BBn"), 
+                               landings = c(415, 545, 108, 113, 164, 6.567, 54.939, 20.392, 65.213, 4096, 211))
+    # mod.res$data$C[length(mod.res$data$C)] <- landings2020$landings[landings2020$area==as.character(input$area)]
+    if(!grepl(x=input$area, "29")) mod.res$data$C[length(mod.res$data$C)] <- landings2020$landings[landings2020$area==as.character(input$area)]
+    if(grepl(x=input$area, "29")) mod.res$data$C[length(mod.res$data$C)+1] <- landings2020$landings[landings2020$area==as.character(input$area)]
+  }
+  
+  # for 2021 projections, use 2021 TACs for BoF and Offshore, use 2020 landings for 29W.
+  if(max(mod.res$Years)==2019){
+    landings2021 <- data.frame(area=c("1A", "1B", "3", "4", "6", "29A", "29B", "29C", "29D", "GBa", "BBn"), 
+                               landings = c(270, 400, 200, 175, 210, 6.567, 54.939, 20.392, 65.213, 4000, 300))
+    # mod.res$data$C[length(mod.res$data$C)] <- landings2020$landings[landings2020$area==as.character(input$area)]
+    mod.res$data$C[length(mod.res$data$C)+1] <- landings2021$landings[landings2021$area==as.character(input$area)]
+  }
+  
+  
+  # This is just progress bars for the dashboard
+  # comment out for testing
+  withProgress(message = "Processing...", value = 0, {
+  
+  # loop through years from beginning of time series up to y, to get 1 and 2y projections for each assessment. We opt to do this instead of reading in all of the old model run RDatas. 
+  
+  if(input$runtype=="Decision tables and plots") {
+    years <- min(mod.res$Years):input$DTyear
+    minY <- length(years)-9
+    maxY <- length(years)
+    years <- years[minY:maxY]
+  }
+  if(input$runtype=="Decision tables only") years <- input$DTyear
+  
+  decision <- NULL
+  decisiontable <- NULL
+  decisiontable2 <- NULL
+  out <- NULL
+  
+  # make the sims.matrix look like inshore. 
+  if(input$area %in% "GBa") {
+    mod.res$sims.matrix <- mod.res$sims.matrix[!names(mod.res$sims.matrix) %in% names(which(map(mod.res$sims.matrix, function(x) dim(x)[2]) == 21))]
+    standard <- mod.res$sims.matrix[names(which(map(mod.res$sims.matrix, function(x) dim(x)[2]) > 1))]
+    newnames <- paste0(rep(names(standard), each=mod.res$data$NY), "[", 1:mod.res$data$NY, "]")
+    standard <- as.data.frame(do.call(cbind, standard))
+    names(standard) <- newnames
+    single <- mod.res$sims.matrix[names(which(map(mod.res$sims.matrix, function(x) dim(x)[2]) == 1))]
+    mod.res$sims.matrix <- cbind(standard, data.frame(K = single$K, S=single$S, deviance=single$deviance, ikappa.rho2 = single$ikappa.rho2,
+                                                      ikappa.tau2 = single$ikappa.tau2, logK = single$logK, q = single$q, qU = single$qU, sigma=single$sigma))
+  }
+  # make the sims.matrix look like inshore. 
+  if(input$area %in% "BBn") {
+    mod.res$sims.matrix <- mod.res$sims.matrix[!names(mod.res$sims.matrix) %in% names(which(map(mod.res$sims.matrix, function(x) dim(x)[2]) == 41))]
+    standard <- mod.res$sims.matrix[names(which(map(mod.res$sims.matrix, function(x) dim(x)[2]) > 1))]
+    newnames <- paste0(rep(names(standard), each=mod.res$data$NY), "[", 1:mod.res$data$NY, "]")
+    standard <- as.data.frame(do.call(cbind, standard))
+    names(standard) <- newnames
+    single <- mod.res$sims.matrix[names(which(map(mod.res$sims.matrix, function(x) dim(x)[2]) == 1))]
+    mod.res$sims.matrix <- cbind(standard, data.frame(K = single$K, S=single$S, deviance=single$deviance, ikappa.rho2 = single$ikappa.rho2,
+                                                      ikappa.tau2 = single$ikappa.tau2, logK = single$logK, q = single$q, qU = single$qU, sigma=single$sigma))
+  }
+  
+  # for 29W, deal with the different strata and tidy up. We decided to only look at the ones that are compared to reference points
+  if(input$area == "29A") strata <- which(mod.res$labels == "Medium")
+  if(input$area %in% c("29B", "29C", "29D")) strata <- which(mod.res$labels == "High")
+  
+  if(grepl(input$area, pattern="29")) {
+    
+    #this gets used for SSModeltest_predict_2y function (for decision table)
+    mod.res.original <- mod.res
+    
+    # the rest is for the boxplots
+    # make an NY variable in SFA29 data
+    mod.res$data$NY <- length(unique(mod.res$Years))
+    double <- map(mod.res$data, function(x) class(x) =="matrix")
+    single <- map(mod.res$data, function(x) !class(x) == "matrix")
+    #for these, only keep the one with the strata
+    stratified <- names(double[which(double==TRUE)])
+    stratified <- map(mod.res$data[stratified], function(x) x[, strata])
+    single <- names(single[which(single==TRUE)])
+    single <- mod.res$data[single]
+    mod.res$data <- c(single, stratified)
+    
+    sims.names <- names(as.data.frame(mod.res$sims.matrix))
+    sims.names.strat <- which(grepl(x=sims.names, pattern=paste0(",", strata, "]"), fixed=T))
+    sims.names.no <- which(!grepl(x=sims.names, pattern="[", fixed=T))
+    sims.names.strat2 <- which(grepl(x=sims.names, pattern=paste0("[", strata, "]"), fixed=T))
+    mod.res$sims.matrix <- mod.res$sims.matrix[,c(sims.names.strat, sims.names.no, sims.names.strat2)]
+    colnames(mod.res$sims.matrix) <- gsub(x=colnames(mod.res$sims.matrix), pattern=paste0("[", strata,"]"), replacement = "", fixed=T)
+    colnames(mod.res$sims.matrix) <- gsub(x=colnames(mod.res$sims.matrix), pattern=paste0(",", strata,"]"), replacement = "]", fixed=T)
+    colnames(mod.res$sims.matrix) <- gsub(x=colnames(mod.res$sims.matrix), pattern="h", replacement = "", fixed=T)
+    
+    names(mod.res$data) <- gsub(x=names(mod.res$data), pattern="h", replacement = "", fixed=T)
+    names(mod.res$data) <- gsub(x=names(mod.res$data), pattern="Catc", replacement = "Catch", fixed=T)
+    
+    mod.res$summary <- mod.res$summary[which(row.names(mod.res$summary) %in% names(as.data.frame(mod.res$sims.matrix))),]
+    rownames(mod.res$summary) <- gsub(x=rownames(mod.res$summary), pattern=paste0("[", strata,"]"), replacement = "", fixed=T)
+    rownames(mod.res$summary) <- gsub(x=rownames(mod.res$summary), pattern=paste0(",", strata,"]"), replacement = "]", fixed=T)
+    rownames(mod.res$summary) <- gsub(x=rownames(mod.res$summary), pattern="h", replacement = "", fixed=T)
+    
+    mod.res$sims.matrix <- as.data.frame(mod.res$sims.matrix)
+    
+    for(i in 1:length(mod.res$data$r)){
+      mod.res$sims.matrix$r <- mod.res$data$r[i]
+      names(mod.res$sims.matrix)[names(mod.res$sims.matrix)=="r"] <- paste0("r[", i,"]")
+    }
+    
+    # subset e.parms to grab the last 3. 1st one is intercept for strata, 2nd one is slope for strata, 3rd is slope(?) for total area(?)
+    # the e.parms are used in Proj.exploit which serves to divy up the exploitation for the entire subarea into individual strata.
+    # mod.res$e.parms <- mod.res$e.parms[(length(mod.res$e.parms)-2):length(mod.res$e.parms)]
+  }
+  
+  for(y in years){
+    print(y)
+    mod.res.sub <- mod.res
+    
+    thisY <- which(mod.res.sub$Years %in% y)
+    maxY <- mod.res.sub$data$NY
+    
+    if(thisY < maxY) {
+      removethese <- row.names(mod.res.sub$summary)[grep(x=row.names(mod.res.sub$summary), pattern = paste0((thisY+1):maxY, collapse="|"))]
+      
+      mod.res.sub$summary <- mod.res.sub$summary[which(!row.names(mod.res.sub$summary) %in% removethese),]
+      mod.res.sub$sims.matrix <- mod.res.sub$sims.matrix[, which(!colnames(mod.res.sub$sims.matrix) %in% removethese)]
+      
+      mod.res.sub$data$thisY <- thisY
+      mod.res.sub$data$maxY <- maxY
+      
+      mod.res.sub$Years <- mod.res.sub$Years[1:thisY]
+      
+      mod.res.sub$data$C <- mod.res.sub$data$C[1:(thisY+1)]
+      
+      if(input$catch2type=="Realized") cplus1 <- round(mod.res$data$C[thisY], -1)
+      if(input$catch2type=="Realized") cplus2 <- round(mod.res$data$C[thisY+1], -1)
+      
+    }
+    
+    if(thisY==maxY){
+      # special handling for the "realized" scenario since we may or may not have realized catch for upper years
+      if(input$catch2type=="Realized"){
+        # do we have a value for cplus1? 
+        if(is.na(mod.res$data$C[thisY]))  {
+          cplus1 <- round(mod.res$data$C[thisY-1], -1)
+          message(paste0("using ", mod.res$data$C[thisY-1], " t catch for projection year ", mod.res.sub$Years[maxY]+1))
+        }
+        if(!is.na(mod.res$data$C[thisY]))  {
+          cplus1 <- round(mod.res$data$C[thisY], -1)
+          message(paste0("using ", mod.res$data$C[thisY], " t catch for projection year ", mod.res.sub$Years[maxY]+1))
+        }
+        # do we have a value for cplus2?
+        if(is.na(mod.res$data$C[thisY]))  {
+          cplus2 <- round(mod.res$data$C[thisY-1], -1)
+          message(paste0("using ", mod.res$data$C[thisY-1], " t catch for projection year ", mod.res.sub$Years[maxY]+2))
+        }
+        if(is.na(mod.res$data$C[thisY+1]))  {
+          cplus2 <- round(mod.res$data$C[thisY], -1)
+          message(paste0("using ", mod.res$data$C[thisY], " t catch for projection year ", mod.res.sub$Years[maxY]+2))
+        }
+        if(!is.na(mod.res$data$C[thisY+1]))  {
+          cplus2 <- round(mod.res$data$C[thisY+1], -1)
+          message(paste0("using ", mod.res$data$C[thisY+1], " t catch for projection year ", mod.res.sub$Years[maxY]+2))
+        }
+      }
+      mod.res.sub$data$thisY <- thisY
+      mod.res.sub$data$maxY <- maxY
+    }
+    
+    # cut down the number of iterations to use in the projections in order to improve run time
+    if(!input$sample == "100") {
+      ntokeep <- dim(mod.res.sub$sims.matrix)[1]*as.numeric(as.character(input$sample))
+      keeprows <- sample(1:dim(mod.res.sub$sims.matrix)[1], ntokeep)
+      mod.res.sub$sims.matrix <- mod.res.sub$sims.matrix[keeprows,]
+    }
+    
+    if(input$sample == "100") ntokeep <- "all"
+    
+    if(input$scenario == "specify"){
+      # m.2 <- NULL
+      # m.multiplier <- NULL
+      # r.2 <- NULL
+      # r.multiplier <- NULL
+      # gparm <- input$gparm
+      # gRparm <- input$gRparm
+      # 
+      # if(input$mtype=="Multiplier") m.multiplier <- input$mort
+      # if(input$mtype=="Set value") m.2 <- input$mort
+      # 
+      # if(input$rtype=="Multiplier") r.multiplier <- input$rec
+      # if(input$rtype=="Set value") r.2 <- input$rec
+      # 
+      # if(input$gtype=="Multiplier") gparm <- mod.res.sub$data$g[mod.res.sub$data$thisY] * input$gparm
+      # if(input$gRtype=="Multiplier") gRparm <- mod.res.sub$data$gR[mod.res.sub$data$thisY] * input$gRparm
+    }
+    
+    if(input$scenario == "same"){
+      # # multiply last year's by 1 so that they're the same
+      # m.multiplier <- 1
+      # m.2 <- NULL
+      # r.multiplier <- 1
+      # r.2 <- NULL
+      # gparm <- mod.res.sub$data$g[mod.res.sub$data$thisY] * 1
+      # gRparm <- mod.res.sub$data$gR[mod.res.sub$data$thisY] * 1
+    }
+    
+    if(input$scenario == "0_surplus"){
+      m.multiplier <- NULL # set value
+      m.2 <- 0
+      r.multiplier <- NULL # set value
+      r.2 <- 0
+      gparm <- 1
+      gRparm <- 0
+    }
+    
+    scenario <- NULL
+    
+    if(input$scenario == "0_surplus") scenario <- "0_surplus"
+    
+    if(input$catch2type == "Realized") {
+      
+      # run the process error projections for 0_surplus (i.e. the data for the boxplots using "realized" catch values)
+      if(!is.null(scenario)) {
+        
+        results_simple <- simple_2y_proj(mod.res.sub, area=input$area) 
+        # tidy up and label the output
+        B.next0 <- do.call(rbind, results_simple$B.next0)
+        B.next1 <- do.call(rbind, results_simple$B.next1)
+        B.next2 <- do.call(rbind, results_simple$B.next2)
+        simple <- rbind(B.next0, B.next1, B.next2)
+        simple$type <- "simple"
+        
+        
+        # pull the exploitation rates from the simple output for use in the process error version
+        rates <- arrange(unique(simple[simple$proj==2, c('year', 'exp')]), year)$exp
+        scenario_temp <- "0_surplus_process"
+        results_process <- process_2y_proj(object=mod.res.sub, area=input$area, scenario=scenario_temp, type="exp", rate=rates)
+        
+        # tidy up the output
+        B.next0 <- do.call(rbind, results_process$B.next0)
+        B.next1 <- do.call(rbind, results_process$B.next1)
+        B.next2 <- do.call(rbind, results_process$B.next2)
+        process <- rbind(B.next0, B.next1, B.next2)
+        process$type <- "process"
+        
+        all <- rbind(simple, process)
+        
+        # summarize it
+        sum_all <- all %>%
+          group_by(year, proj, type) %>%
+          dplyr::summarize(min=min(Biomass),
+                           med=median(Biomass),
+                           max=max(Biomass),
+                           catch = unique(catch), 
+                           exp = unique(exp)) 
+      }
+    }
+    
+    catchlevels <- seq(0, input$catch, input$catchbreak)
+    
+    # make decision tables for the last year only!
+    if(y == max(years)){
+      print("generating decision tables")
+      # this is to calculate the decision table data (i.e. for a variety of catch levels!)
+      if(!grepl(x=input$area, "29")){
+        decision <- predict.SSModel.2y(mod.res.sub, 
+                                       area=input$area,
+                                       Catch=catchlevels, 
+                                       catch2= c(cplus1, cplus2),
+                                       g.parm = c(mod.res.sub$data$g[mod.res.sub$data$thisY], gparm), 
+                                       gr.parm = c(mod.res.sub$data$gR[mod.res.sub$data$thisY], gRparm), 
+                                       m.2=m.2,
+                                       r.2=r.2,
+                                       m.multiplier=m.multiplier,
+                                       r.multiplier=r.multiplier,
+                                       two.year=T,
+                                       scenario=scenario) 
+        # run SSModel_predict_summary_median to get decisiontable objects.
+        decisiontable <- SSModel_predict_summary_median(object=decision[[1]], LRP=LRP, USR=USR, RRP=input$RRP)
+        decisiontable2 <- SSModel_predict_summary_median(object=decision[[2]], LRP=LRP, USR=USR, RRP=input$RRP)
+      }      
+      
+      # this is to calculate the decision table data (i.e. for a variety of catch levels!)
+      if(grepl(x=input$area, "29")){
+        # recreate ssmodelttest_predict with 2y for a 29-specific object (B.mod.res = mod.res.original)
+        # this uses plain old SSModeltest summary function! Not the one I tried to make. 
+        decisiontable<- data.frame(NULL)
+        decisiontable2<- data.frame(NULL)
+        for (i in 1:20){
+          decision <- predict.SSModeltest.2y(mod.res.original, 
+                                             two.year=T, 
+                                             exploit=0.02*(i-1), 
+                                             Catch = NULL,
+                                             catch2= cplus1,
+                                             g.parm=rev(c(mod.res.original$data$gh[mod.res.original$Years==y])))
+          
+          # for year k (year 1 or year 2) decision table:
+          for (k in 1:2){
+            # Get the Probability of being above the LRP, for Area B is this 1.12, for area C this is 1.41, and D is 1.30
+            lrp <- signif(length(which(decision[[k]]$Bh.next$High/decision[[k]]$Area[strata] >= 1.12))/length(decision[[k]]$Bh.next$High),digits=2)
+            usr <- signif(length(which(decision[[k]]$Bh.next$High/decision[[k]]$Area[strata] >= 2.24))/length(decision[[k]]$Bh.next$High),digits=2)
+            #temp<-predict(C.2015,exploit=0.02*(i-1), g.parm=c(1.1612, 1.1578, 1.1796))
+            if(k==1) decisiontable <- rbind(decisiontable,
+                                            t(cbind(c(unlist(SSModeltest:::summary.predict.ssmodelSFA29(decision[[k]])$Next.year),Prob_above_LRP=lrp,Prob_above_USR=usr))))
+            
+            if(k==2) decisiontable2 <- rbind(decisiontable2,
+                                             t(cbind(c(unlist(SSModeltest:::summary.predict.ssmodelSFA29(decision[[k]])$Next.year),Prob_above_LRP=lrp,Prob_above_USR=usr))))
+          }
+        }
+        
+      }
+      
+      row.names(decisiontable) <- NULL
+      row.names(decisiontable2) <- NULL
+      
+      # Increment the progress bar, and update the detail text.
+      # comment out for testing
+      #incProgress(1/length(years), detail = paste(y, " completed"))
+      if(!grepl(x=input$area, "29")){
+        decisiontable$Next.year <- as.data.frame(decisiontable$Next.year)
+        decisiontable2$Next.year <- as.data.frame(decisiontable2$Next.year)
+        decisiontable$Next.year <- decisiontable$Next.year[decisiontable$Next.year$Catch %in% catchlevels,]
+        decisiontable2$Next.year <- decisiontable2$Next.year[decisiontable2$Next.year$Catch %in% catchlevels,]
+        
+        decisiontable$Interim.RRP <- as.data.frame(decisiontable$Interim.RRP)
+        decisiontable2$Interim.RRP <- as.data.frame(decisiontable2$Interim.RRP)
+        decisiontable$Interim.RRP <- decisiontable$Interim.RRP[decisiontable$Interim.RRP$Catch %in% catchlevels,]
+        decisiontable2$Interim.RRP <- decisiontable2$Interim.RRP[decisiontable2$Interim.RRP$Catch %in% catchlevels,]
+        
+        if(input$area == 6) {
+          decisiontable$Next.year <- select(decisiontable$Next.year, -p.LRP, -p.USR) 
+          decisiontable2$Next.year <- select(decisiontable2$Next.year, -p.LRP, -p.USR) 
+        }
+      }
+      
+      if(grepl(x=input$area, "29")){
+        decisiontable <- list(Next.year=decisiontable, Interim.RRP=NULL)
+        decisiontable2 <- list(Next.year=decisiontable2, Interim.RRP=NULL)
+      }
+      
+      # prepare out object
+      # if(input$catch2type == "Assume current year") {
+      #   out[[paste0(y)]] <- list(decision=decision, 
+      #                            decisiontable=decisiontable,
+      #                            decisiontable2=decisiontable2, 
+      #                            catch=catch, 
+      #                            catch2=catch) }
+      # if(input$catch2type == "Assign value" & !is.null(input$catch2)) {
+      #   out[[paste0(y)]] <- list(decision=decision, 
+      #                            decisiontable=decisiontable,
+      #                            decisiontable2=decisiontable2, 
+      #                            catch=catch, 
+      #                            catch2=round(input$catch2, -1))}
+    }
+    
+    catch <- mod.res.sub$data$C[mod.res.sub$data$thisY-1]
+    
+    if(input$catch2type == "Realized" & !is.null(scenario)) {
+      out[[paste0(y)]] <- list(decision=decision, 
+                               decisiontable=decisiontable,
+                               decisiontable2=decisiontable2, 
+                               catch=catch, 
+                               catch2=c(cplus1, cplus2),
+                               all=all)
+    }
+    
+    if(input$catch2type == "Realized" & is.null(scenario)) {
+      out[[paste0(y)]] <- list(decision=decision, 
+                               decisiontable=decisiontable, 
+                               decisiontable2=decisiontable2, 
+                               catch=catch, 
+                               catch2=c(cplus1, cplus2))
+    }
+  }
+  
+  }) # comment out for testing
+  
+  if(input$area == 6){
+    LRP <- NA
+    USR <- NA
+  }
+  
+  # inputs table
+  #How many iterations?
+  tab <- as.data.frame(t(data.frame(input$DTyear, input$area, paste0(m.multiplier, " * ", m.2), paste0(r.multiplier, " * ", r.2), gparm, gRparm, input$catch, LRP, USR, input$RRP, input$runtype, input$sample, ntokeep)))
+  tab$var <- c("Year", "SPA", "Mortality input", "Recruitment input", "Com. growth rate", "Rec. growth rate", "Max. catch (mt)", "LRP", "USR", "RRP", "Run type", "Percentage of iterations retained per year", "Number of iterations retained per year")
+  names(tab) <- c("Value", "Variable")
+  out$tab <-tab[, c("Variable", "Value")]
+  
+  # if(input$catch2type=="Assign value") {
+  #   out$tab <- rbind(out$tab, 
+  #                    data.frame(Variable="Catch for 2y proj", 
+  #                               Value= as.character(round(input$catch2, -1))))
+  # }
+  
+  if(input$catch2type=="Realized") {
+    out$tab <- rbind(out$tab, 
+                     data.frame(Variable="Catch for 2y proj", 
+                                Value= "Realized"))
+  }
+  # if(input$catch2type=="Assume current year") {
+  #   out$tab <- rbind(out$tab, 
+  #                    data.frame(Variable="Catch for 2y proj", 
+  #                               Value="Same"))
+  #}
+  
+  # PLOTS
+  
+  if(input$runtype=="Decision tables and plots"){
+    # comment out for testing
+    #withProgress(message = "Preparing to plot...", value = 0, {
+    # df.current <- NULL
+    # df.next <- NULL
+    # df.next2 <- NULL
+    # projdata <- NULL
+    
+    # for(y in years){
+    #   # df.current <- data.frame(n=1:length(out[[paste0(y)]]$decision[[1]]$B.cur),
+    #   #                          B = out[[paste0(y)]]$decision[[1]]$B.cur,
+    #   #                          year = y,
+    #   #                          proj = "actual",
+    #   #                          catch= out[[paste0(y)]]$catch)
+    #   
+    #   # df.next
+    #   # if(!input$catch2type == "Realized"){
+    #   #   df.next <-  data.frame(n=1:length(out[[paste0(y)]]$decision[[1]]$B.cur),
+    #   #                          B = out[[paste0(y)]]$decision[[1]]$B.next[,which(
+    #   #                            out[[paste0(y)]]$decision[[1]]$Catch == round(out[[paste0(y)]]$catch, -1))], 
+    #   #                          year = y+1, 
+    #   #                          proj = "1yr",
+    #   #                          catch= out[[paste0(y)]]$catch)
+    #   # }
+    #   # if(input$catch2type=="Realized"){
+    #   #   # if(y > (input$DTyear-1)){df.next <- NULL}
+    #   #   # if(y < input$DTyear){
+    #   #   df.next <- data.frame(n = 1:length(out[[paste0(y)]]$decision[[1]]$B.cur), # just for ease...
+    #   #                         B = out[[paste0(y)]]$decision[[2]]$B.cur,
+    #   #                         year=y+1, 
+    #   #                         proj="1yr", 
+    #   #                         catch= out[[paste0(y)]]$catch2[1])#,
+    #   #   #HCRcatch = max(
+    #   #   #out[[paste0(y)]]$decisiontable2$Next.year$Catch[
+    #   #   # out[[paste0(y)]]$decisiontable2$Next.year$p.LRP>input$pLRP]))
+    #   #   # }
+    #   # }
+    #   
+    #   #df.next2
+    #   # if(input$catch2type=="Assume current year"){
+    #   #   df.next2 <- data.frame(
+    #   #     n = 1:length(out[[paste0(y)]]$decision[[1]]$B.cur), # just for ease...
+    #   #     B = out[[paste0(y)]]$decision[[2]]$B.next[,which(
+    #   #       out[[paste0(y)]]$decision[[2]]$Catch == round(out[[paste0(y)]]$catch, -1))],
+    #   #     year=y+2, 
+    #   #     proj="2yr", 
+    #   #     catch= out[[paste0(y)]]$catch2)#,
+    #   #   #HCRcatch = max(
+    #   #   #out[[paste0(y)]]$decisiontable2$Next.year$Catch[
+    #   #   #out[[paste0(y)]]$decisiontable2$Next.year$p.LRP>input$pLRP]))
+    #   # }
+    #   # if(input$catch2type=="Assign value"){
+    #   #   df.next2 <- data.frame(n=1:length(out[[paste0(y)]]$decision[[1]]$B.cur), # just for ease...
+    #   #                          B = out[[paste0(y)]]$decision[[2]]$B.next[,which(
+    #   #                            out[[paste0(y)]]$decision[[2]]$Catch == input$catch2)],
+    #   #                          year=y+2, 
+    #   #                          proj="2yr", 
+    #   #                          catch= out[[paste0(y)]]$catch2)#,
+    #   #   #HCRcatch = max(
+    #   #   #out[[paste0(y)]]$decisiontable2$Next.year$Catch[
+    #   #   # out[[paste0(y)]]$decisiontable2$Next.year$p.LRP>input$pLRP]))
+    #   # }
+    #   # if(input$catch2type=="Realized"){
+    #   #   # if(y > (input$DTyear-2)){df.next2 <- NULL}
+    #   #   # if(y < (input$DTyear-1)){
+    #   #   df.next2 <- data.frame(
+    #   #     n = 1:length(out[[paste0(y)]]$decision[[1]]$B.cur), # just for ease...
+    #   #     B = out[[paste0(y)]]$decision[[2]]$B.next[,which(
+    #   #       out[[paste0(y)]]$decision[[2]]$Catch == out[[paste0(y)]]$catch2[2])],
+    #   #     year=y+2, 
+    #   #     proj="2yr", 
+    #   #     catch= out[[paste0(y)]]$catch2[2])#,
+    #   #   #HCRcatch = max(
+    #   #   #out[[paste0(y)]]$decisiontable2$Next.year$Catch[
+    #   #   # out[[paste0(y)]]$decisiontable2$Next.year$p.LRP>input$pLRP]))
+    #   #   # }
+    #   # }
+    #   
+    #   projdata <- rbind(projdata, df.current, df.next, df.next2)
+    #   
+    #   #Increment the progress bar, and update the detail text.
+    #   # comment out for testing
+    #   #incProgress(1/length(years), detail = paste(y, " completed"))
+    # }
+    #})# comment out for testing
+    #projdata$proj <- factor(projdata$proj, levels=c("2yr", "1yr", "actual"))
+    
+    # catchlabels <- projdata %>%
+    #   group_by(year, proj, catch)%>%
+    #   summarise(minB = quantile(B, na.rm = T, c(0.05,0.25, 0.75, 0.95))[1])
+    
+    if(input$plot == "Standard boxplot"){
+      # projdata_sum <- projdata %>%
+      #   select(n, B, year, proj) %>%
+      #   group_by(proj, year) %>%
+      #   summarise(min=quantile(B, na.rm = T, c(0.05,0.25, 0.75, 0.95))[1],
+      #             lower=quantile(B, na.rm = T,  c(0.05,0.25, 0.75, 0.95))[2],
+      #             med=median(B, na.rm = T),
+      #             meanB = mean(B, na.rm = T),
+      #             upper=quantile(B, na.rm = T, c(0.05,0.25, 0.75, 0.95))[3],
+      #             max=quantile(B, na.rm = T, c(0.05,0.25, 0.75, 0.95))[4])
+      
+      # pred.eval <- ggplot() + 
+      #   geom_boxplot(data=projdata_sum[projdata_sum$year > min(projdata_sum$year)+1,], 
+      #                aes(x=factor(year), ymin=min, lower=lower, middle=med, upper=upper, ymax=max, fill=proj), stat="identity", position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
+      #   theme_bw() +
+      #   ylab("Fully recruited biomass estimate (metric tonnes)") + 
+      #   xlab("Year") + 
+      #   scale_fill_brewer(type = "qual", palette = "Paired", name="Estimate type", direction=-1) +
+      #   theme(panel.grid=element_blank(), text = element_text(size=18))#+
+      # #geom_text(data=catchlabels[catchlabels$year > min(projdata_sum$year)+1,], aes(factor(year), y=minB, label=round(catch, -1), group=factor(proj)), vjust=1.2, position = position_dodge2(preserve="single", width=0.9)) +
+      # #annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Catch (mt) used for each projection is shown")
+      # 
+      # zoom.pred.eval <- ggplot() +
+      #   geom_boxplot(data=projdata_sum[projdata_sum$year %in% ((max(projdata_sum$year)-3):max(projdata_sum$year)),],
+      #                aes(x=factor(year), ymin=min, lower=lower, middle=med, upper=upper, ymax=max, fill=proj), stat="identity", position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
+      #   theme_bw() +
+      #   ylab("Fully recruited biomass estimate (metric tonnes)") +
+      #   xlab("Year") +
+      #   scale_fill_brewer(type = "qual", palette = "Paired", name="Estimate type", direction=-1) +
+      #   theme(panel.grid=element_blank(), text = element_text(size=18))+
+      #   #geom_text(data=catchlabels[catchlabels$year %in% ((max(projdata_sum$year)-3):max(projdata_sum$year)),], aes(factor(year), y=minB, label=round(catch, -1), group=factor(proj)), vjust=1.2, position = position_dodge2(preserve="single", width=0.9)) +
+      #   #annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Catch (mt) used for each projection is shown") +
+      #   geom_hline(data=tab[tab$Variable=="LRP",], aes(yintercept=as.numeric(as.character(Value))), linetype="dashed", colour="red", lwd=1) +
+      #   geom_hline(data=tab[tab$Variable=="USR",], aes(yintercept=as.numeric(as.character(Value))), linetype="dashed", colour="forestgreen", lwd=1)
+      
+      
+      if(input$catch2type=="Realized" & input$scenario=="0_surplus") { 
+        
+        all_sum <- all %>%
+          select(Biomass, year, proj, type) %>%
+          group_by(proj, year, type) %>%
+          summarise(min=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[1],
+                    lower=quantile(Biomass, na.rm = T,  c(0.05,0.25, 0.75, 0.95))[2],
+                    med=median(Biomass, na.rm = T),
+                    meanB = mean(Biomass, na.rm = T),
+                    upper=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[3],
+                    max=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[4])
+        
+      pred.eval <- ggplot() +
+        geom_boxplot(data=all_sum[all_sum$type=="process" & all_sum$year>(min(all_sum$year)+1),], 
+                       aes(x=as.factor(year), ymin=min, lower=lower, middle=med, upper=upper, ymax=max, fill=as.factor(proj)), stat="identity", position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
+        theme_bw() +
+        ylab("Fully recruited biomass estimate (metric tonnes)") +
+        xlab("Year") +
+        scale_fill_brewer(type = "qual", palette = "Paired", name="Estimate type", direction=-1) +
+        theme(panel.grid=element_blank(), text = element_text(size=18))#+
+      #geom_text(data=catchlabels[catchlabels$year > min(projdata_sum$year)+1,], aes(factor(year), y=minB, label=round(catch, -1), group=factor(proj)), vjust=1.2, position = position_dodge2(preserve="single", width=0.9)) +
+      #annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Catch (mt) used for each projection is shown")
+
+      zoom.pred.eval <- ggplot() +
+        geom_boxplot(data=all_sum[all_sum$type=="process" & all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),],
+                     aes(x=factor(year), ymin=min, lower=lower, middle=med, upper=upper, ymax=max, fill=as.factor(proj)), stat="identity", position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
+        theme_bw() +
+        ylab("Fully recruited biomass estimate (metric tonnes)") +
+        xlab("Year") +
+        scale_fill_brewer(type = "qual", palette = "Paired", name="Estimate type", direction=-1) +
+        theme(panel.grid=element_blank(), text = element_text(size=18))+
+        #geom_text(data=catchlabels[catchlabels$year %in% ((max(projdata_sum$year)-3):max(projdata_sum$year)),], aes(factor(year), y=minB, label=round(catch, -1), group=factor(proj)), vjust=1.2, position = position_dodge2(preserve="single", width=0.9)) +
+        #annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Catch (mt) used for each projection is shown") +
+        geom_hline(data=tab[tab$Variable=="LRP",], aes(yintercept=as.numeric(as.character(Value))), linetype="dashed", colour="red", lwd=1) +
+        geom_hline(data=tab[tab$Variable=="USR",], aes(yintercept=as.numeric(as.character(Value))), linetype="dashed", colour="forestgreen", lwd=1)
+          
+          
+        simple.pred.eval <- ggplot() + 
+          geom_boxplot(data=all_sum[all_sum$type=="simple" & all_sum$year>(min(all_sum$year)+1),], 
+                       aes(x=as.factor(year), ymin=min, lower=lower, middle=med, upper=upper, ymax=max, fill=as.factor(proj)), stat="identity",
+                       position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
+          ylab("Fully recruited biomass estimate (metric tonnes)") + 
+          scale_fill_brewer(type = "qual", palette = "Paired", name="Estimate type", direction=-1) +
+          xlab("Year") + 
+          theme_bw() +
+          theme(panel.grid=element_blank(), text = element_text(size=18))
+        
+        method.comparison <- ggplot() + 
+          geom_boxplot(data=all_sum[all_sum$proj>0,], 
+                       aes(x=as.factor(year), ymin=min, lower=lower, middle=med, upper=upper, ymax=max, fill=as.factor(type)),
+                       stat="identity",
+                       position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
+          scale_fill_brewer(type = "qual", palette = "Paired", name="Estimate type", direction=-1) +
+          xlab("Year") + 
+          facet_wrap(~proj)+
+          theme_bw() +
+          theme(panel.grid=element_blank(), text = element_text(size=18))
+      }
+      
+      if(input$catch2type=="Realized" & !input$scenario=="0_surplus"){
+        simple.pred.eval <- ggplot() + 
+          geom_text(aes(x=1,y=1, 
+                        label = "This plot only works for the 'Zero surplus production' scenario"), size=8, color='skyblue') +
+          theme_nothing()
+        
+        method.comparison <- ggplot() + 
+          geom_text(aes(x=1,y=1, 
+                        label = "This plot only works for the 'Zero surplus production' scenario"), size=8, color='skyblue') +
+          theme_nothing()
+      }
+    }
+    
+    if(input$plot == "Functional boxplot"){
+      test <- projdata %>%
+        select(n, B, year, proj) %>%
+        filter(year > (min(projdata$year)+1)) %>%
+        group_by(proj, year) %>%
+        summarise(min=quantile(B, na.rm = T, c(0.05,0.25, 0.75, 0.95))[1],
+                  lower=quantile(B, na.rm = T,  c(0.05,0.25, 0.75, 0.95))[2],
+                  med=median(B, na.rm = T),
+                  meanB = mean(B, na.rm = T),
+                  upper=quantile(B, na.rm = T, c(0.05,0.25, 0.75, 0.95))[3],
+                  max=quantile(B, na.rm = T, c(0.05,0.25, 0.75, 0.95))[4])
+      
+      pred.eval <- ggplot() + 
+        geom_ribbon(data=test, aes(year, fill=proj, ymin=lower, ymax=upper), alpha=0.3) +
+        geom_line(data=test, aes(year, colour=proj, y=med), lwd=2) +
+        geom_line(data=test, aes(year, colour=proj, y=meanB), lwd=2, lty=3) + 
+        theme_bw() + 
+        theme(panel.grid=element_blank()) +
+        ylab("Fully recruited biomass estimate (metric tonnes)") + 
+        xlab("Year") + 
+        scale_fill_brewer(type = "qual", palette = "Set2", name="Estimate type") +
+        scale_colour_brewer(type = "qual", palette = "Set2", name="Estimate type") +
+        theme(panel.grid=element_blank()) +
+        annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Bands are 50% IQR,\nsolid line are medians,\ndashed lines are means") +
+        scale_x_continuous(breaks=unique(test$year)) +
+        theme(panel.grid=element_blank(), text = element_text(size=18))
+      
+      zoom.pred.eval <- ggplot() +
+        geom_ribbon(data=test[test$year %in% ((max(test$year)-3):max(test$year)),],
+                    aes(year, ymin=lower, ymax=upper,fill=proj), alpha=0.3) +
+        geom_line(data=test[test$year %in% ((max(test$year)-3):max(test$year)),], aes(year, colour=proj, y=med), lwd=2) +
+        geom_line(data=test[test$year %in% ((max(test$year)-3):max(test$year)),], aes(year, colour=proj, y=meanB), lwd=2, lty=3) + 
+        theme_bw() + 
+        theme(panel.grid=element_blank()) +
+        ylab("Fully recruited biomass estimate (metric tonnes)") + 
+        xlab("Year") + 
+        scale_fill_brewer(type = "qual", palette = "Set2", name="Estimate type") +
+        scale_colour_brewer(type = "qual", palette = "Set2", name="Estimate type") +
+        theme(panel.grid=element_blank()) +
+        annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Bands are 50% IQR,\nsolid line are medians,\ndashed lines are means") +
+        scale_x_continuous(breaks=unique(test$year)) +
+        geom_hline(data=tab[tab$Variable=="LRP",], aes(yintercept=as.numeric(as.character(Value))), linetype="dashed", colour="red", lwd=1) +
+        geom_hline(data=tab[tab$Variable=="USR",], aes(yintercept=as.numeric(as.character(Value))), linetype="dashed", colour="forestgreen", lwd=1)
+      
+      if(input$catch2type=="Realized" & input$scenario=="0_surplus") { 
+        #simple method
+        all_sum <- all %>%
+          select(Biomass, year, proj, type) %>%
+          filter(year > (min(all$year)+1)) %>%
+          group_by(proj, year, type) %>%
+          summarise(min=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[1],
+                    lower=quantile(Biomass, na.rm = T,  c(0.05,0.25, 0.75, 0.95))[2],
+                    med=median(Biomass, na.rm = T),
+                    meanB = mean(Biomass, na.rm = T),
+                    upper=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[3],
+                    max=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[4])
+        
+        simple.pred.eval <- ggplot() +
+          geom_ribbon(data=all_sum[all_sum$type=="simple",], aes(year, fill=as.factor(proj), ymin=lower, ymax=upper), alpha=0.3) +
+          geom_line(data=all_sum[all_sum$type=="simple",], aes(year, colour=as.factor(proj), y=med), lwd=2) +
+          theme_bw() +
+          theme(panel.grid=element_blank()) +
+          ylab("Fully recruited biomass estimate (metric tonnes)") +
+          xlab("Year") +
+          scale_fill_brewer(type = "qual", palette = "Set2", name="Estimate type") +
+          scale_colour_brewer(type = "qual", palette = "Set2", name="Estimate type") +
+          theme(panel.grid=element_blank()) +
+          annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Bands are 50% IQR,\nsolid line are medians")+#,\ndashed lines are means") +
+          scale_x_continuous(breaks=unique(test$year)) +
+          theme(panel.grid=element_blank(), text = element_text(size=18))
+        
+        method.comparison <- ggplot() + 
+          geom_ribbon(data=all_sum[all_sum$proj>0,], aes(x=year, ymin=lower, ymax=upper, fill=as.factor(type)), alpha=0.3) +
+          geom_line(data=all_sum[all_sum$proj>0,], aes(x=year, y=med, colour=as.factor(type))) +
+          scale_fill_brewer(type = "qual", palette = "Set2", name="Estimate type") +
+          scale_colour_brewer(type = "qual", palette = "Set2", name="Estimate type") +
+          annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Bands are 50% IQR,\nsolid line are medians")+#,\ndashed lines are means") +
+          xlab("Year") + 
+          facet_wrap(~proj) +
+          theme_bw()+
+          theme(panel.grid=element_blank(), text = element_text(size=18))
+      }
+      
+      if(input$catch2type=="Realized" & !input$scenario=="0_surplus"){
+        simple.pred.eval <- ggplot() + 
+          geom_text(aes(x=1,y=1, 
+                        label = "Sorry, this plot only works for the 'Zero surplus production' scenario"), size=8, color='skyblue') +
+          theme_nothing()
+        
+        method.comparison <- ggplot() + 
+          geom_text(aes(x=1,y=1, 
+                        label = "Sorry, this plot only works for the 'Zero surplus production' scenario"), size=8, color='skyblue') +
+          theme_nothing()
+      }
+      
+    }
+    # message(dim(projdata))
+    # 
+    # # and the difference plot
+    # actual <- projdata[projdata$proj=="actual",]
+    # projected <- projdata[!projdata$proj=="actual",]
+    # 
+    # names(actual)[which(names(actual)=="B")] <- "actual"
+    # 
+    # diff <- left_join(projected, actual[, c("n", "year", "actual")])
+    # 
+    # diff$prop <- diff$B/diff$actual
+    # diff$subtract <- diff$B - diff$actual
+    # 
+    # if(input$plot == "Standard boxplot"){
+    #   # keep the colours the same as above
+    #   colours <- brewer.pal(n=3, name="Paired")
+    #   
+    #   diff1 <- ggplot() +
+    #     geom_boxplot(data=diff,
+    #                  aes(x=factor(year), y=prop, fill=proj),
+    #                  position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
+    #     theme_bw() +
+    #     ylab("Proportional difference (proj/actual)") +
+    #     xlab("Year") +
+    #     scale_fill_manual(values=colours, name="Estimate type") +
+    #     theme(panel.grid=element_blank(), text = element_text(size=18)) +
+    #     geom_hline(yintercept = 1, lty="dashed")
+    #   
+    #   diff2 <- ggplot() +
+    #     geom_boxplot(data=diff,
+    #                  aes(x=factor(year), y=subtract, fill=proj),
+    #                  position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
+    #     theme_bw() +
+    #     ylab("Absolute difference (mt, proj - actual)") +
+    #     xlab("Year") +
+    #     scale_fill_manual(values=colours, name="Estimate type") +
+    #     theme(panel.grid=element_blank(), text = element_text(size=18)) +
+    #     geom_hline(yintercept = 0, lty="dashed")
+    # }
+    # 
+    # if(input$plot == "Functional boxplot"){
+    #   # keep the colours the same as above
+    #   colours <- brewer.pal(n=3, name="Set2")
+    #   
+    #   test <- diff %>%
+    #     select(n, prop, year, proj) %>%
+    #     group_by(proj, year) %>%
+    #     summarise(min=quantile(prop, na.rm=T, c(0.05,0.25, 0.75, 0.95))[1],
+    #               lower=quantile(prop, na.rm=T, c(0.05,0.25, 0.75, 0.95))[2],
+    #               med=median(prop, na.rm=T),
+    #               meanB = mean(prop, na.rm=T),
+    #               upper=quantile(prop, na.rm=T, c(0.05,0.25, 0.75, 0.95))[3],
+    #               max=quantile(prop, na.rm=T, c(0.05,0.25, 0.75, 0.95))[4])
+    #   
+    #   diff1 <- ggplot() +
+    #     geom_ribbon(data=test[test$proj=="1yr",], aes(year, fill=proj, ymin=lower, ymax=upper), alpha=0.3) +
+    #     #geom_ribbon(data=test, aes(year, colour=proj, ymin=min, ymax=max), fill=NA, lty="dashed") +
+    #     geom_line(data=test[test$proj=="1yr",], aes(year, colour=proj, y=med), lwd=2) +
+    #     #geom_line(data=test[test$proj=="1yr",], aes(year, colour=proj, y=meanB), lwd=2, lty=3) +
+    #     geom_ribbon(data=test[test$proj=="2yr",], aes(year, fill=proj, ymin=lower, ymax=upper), alpha=0.3) +
+    #     #geom_ribbon(data=test, aes(year, colour=proj, ymin=min, ymax=max), fill=NA, lty="dashed") +
+    #     geom_line(data=test[test$proj=="2yr",], aes(year, colour=proj, y=med), lwd=2) +
+    #     #geom_line(data=test[test$proj=="2yr",], aes(year, colour=proj, y=meanB), lwd=2, lty=3) +
+    #     theme_bw() +
+    #     theme(panel.grid=element_blank()) +
+    #     ylab("Proportional difference (proj/actual)") +
+    #     xlab("Year") +
+    #     scale_fill_manual(values=colours, name="Estimate type") +
+    #     scale_colour_manual(values=colours, name="Estimate type") +
+    #     theme(panel.grid=element_blank()) +
+    #     annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Bands are 50% IQR,\nsolid line are medians")+#,\ndashed lines are means") +
+    #     scale_x_continuous(breaks=unique(test$year)) +
+    #     theme(panel.grid=element_blank(), text = element_text(size=18)) +
+    #     geom_hline(yintercept = 1, lty="dashed")
+    #   
+    #   test <- diff %>%
+    #     select(n, subtract, year, proj) %>%
+    #     group_by(proj, year) %>%
+    #     summarise(min=quantile(subtract, na.rm=T, c(0.05,0.25, 0.75, 0.95))[1],
+    #               lower=quantile(subtract, na.rm=T, c(0.05,0.25, 0.75, 0.95))[2],
+    #               med=median(subtract, na.rm=T),
+    #               meanB = mean(subtract, na.rm=T),
+    #               upper=quantile(subtract, na.rm=T, c(0.05,0.25, 0.75, 0.95))[3],
+    #               max=quantile(subtract, na.rm=T, c(0.05,0.25, 0.75, 0.95))[4])
+    #   
+    #   diff2 <- ggplot() +
+    #     geom_ribbon(data=test[test$proj=="1yr",], aes(year, fill=proj, ymin=lower, ymax=upper), alpha=0.3) +
+    #     #geom_ribbon(data=test, aes(year, colour=proj, ymin=min, ymax=max), fill=NA, lty="dashed") +
+    #     geom_line(data=test[test$proj=="1yr",], aes(year, colour=proj, y=med), lwd=2) +
+    #     #geom_line(data=test[test$proj=="1yr",], aes(year, colour=proj, y=meanB), lwd=2, lty=3) +
+    #     geom_ribbon(data=test[test$proj=="2yr",], aes(year, fill=proj, ymin=lower, ymax=upper), alpha=0.3) +
+    #     #geom_ribbon(data=test, aes(year, colour=proj, ymin=min, ymax=max), fill=NA, lty="dashed") +
+    #     geom_line(data=test[test$proj=="2yr",], aes(year, colour=proj, y=med), lwd=2) +
+    #     #geom_line(data=test[test$proj=="2yr",], aes(year, colour=proj, y=meanB), lwd=2, lty=3) +
+    #     theme_bw() +
+    #     theme(panel.grid=element_blank()) +
+    #     ylab("Absolute difference (mt, proj - actual)") +
+    #     xlab("Year") +
+    #     scale_fill_manual(values=colours, name="Estimate type") +
+    #     scale_colour_manual(values=colours, name="Estimate type") +
+    #     theme(panel.grid=element_blank()) +
+    #     annotate(geom="text", x=Inf, y=Inf, hjust=1.05, vjust=1.2, label="* Bands are 50% IQR,\nsolid line are medians")+#,\ndashed lines are means") +
+    #     scale_x_continuous(breaks=unique(test$year)) +
+    #     theme(panel.grid=element_blank(), text = element_text(size=18)) +
+    #     geom_hline(yintercept = 1, lty="dashed")
+    # }
+    # 
+    # message(dim(diff))
+    
+    #out$projdata
+    out$pred.eval <- pred.eval
+    out$zoom.pred.eval <- zoom.pred.eval
+    out$simple.pred.eval <- simple.pred.eval
+    out$method.comparison <- method.comparison
+    #out$diff1 <- diff1
+    #out$diff2 <- diff2
+  }
+  
+  return(out)
+}) # comment out ) for testing
+```
+
+```{r, echo=F}
+datadownload <- eventReactive(input$export, {
+  assign(x = "decisiondata", value=isolate(decisiondata()))
+  save(decisiondata, file = input$file)
+})
+
+renderPrint({
+  withProgress(message = "Exporting Rdata file...", value = 0, {
+    datadownload()
+  })
+})
+
+```
+
+
+Instructions
+==================================================
+
+
+Column
+-----------------------------------------------------------------------
+
+
+
+When you first hit Run Document, the Dashboard will appear with the sidebar options only - the rest of the Dashboard will be blank. 
+
+**Data Parameters**
+
+First you have to load the model data file. Pick the SPA you're interested in, then the file location to load from. Choosing the *ESS* option will grab the specified area's file from the shared drive, but this is very slow over VPN. **I would recommend you copy each model data file to the repository location manually (this is wherever the dashboard RMD file is saved), and then select the *Repo working directory* option.** 
+
+
+**Dashboard Parameters**
+
+The default options conduct a full run, which means plots and decision tables are generated using the data in the specified year. You can subset the number of model iterations to speed up run time (0.01 is fastest, 100 is slowest but uses all iterations). You can also choose to display functional boxplots instead of standard boxplots, but this is not yet fully implemented. 
+
+
+**Projection Parameters**
+
+There are three scenario options to choose from. For zero surplus production and same parameters as last year scenarios, the mortality, recruitment, and growth parameters for the second year's projection are set automatically. If you want to adjust those, then choose the last option and go for it. The Catch parameters are the catch levels used for the decision tables. You may ignore the *Catch for the second year* option for now. You should also adjust the Reference points to match those of the area you're working on. These are important for the decision tables. 
+
+**To run the dashboard with the default options, scroll to the bottom of the sidebar and click the circular arrow button.**
+
+
+**Downloading RData**
+
+Specify a file path and name, and then click the download button to generate an RData file of the output. 
+
+
+**Error hints**
+
+"non-conformable arrays": Increase catch and/or catch breaks. For BoF/SFA29/BBn use 1000 and 10. For GBa, use 10000 and 100.
+
+
+Decision tables
+==================================================
+
+
+Column {data-width=200}
+-----------------------------------------------------------------------
+
+
+### Current parameters
+
+```{r, echo=F}
+renderTable({
+  decisiondata()$tab
+})
+```
+
+
+
+Column {data-width=500 .tabset}
+-----------------------------------------------------------------------
+
+
+### Decision table for year + 1
+<!-- What I think we are going to need is some means of varying g/r/K in that function for year two as someone should inevitably going to ask us "well what if mortality goes up, what then?".  Basically we need a means of 'simulating' different scenarios.  I think the easiest way to do that for r and m would be to simply have a multiplier on the sims.matrix so we can make r_2021 = 0.5 * r_2020.  For g I think adjust it so you can specify g.parm = c(1.2,1.3) where the second number is the second year and tweak the code to allow for that.  Should be really simple to do in terms of coding, but we will need to add some way of tracking and saving different simulations. (edited)  -->
+
+
+```{r, echo=F}
+renderDataTable({
+  decisiondata()[[paste0(input$DTyear)]]$decisiontable$Next.year
+})
+
+```
+
+
+### $P(E)$ >RRP for year + 2 (interim)
+
+```{r, echo=F}
+renderDataTable({
+  decisiondata()[[paste0(input$DTyear)]]$decisiontable$Interim.RRP
+})
+
+```
+
+### Decision table for year + 2
+
+```{r, echo=F}
+renderDataTable({
+  decisiondata()[[paste0(input$DTyear)]]$decisiontable2$Next.year
+})
+
+
+```
+
+
+Plots
+===================================== 
+
+Column {.tabset}
+-----------------------------------------------------------------------
+
+### Prediction evaluation plots (no process error)
+
+```{r, echo=F}
+renderPlot({
+  if(input$runtype=="Decision tables and plots"){
+    decisiondata()$simple.pred.eval
+  }
+})
+```
+
+### Method comparison plots (without and with process error)
+
+```{r, echo=F}
+renderPlot({
+  if(input$runtype=="Decision tables and plots"){
+    decisiondata()$method.comparison
+  }
+})
+```
+
+### Prediction evaluation plots (with process error)
+
+```{r, echo=F}
+renderPlot({
+  if(input$runtype=="Decision tables and plots"){
+    decisiondata()$pred.eval
+  }
+})
+
+```
+
+### Most recent projections (with process error)
+
+```{r, echo=F}
+renderPlot({
+  if(input$runtype=="Decision tables and plots"){
+    decisiondata()$zoom.pred.eval
+  }
+})
+
+```
+
+### Proportional difference
+
+```{r, echo=F}
+renderPlot({
+  if(input$runtype=="Decision tables and plots"){
+    decisiondata()$diff1
+  }
+})
+```
+
+### Absolute difference
+
+```{r, echo=F}
+renderPlot({
+  if(input$runtype=="Decision tables and plots"){
+    decisiondata()$diff2
+  }
+})
+```
+

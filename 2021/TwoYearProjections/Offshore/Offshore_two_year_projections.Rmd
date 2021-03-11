@@ -1,0 +1,110 @@
+---
+title: "2 year projections"
+# output: pdf
+#   # flexdashboard::flex_dashboard:
+#     # theme: bootstrap
+# orientation: columns
+# vertical_layout: fill
+
+# storyboard: true
+#runtime: shiny
+#runtime: shiny_prerendered #  This is supposed to render all the plots right off the bat, so slower first time, but makes moving between pages really quick...
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(dplyr.summarise.inform = FALSE)
+options(dplyr.join.inform = FALSE)
+require(purrr)
+
+```
+
+```{r}
+## run the projections
+
+source("./Offshore/two_year_projections_offshore.R")
+SP <- read.csv("Y:/Projects/CSAS/2y_Projection_RAP/data/SP_by_areas_by_DK.csv")
+HCRs <- data.frame(area = c("BBn", "GBa"), exploitation = c(0.15, 0.25))
+
+area <- "BBn"
+
+SPscenario <- list(0, SP$med[SP$Subarea==area], NULL)
+out <- map(SPscenario, function(x) two_year_projections_offshore(area=area,
+                                                               year=2019, 
+                                                               exploitation=HCRs$exploitation[HCRs$area==area], 
+                                                               runtype=c("Decision tables and plots"), #"Decision tables only"),
+                                                               plot=c("Standard boxplot"), #
+                                                                 #"Functional boxplot"),
+                                                               surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
+                                                               sample=0.1,
+                                                               path="Repo working directory (fast)", 
+                                                               save=T))
+
+
+save(out, file = paste0("./Offshore/", area, "/twoyearprojections.RData"))
+
+```
+
+
+# Results
+```{r}
+
+load(paste0("./Offshore/", area, "/twoyearprojections.RData"))
+
+require(patchwork)
+require(cowplot)
+# plot_grid(plot_drt_cod$drt + xlab(NULL), plot_drt_had$drt + ylab(NULL) + xlab(NULL), plot_drt_ytf$drt +ylab(NULL) + xlab(NULL), plot_dt_cod$dt, plot_dt_had$dt + ylab(NULL), plot_dt_ytf$dt + ylab(NULL), ncol=3, align="v")
+
+# pred.eval
+
+# Using the realized catch for all projections (except 2021), we get biomass posterior distributions which we can compare between projection timings. 
+png(paste0("./Offshore/", area, "/pred_eval.png"), height=6, width=22, res=400, units="in")
+plot_grid(out[[1]]$realized$pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+          out[[2]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+          out[[3]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
+          ncol=3, align="v")
+dev.off()
+# GBa 150000 and 150000
+# BB 30000 and 10000
+
+# This simply shows the biomass projections for the most recent year. 
+png(paste0("./Offshore/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
+plot_grid(out[[1]]$realized$zoom.pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+          out[[2]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+          out[[3]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
+          ncol=3, align="v")
+dev.off()
+
+
+# the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
+png(paste0("./Offshore/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+plot_grid(out[[1]]$realized$evaluation1, 
+          out[[2]]$realized$evaluation1+ ylab(NULL) , 
+          out[[3]]$realized$evaluation1+ ylab(NULL) ,
+          out[[1]]$realized$evaluation2, 
+          out[[2]]$realized$evaluation2+ ylab(NULL) , 
+          out[[3]]$realized$evaluation2+ ylab(NULL) , 
+          ncol=3, align="v")
+dev.off()
+# GBa 20000 and 1.2
+# BBn 4000 and 0.8
+
+# A HCR is used to select catch for year 1 and year 2. 
+png(paste0("./Offshore/", area, "/catch_diff_eval_HCR1.png"))
+plot_grid(out[[1]]$impact_HCR1$evaluation3, out[[2]]$impact_HCR1$evaluation3, out[[3]]$impact_HCR1$evaluation3,
+          out[[1]]$impact_HCR1$evaluation4, out[[2]]$impact_HCR1$evaluation4, out[[3]]$impact_HCR1$evaluation4, ncol=3, align="v")
+dev.off()
+# GBa 10000 and 3
+# BBn 1000 and 4
+
+png(paste0("./Offshore/", area, "/catch_diff_eval_HCR2.png"))
+plot_grid(out[[1]]$impact_HCR2$evaluation3, out[[2]]$impact_HCR2$evaluation3, out[[3]]$impact_HCR2$evaluation3,
+          out[[1]]$impact_HCR2$evaluation4, out[[2]]$impact_HCR2$evaluation4, out[[3]]$impact_HCR2$evaluation4, ncol=3, align="v")
+dev.off()
+# GBa 10000 and 3
+# BBn NA
+
+
+```
+
+
