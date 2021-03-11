@@ -161,7 +161,7 @@ two_year_projections_offshore <- function(
     process <- rbind(B.next0, B.next1, B.next2)
     decision.df <- rbind(decision.df, process)
   }
-  browser()
+  
   decisiontable <- function(object, proj, year, LRP, USR){
     object <- object[object$proj==proj & object$year == year,]
     return(
