@@ -150,7 +150,9 @@ two_year_projections_offshore <- function(
   
   checktable <- do.call(rbind, map_df(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(x, NA), decisiontable=T))$B.next1)
   
-  decision <- map(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(exploitation, x), decisiontable=F))
+  decision1 <- do.call(rbind, process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(exploitation, NA), decisiontable=F)$B.next1)
+  
+  decision2 <- map(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(NA, x), decisiontable=F))
   
   # tidy up the output
   decision.df <- NULL
@@ -161,7 +163,7 @@ two_year_projections_offshore <- function(
     process <- rbind(B.next0, B.next1, B.next2)
     decision.df <- rbind(decision.df, process)
   }
-  
+
   decisiontable <- function(object, proj, year, LRP, USR){
     object <- object[object$proj==proj & object$year == year,]
     return(
@@ -181,8 +183,8 @@ two_year_projections_offshore <- function(
   
   checktable <- decisiontable(checktable, proj=1, year=2020, LRP=LRP, USR=USR)
   
-  decision.1 <- map_df(3:length(unique(decision.df$year)), function(x) 
-    decisiontable(decision.df, proj=1, year=unique(decision.df$year)[x], LRP=LRP, USR=USR))
+  decision.1 <- map_df(3:length(unique(decision1$year)), function(x) 
+    decisiontable(decision1, proj=1, year=unique(decision1$year)[x], LRP=LRP, USR=USR))
   
   decision.2 <- map_df(3:length(unique(decision.df$year)), function(x) 
     decisiontable(decision.df, proj=2, year=unique(decision.df$year)[x], LRP=LRP, USR=USR))
