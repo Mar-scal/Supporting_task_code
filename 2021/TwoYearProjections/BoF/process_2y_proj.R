@@ -11,7 +11,7 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
   B.next1 <- NULL
   B.next2 <- NULL
   for (i in year.start:length(object$Years)){
-    browser()
+    
     # keep r, K, and sigma the same regardless of year
     q <- object$sims.matrix[,paste0("q")]
     r <- object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 

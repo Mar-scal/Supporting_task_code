@@ -23,6 +23,7 @@ require(purrr)
 time1 <- Sys.time()
 ## run the projections
 SP <- read.csv("Y:/Projects/CSAS/2y_Projection_RAP/data/SP_by_areas_by_DK.csv")
+SP$Subarea <- gsub(x=SP$Subarea, pattern="SPA ", replacement = "")
 HCRs <- data.frame(area = c("BBn", "GBa", 
                             "1A", "1B", "3", "4", "6",
                             "29A", "29B", "29C", "29D"), 
@@ -30,7 +31,7 @@ HCRs <- data.frame(area = c("BBn", "GBa",
                                     0.15, 0.15, 0.15, 0.15, 0.18,
                                     0.05, 0.06, 0.06, 0.09))
 
-area <- "BBn"
+area <- "1A"
 
 ####################
 
@@ -39,20 +40,21 @@ if(area %in% c("1A", "1B", "3", "4", "6")) folder <- "BoF"
 if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"
 
 SPscenario <- list(0, SP$med[SP$Subarea==area], NULL)
-
+#SPscenario <- 0
 source(paste0("./", folder, "/two_year_projections.R"))
 
 out <- map(SPscenario, function(x) two_year_projections(area=area,
-                                                               year=2019, 
-                                                               exploitation=HCRs$exploitation[HCRs$area==area], 
-                                                               runtype=c("Decision tables and plots"), #"Decision tables only"),
-                                                               surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
-                                                               sample=0.3,
-                                                               path="Repo working directory (fast)", 
-                                                               save=T))
+                                                        year=2019, 
+                                                        exploitation=HCRs$exploitation[HCRs$area==area], 
+                                                        runtype=c("Decision tables and plots"), #"Decision tables only"),
+                                                        surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
+                                                        sample=0.001,
+                                                        path="Repo working directory (fast)", 
+                                                        save=T,
+                                                        pred.eval=T))
 
 
-save(out, file = paste0("./Offshore/", area, "/twoyearprojections.RData"))
+save(out, file = paste0("./", folder, "/", area, "/twoyearprojections.RData"))
 
 time2 <- Sys.time()
 time2-time1
@@ -127,7 +129,7 @@ dev.off()
 # GBa 10000 and 3
 # BBn 1000 and 4
 
-png(paste0("./Offshore/", area, "/decision_impact_HCR2"), height=12, width=22, res=400, units="in")
+png(paste0("./Offshore/", area, "/decision_impact_HCR2.png"), height=12, width=22, res=400, units="in")
 plot_grid(out[[1]]$impact_HCR2$evaluation3, 
           out[[2]]$impact_HCR2$evaluation3 + ylab(NULL), 
           out[[3]]$impact_HCR2$evaluation3 + ylab(NULL),

@@ -36,6 +36,14 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
     break3 <- seq(0, 2000, 500) 
   }
   
+  if(!area%in%c("BBn", "GBa")) {
+    break1 <- seq(-500, 500, 100)
+    break2 <- seq(-1, 1, 0.5) 
+    break3 <- seq(0, 1000, 200) 
+  }
+  
+  
+  
   catchvals <- decisions[!is.na(decisions$missedout),] %>%
     dplyr::select(year, real, proj) %>%
     pivot_longer(cols = c("real", "proj"))

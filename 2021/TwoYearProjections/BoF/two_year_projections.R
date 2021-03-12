@@ -109,7 +109,7 @@ two_year_projections <- function(
   # to use an exploitation value for the 1st year projection, set exp = c(0.15, NA)
   # to use an exploitation value for the 2nd year projection, set exp = c(NA, 0.15)
   # to use exploitation values for BOTH years, set exp = c(0.15, 0.15)
-browser()
+
 if(pred.eval==T){
   message("running projection evaluation (incl. figures)")
   source(paste0("./", folder, "/proj_eval_plot.R"))
@@ -151,7 +151,6 @@ if(pred.eval==F){
         dplyr::summarize(biomass=median(Biomass),
                          catch=median(catch),
                          mu=median(mu),
-                         Fmort = median(Fmort),
                          B.change=median(B.change),
                          pB0 = sum(pB0)/length(pB0),
                          p.LRP = round(sum(Biomass > LRP)/length(Biomass), 3),
@@ -161,10 +160,10 @@ if(pred.eval==F){
   
   checktable <- decisiontable(checktable, proj=1, year=2020, LRP=LRP, USR=USR)
   
-  decision.1 <- map_df(3:length(unique(decision1$year)), function(x) 
+  decision.1 <- map_df(2:length(unique(decision1$year)), function(x) 
     decisiontable(decision1, proj=1, year=unique(decision1$year)[x], LRP=LRP, USR=USR))
   
-  decision.2 <- map_df(3:length(unique(decision.df$year)), function(x) 
+  decision.2 <- map_df(2:length(unique(decision.df$year)), function(x) 
     decisiontable(decision.df, proj=2, year=unique(decision.df$year)[x], LRP=LRP, USR=USR))
   
   
@@ -174,7 +173,7 @@ if(pred.eval==F){
     dplyr::select(year, mu, catch, p.USR) %>%
     dplyr::summarise(mu = max(mu)) %>%
     dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
-    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "Fmort", "B.change", "pB0", "p.LRP", "p.USR"))
+    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "B.change", "pB0", "p.LRP", "p.USR"))
   
   
   HCRscenario2 <- decision.2 %>%
@@ -184,7 +183,7 @@ if(pred.eval==F){
     dplyr::select(year, mu, catch, p.USR) %>%
     dplyr::summarise(mu = max(mu)) %>%
     dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
-    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "Fmort", "B.change", "pB0", "p.LRP", "p.USR"))
+    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "B.change", "pB0", "p.LRP", "p.USR"))
   
   
   
