@@ -20,6 +20,7 @@ require(purrr)
 ```
 
 ```{r}
+time1 <- Sys.time()
 ## run the projections
 SP <- read.csv("Y:/Projects/CSAS/2y_Projection_RAP/data/SP_by_areas_by_DK.csv")
 HCRs <- data.frame(area = c("BBn", "GBa", 
@@ -29,7 +30,9 @@ HCRs <- data.frame(area = c("BBn", "GBa",
                                     0.15, 0.15, 0.15, 0.15, 0.18,
                                     0.05, 0.06, 0.06, 0.09))
 
-area <- "GBa"
+area <- "BBn"
+
+####################
 
 if(area %in% c("GBa", "BBn")) folder <- "Offshore"
 if(area %in% c("1A", "1B", "3", "4", "6")) folder <- "BoF"
@@ -43,15 +46,16 @@ out <- map(SPscenario, function(x) two_year_projections(area=area,
                                                                year=2019, 
                                                                exploitation=HCRs$exploitation[HCRs$area==area], 
                                                                runtype=c("Decision tables and plots"), #"Decision tables only"),
-                                                               plot=c("Standard boxplot"), #
-                                                                 #"Functional boxplot"),
                                                                surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
                                                                sample=0.3,
                                                                path="Repo working directory (fast)", 
-                                                               save=F))
+                                                               save=T))
 
 
 save(out, file = paste0("./Offshore/", area, "/twoyearprojections.RData"))
+
+time2 <- Sys.time()
+time2-time1
 
 ```
 
@@ -60,7 +64,7 @@ save(out, file = paste0("./Offshore/", area, "/twoyearprojections.RData"))
 ```{r}
 
 load(paste0("./Offshore/", area, "/twoyearprojections.RData"))
-
+#load(paste0("Y:/Projects/CSAS/2y_Projection_RAP/data/", area, "/twoyearprojections.RData"))
 require(patchwork)
 require(cowplot)
 # plot_grid(plot_drt_cod$drt + xlab(NULL), plot_drt_had$drt + ylab(NULL) + xlab(NULL), plot_drt_ytf$drt +ylab(NULL) + xlab(NULL), plot_dt_cod$dt, plot_dt_had$dt + ylab(NULL), plot_dt_ytf$dt + ylab(NULL), ncol=3, align="v")
@@ -100,16 +104,36 @@ dev.off()
 # BBn 4000 and 0.8
 
 # A HCR is used to select catch for year 1 and year 2. 
-png(paste0("./Offshore/", area, "/catch_diff_eval_HCR1.png"), height=12, width=22, res=400, units="in")
-plot_grid(out[[1]]$impact_HCR1$evaluation3, out[[2]]$impact_HCR1$evaluation3, out[[3]]$impact_HCR1$evaluation3,
-          out[[1]]$impact_HCR1$evaluation4, out[[2]]$impact_HCR1$evaluation4, out[[3]]$impact_HCR1$evaluation4, ncol=3, align="v")
+png(paste0("./Offshore/", area, "/catch_diff_eval_HCR1.png"), height=6, width=22, res=400, units="in")
+plot_grid(out[[1]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright"), 
+          out[[2]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), 
+          out[[3]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), ncol=3, align="v")
+dev.off()
+
+png(paste0("./Offshore/", area, "/catch_diff_eval_HCR2.png"), height=6, width=22, res=400, units="in")
+plot_grid(out[[1]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright"), 
+          out[[2]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), 
+          out[[3]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), ncol=3, align="v")
+dev.off()
+
+png(paste0("./Offshore/", area, "/decision_impact_HCR1.png"), height=12, width=22, res=400, units="in")
+plot_grid(out[[1]]$impact_HCR1$evaluation3, 
+          out[[2]]$impact_HCR1$evaluation3 + ylab(NULL), 
+          out[[3]]$impact_HCR1$evaluation3 + ylab(NULL),
+          out[[1]]$impact_HCR1$evaluation4, 
+          out[[2]]$impact_HCR1$evaluation4 + ylab(NULL), 
+          out[[3]]$impact_HCR1$evaluation4 + ylab(NULL), ncol=3, align="v")
 dev.off()
 # GBa 10000 and 3
 # BBn 1000 and 4
 
-png(paste0("./Offshore/", area, "/catch_diff_eval_HCR2.png"), height=12, width=22, res=400, units="in")
-plot_grid(out[[1]]$impact_HCR2$evaluation3, out[[2]]$impact_HCR2$evaluation3, out[[3]]$impact_HCR2$evaluation3,
-          out[[1]]$impact_HCR2$evaluation4, out[[2]]$impact_HCR2$evaluation4, out[[3]]$impact_HCR2$evaluation4, ncol=3, align="v")
+png(paste0("./Offshore/", area, "/decision_impact_HCR2"), height=12, width=22, res=400, units="in")
+plot_grid(out[[1]]$impact_HCR2$evaluation3, 
+          out[[2]]$impact_HCR2$evaluation3 + ylab(NULL), 
+          out[[3]]$impact_HCR2$evaluation3 + ylab(NULL),
+          out[[1]]$impact_HCR2$evaluation4, 
+          out[[2]]$impact_HCR2$evaluation4 + ylab(NULL), 
+          out[[3]]$impact_HCR2$evaluation4 + ylab(NULL), ncol=3, align="v")
 dev.off()
 # GBa 10000 and 3
 # BBn NA
@@ -122,23 +146,28 @@ dev.off()
 ```{r}
 require(openxlsx)
 dt <- createWorkbook()
-addWorksheet(wb=dt, sheetName = "2020")
+addWorksheet(wb=dt, sheetName = "2020_1yr")
 writeData(dt, sheet=1, 
           out[[1]]$checktable
           )
 
+addWorksheet(wb=dt, sheetName = "2020_2yr")
+writeData(dt, sheet=2, 
+          out[[1]]$decision.2[out[[1]]$decision.2$year==2020 & out[[1]]$decision.2$proj==2,]
+          )
+
 addWorksheet(wb=dt, sheetName = "2021_Surplus0")
-writeData(dt, sheet=2,
+writeData(dt, sheet=3,
           out[[1]]$decision.2[out[[1]]$decision.2$year==2021,]
           )
 
 addWorksheet(wb=dt, sheetName = "2021_SurplusMedian")
-writeData(dt, sheet=3,
+writeData(dt, sheet=4,
           out[[2]]$decision.2[out[[1]]$decision.2$year==2021,]
           )
 
 addWorksheet(wb=dt, sheetName = "2021_SurplusPrevious")
-writeData(dt, sheet=4,
+writeData(dt, sheet=5,
           out[[3]]$decision.2[out[[1]]$decision.2$year==2021,]
           )
 

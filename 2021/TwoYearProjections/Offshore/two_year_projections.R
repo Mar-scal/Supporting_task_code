@@ -3,11 +3,11 @@ two_year_projections <- function(
   year=2019, 
   exploitation=0.15, 
   runtype=c("Decision tables and plots"), #"Decision tables only"),
-  plot=c("Standard boxplot"), #"Functional boxplot"),
   surplus = 0, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
   sample=0.1,
   path="Repo working directory (fast)",
-  save=F)
+  save=F, 
+  pred.eval=T)
 {
   ## packages
   require(tidyverse)
@@ -32,7 +32,9 @@ two_year_projections <- function(
   if(path == "Repo working directory (fast)") message_txt <- paste0("Loading RData file from ", getwd())
   if(path == "Network (slow)") message_txt <- paste0("Loading RData file from ESS or Sky")
   
-  
+  if(area %in% c("GBa", "BBn")) folder <- "Offshore"
+  if(area %in% c("1A", "1B", "3", "4", "6")) folder <- "BoF"
+  if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"
   
   
   
@@ -130,7 +132,6 @@ two_year_projections <- function(
   
 
   ##################### boxplots ########################
-  message("running projection evaluation (incl. figures)")
   # run the process error projections ****for the boxplots***!
   # e.g. for y = 2010, this does a 1y projection for 2011 using 2011 landings, and 2y projection for 2012, re-using 2011 landings.
   # However for the final years (2019), it uses the 2020 landings (realized) for the 2020 projection, and 2021 TAC for 2021 projection.
@@ -138,14 +139,21 @@ two_year_projections <- function(
   # to use an exploitation value for the 1st year projection, set exp = c(0.15, NA)
   # to use an exploitation value for the 2nd year projection, set exp = c(NA, 0.15)
   # to use exploitation values for BOTH years, set exp = c(0.15, 0.15)
-  source("./Offshore/proj_eval_plot.R")
-  # note, proj_eval_plot uses process_2y_proj inside!
-  realized <- proj_eval_plot(object=mod.res, area=area, surplus=surplus, mu=c(NA, NA), plot=plot, ref.pts=RP, save=save)
-
+  if(pred.eval==T){
+    message("running projection evaluation (incl. figures)")
+    source(paste0("./", folder, "/proj_eval_plot.R"))
+    # note, proj_eval_plot uses process_2y_proj inside!
+    realized <- proj_eval_plot(object=mod.res, area=area, surplus=surplus, mu=c(NA, NA), ref.pts=RP, save=save)
+  }
+  if(pred.eval==F){
+    message("skipping projection evaluation")
+    realized <- NULL
+  }
+  
   
   # run projections using a range of exploitation values
   message("generating decision tables")
-  source("./Offshore/process_2y_proj_offshore.R")
+  source("./Offshore/process_2y_proj.R")
   exp.range <- seq(0, 0.3, 0.01)
   
   checktable <- do.call(rbind, map_df(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(x, NA), decisiontable=T))$B.next1)
@@ -172,8 +180,8 @@ two_year_projections <- function(
         dplyr::group_by(year, proj, mu) %>%
         dplyr::summarize(biomass=median(Biomass),
                          catch=median(catch),
+                         adj.catch = median(catch-proj.catch), # proj.catch is straight from the model object!
                          mu=median(mu),
-                         Fmort = median(Fmort),
                          B.change=median(B.change),
                          pB0 = sum(pB0)/length(pB0),
                          p.LRP = round(sum(Biomass > LRP)/length(Biomass), 3),
@@ -183,10 +191,10 @@ two_year_projections <- function(
   
   checktable <- decisiontable(checktable, proj=1, year=2020, LRP=LRP, USR=USR)
   
-  decision.1 <- map_df(3:length(unique(decision1$year)), function(x) 
+  decision.1 <- map_df(2:length(unique(decision1$year)), function(x) 
     decisiontable(decision1, proj=1, year=unique(decision1$year)[x], LRP=LRP, USR=USR))
   
-  decision.2 <- map_df(3:length(unique(decision.df$year)), function(x) 
+  decision.2 <- map_df(2:length(unique(decision.df$year)), function(x) 
     decisiontable(decision.df, proj=2, year=unique(decision.df$year)[x], LRP=LRP, USR=USR))
   
   
@@ -196,7 +204,7 @@ two_year_projections <- function(
     dplyr::select(year, mu, catch, p.USR) %>%
     dplyr::summarise(mu = max(mu)) %>%
     dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
-    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "Fmort", "B.change", "pB0", "p.LRP", "p.USR"))
+    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "adj.catch", "B.change", "pB0", "p.LRP", "p.USR"))
   
   
   HCRscenario2 <- decision.2 %>%
@@ -206,7 +214,7 @@ two_year_projections <- function(
     dplyr::select(year, mu, catch, p.USR) %>%
     dplyr::summarise(mu = max(mu)) %>%
     dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
-    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "Fmort", "B.change", "pB0", "p.LRP", "p.USR"))
+    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "adj.catch", "B.change", "pB0", "p.LRP", "p.USR"))
   
 
   

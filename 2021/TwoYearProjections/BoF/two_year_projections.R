@@ -3,11 +3,11 @@ two_year_projections <- function(
   year=2019, 
   exploitation=0.15, 
   runtype=c("Decision tables and plots"), #"Decision tables only"),
-  plot=c("Standard boxplot"), #"Functional boxplot"),
   surplus = 0, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
   sample=0.1,
   path="Repo working directory (fast)",
-  save=F)
+  save=F, 
+  pred.eval=T)
 {
   ## packages
   require(tidyverse)
@@ -35,29 +35,26 @@ two_year_projections <- function(
   if(path == "Repo working directory (fast)") message_txt <- paste0("Loading RData file from ", getwd())
   if(path == "Network (slow)") message_txt <- paste0("Loading RData file from ESS or Sky")
   
-  
-  
+  if(area %in% c("GBa", "BBn")) folder <- "Offshore"
+  if(area %in% c("1A", "1B", "3", "4", "6")) folder <- "BoF"
+  if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"  
   
   
   ############### Set up new landings, exploitation, and reference point info ############################
-  RP <- data.frame(area = c("GBa", "BBn"),
-                   LRP = c(7137, NA),
-                   USR = c(13284, NA))
+  RP <- data.frame(area = c("1A", "1B", "3", "4", "6", "29A", "29B", "29C", "29D", "GBa", "BBn"),
+                   LRP = c(480, 880, 600, 530, 500, NA, 1.12, 1.41, 1.3, 7137, NA),
+                   USR = c(1000, 1800, 1000, 750, 600, NA, 2.24, 2.82, 2.6, 13284, NA))
   
   LRP <- RP$LRP[RP$area == as.character(area)]
   USR <- RP$USR[RP$area == as.character(area)]
   
-  if(is.null(mod.res$Years)) mod.res$Years <- mod.res$data$year
-  
-  # NO DON'T DO THIS:
-  # # for offshore only, add proj.catch[[bnk]] to the catches
-  # if(area == "GBa") mod.res$data$C <- mod.res$data$C + proj.dat[[area]]$catch[proj.dat[[area]]$year %in% 1986:2019]
-  # if(area == "BBn") mod.res$data$C <- mod.res$data$C + proj.dat[[area]]$catch
+  LRP <- RP$LRP[RP$area == as.character(area)]
+  USR <- RP$USR[RP$area == as.character(area)]
   
   # for 2020 projections, use 2020 landings.
   if(max(mod.res$Years)==2019){
-    landings2020 <- data.frame(area=c("GBa", "BBn"), 
-                               landings = c(4096, 211)) 
+    landings2020 <- data.frame(area=c("1A", "1B", "3", "4", "6", "29A", "29B", "29C", "29D", "GBa", "BBn"), 
+                               landings = c(415, 545, 108, 113, 164, 6.567, 54.939, 20.392, 65.213, 4096, 211))
     message(paste0("landings for 2019 (used for 2020 projection) are ", landings2020$landings[landings2020$area==area], "t"))
     
     mod.res$data$C[length(mod.res$data$C)+1] <- landings2020$landings[landings2020$area==as.character(area)]
@@ -65,39 +62,11 @@ two_year_projections <- function(
   
   # for 2021 projections, use 2021 TACs for BoF and Offshore, use 2020 landings for 29W.
   if(max(mod.res$Years)==2019){
-    landings2021 <- data.frame(area=c("GBa", "BBn"), 
-                               landings = c(4000, 300))
+    landings2021 <- data.frame(area=c("1A", "1B", "3", "4", "6", "29A", "29B", "29C", "29D", "GBa", "BBn"), 
+                               landings = c(270, 400, 200, 175, 210, 6.567, 54.939, 20.392, 65.213, 4000, 300))
     message(paste0("landings for 2020 (used for 2021 projection) are 2021 TAC: ", landings2021$landings[landings2021$area==area], "t"))
     mod.res$data$C[length(mod.res$data$C)+1] <- landings2021$landings[landings2021$area==as.character(area)]
   }
-  
-  
-  
-  
-  
-  ###################### Make the mod.res look like BoF ##########################
-  if(area %in% "GBa") {
-    mod.res$sims.matrix <- mod.res$sims.matrix[!names(mod.res$sims.matrix) %in% names(which(map(mod.res$sims.matrix, function(x) dim(x)[2]) == 21))]
-    standard <- mod.res$sims.matrix[names(which(map(mod.res$sims.matrix, function(x) dim(x)[2]) > 1))]
-    newnames <- paste0(rep(names(standard), each=mod.res$data$NY), "[", 1:mod.res$data$NY, "]")
-    standard <- as.data.frame(do.call(cbind, standard))
-    names(standard) <- newnames
-    single <- mod.res$sims.matrix[names(which(map(mod.res$sims.matrix, function(x) dim(x)[2]) == 1))]
-    mod.res$sims.matrix <- cbind(standard, data.frame(K = single$K, S=single$S, deviance=single$deviance, ikappa.rho2 = single$ikappa.rho2,
-                                                      ikappa.tau2 = single$ikappa.tau2, logK = single$logK, q = single$q, qU = single$qU, sigma=single$sigma))
-  }
-  
-  if(area %in% "BBn") {
-    mod.res$sims.matrix <- mod.res$sims.matrix[!names(mod.res$sims.matrix) %in% names(which(map(mod.res$sims.matrix, function(x) dim(x)[2]) == 41))]
-    standard <- mod.res$sims.matrix[names(which(map(mod.res$sims.matrix, function(x) dim(x)[2]) > 1))]
-    newnames <- paste0(rep(names(standard), each=mod.res$data$NY), "[", 1:mod.res$data$NY, "]")
-    standard <- as.data.frame(do.call(cbind, standard))
-    names(standard) <- newnames
-    single <- mod.res$sims.matrix[names(which(map(mod.res$sims.matrix, function(x) dim(x)[2]) == 1))]
-    mod.res$sims.matrix <- cbind(standard, data.frame(K = single$K, S=single$S, deviance=single$deviance, ikappa.rho2 = single$ikappa.rho2,
-                                                      ikappa.tau2 = single$ikappa.tau2, logK = single$logK, q = single$q, qU = single$qU, sigma=single$sigma))
-  }
-  
   
   
   
@@ -131,9 +100,8 @@ two_year_projections <- function(
   
   
   
-
+  
   ##################### boxplots ########################
-  message("running projection evaluation (incl. figures)")
   # run the process error projections ****for the boxplots***!
   # e.g. for y = 2010, this does a 1y projection for 2011 using 2011 landings, and 2y projection for 2012, re-using 2011 landings.
   # However for the final years (2019), it uses the 2020 landings (realized) for the 2020 projection, and 2021 TAC for 2021 projection.
@@ -141,14 +109,21 @@ two_year_projections <- function(
   # to use an exploitation value for the 1st year projection, set exp = c(0.15, NA)
   # to use an exploitation value for the 2nd year projection, set exp = c(NA, 0.15)
   # to use exploitation values for BOTH years, set exp = c(0.15, 0.15)
-  source("./Offshore/proj_eval_plot.R")
+browser()
+if(pred.eval==T){
+  message("running projection evaluation (incl. figures)")
+  source(paste0("./", folder, "/proj_eval_plot.R"))
   # note, proj_eval_plot uses process_2y_proj inside!
-  realized <- proj_eval_plot(object=mod.res, area=area, surplus=surplus, mu=c(NA, NA), plot=plot, ref.pts=RP, save=save)
-
+  realized <- proj_eval_plot(object=mod.res, area=area, surplus=surplus, mu=c(NA, NA), ref.pts=RP, save=save)
+}
+if(pred.eval==F){
+  message("skipping projection evaluation")
+  realized <- NULL
+}
   
   # run projections using a range of exploitation values
   message("generating decision tables")
-  source("./Offshore/process_2y_proj_offshore.R")
+  source(paste0("./", folder, "/process_2y_proj.R"))
   exp.range <- seq(0, 0.3, 0.01)
   
   checktable <- do.call(rbind, map_df(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(x, NA), decisiontable=T))$B.next1)
@@ -166,7 +141,7 @@ two_year_projections <- function(
     process <- rbind(B.next0, B.next1, B.next2)
     decision.df <- rbind(decision.df, process)
   }
-
+  
   decisiontable <- function(object, proj, year, LRP, USR){
     object <- object[object$proj==proj & object$year == year,]
     return(
@@ -211,12 +186,12 @@ two_year_projections <- function(
     dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
     dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "Fmort", "B.change", "pB0", "p.LRP", "p.USR"))
   
-
+  
   
   
   ################## Decision impact ####################
   message("running decision impact analysis")
-  source("./Offshore/decision_impact.R")
+  source(paste0("./", folder, "/decision_impact.R"))
   impact_HCR1 <- decision_impact(HCRscenario1, save=save, area=area, surplus=surplus, HCRscenario = 1)
   if(!area=="BBn") impact_HCR2 <- decision_impact(HCRscenario2, save=save, area=area, surplus=surplus, HCRscenario = 2)
   if(area=="BBn") impact_HCR2 <- NULL
