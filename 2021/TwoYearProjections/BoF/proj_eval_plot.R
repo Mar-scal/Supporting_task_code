@@ -58,26 +58,49 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     break3 <- seq(-30000,30000, 5000)
     break4 <- seq(-1.2, 1.2, 0.6)
   }
+  
   if(area =="BBn") {
     break1 <- seq(0,30000, 5000)
     break2 <- seq(0,10000, 2000)
     break3 <- seq(-5000,5000, 1000)
     break4 <- seq(-0.8, 0.8, 0.4)
   }
-  if(!area %in% c("BBn", "GBa")) {
+  
+  if(!area %in% c("BBn", "GBa", "1B", "3", "4", "6")) {
+    break1 <- seq(0,8000, 2000)
+    break2 <- seq(0,8000, 2000)
+    break3 <- seq(-2500,2500, 500)
+    break4 <- seq(-0.8, 0.8, 0.4)
+  }
+ 
+  if(area =="1B") {
     break1 <- seq(0,10000, 2000)
     break2 <- seq(0,10000, 2000)
     break3 <- seq(-2500,2500, 500)
     break4 <- seq(-0.8, 0.8, 0.4)
   }
   
-
+  if(area %in% c("3", "4")) {
+    break1 <- seq(0,6000, 2000)
+    break2 <- seq(0,6000, 2000)
+    break3 <- seq(-1500,1500, 500)
+    break4 <- seq(-0.8, 0.8, 0.4)
+  }
+  
+  if(area =="6") {
+    break1 <- seq(0,4000, 1000)
+    break2 <- seq(0,4000, 1000)
+    break3 <- seq(-1500,1500, 500)
+    break4 <- seq(-0.8, 0.8, 0.4)
+  }
+  
+  
   # boxplot code here
   pred.eval <- ggplot() +
     geom_boxplot(data=all_sum[all_sum$year>(min(all_sum$year)+1),],
                  aes(x=as.factor(year), ymin=min, lower=lower, middle=med, upper=upper, ymax=max, fill=as.factor(proj)), stat="identity", position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
     theme_bw() +
-    ylab("Fully recruited biomass estimate (metric tonnes)") +
+    ylab("Commercial biomass estimate (metric tonnes)") +
     xlab("Year") +
     scale_fill_brewer(type = "qual", palette = "Paired", name=NULL, direction=-1, labels=c("actual", "year 1", "year 2")) +
     theme(panel.grid=element_blank(), text = element_text(size=18))+
@@ -88,7 +111,7 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     geom_boxplot(data=all_sum[all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),],
                  aes(x=factor(year), ymin=min, lower=lower, middle=med, upper=upper, ymax=max, fill=as.factor(proj)), stat="identity", position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
     theme_bw() +
-    ylab("Fully recruited biomass estimate (metric tonnes)") +
+    ylab("Commercial biomass estimate (metric tonnes)") +
     xlab("Year") +
     scale_fill_brewer(type = "qual", palette = "Paired", name=NULL, direction=-1, labels=c("actual", "year 1", "year 2")) +
     theme(panel.grid=element_blank(), text = element_text(size=18))+
@@ -104,7 +127,7 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     geom_line(data=all_sum, aes(year, colour=as.factor(proj), y=meanB), lwd=2, lty=3) +
     theme_bw() +
     theme(panel.grid=element_blank()) +
-    ylab("Fully recruited biomass estimate (metric tonnes)") +
+    ylab("Commercial biomass estimate (metric tonnes)") +
     xlab("Year") +
     scale_fill_brewer(type = "qual", palette = "Set2", name=NULL, labels=c("actual", "year 1", "year 2")) +
     scale_colour_brewer(type = "qual", palette = "Set2", name=NULL, labels=c("actual", "year 1", "year 2")) +
@@ -122,7 +145,7 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     geom_line(data=all_sum[all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),], aes(year, colour=as.factor(proj), y=meanB), lwd=2, lty=3) +
     theme_bw() +
     theme(panel.grid=element_blank(), text = element_text(size=18))+
-    ylab("Fully recruited biomass estimate (metric tonnes)") +
+    ylab("Commercial biomass estimate (metric tonnes)") +
     xlab("Year") +
     scale_fill_brewer(type = "qual", palette = "Set2", name=NULL, labels=c("actual", "year 1", "year 2")) +
     scale_colour_brewer(type = "qual", palette = "Set2", name=NULL, labels=c("actual", "year 1", "year 2")) +

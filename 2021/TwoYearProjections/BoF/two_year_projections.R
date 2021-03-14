@@ -177,15 +177,14 @@ if(pred.eval==F){
   
   
   HCRscenario2 <- decision.2 %>%
-    dplyr::group_by(year) %>%
-    dplyr::filter(p.USR>0.75) %>%
-    dplyr::filter(mu <= exploitation) %>%
-    dplyr::select(year, mu, catch, p.USR) %>%
-    dplyr::summarise(mu = max(mu)) %>%
-    dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
-    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "B.change", "pB0", "p.LRP", "p.USR"))
-  
-  
+      dplyr::group_by(year) %>%
+      dplyr::filter(p.USR>0.75 | mu==0) %>%
+      dplyr::filter(mu <= exploitation) %>%
+      dplyr::select(year, mu, catch, p.USR) %>%
+      dplyr::summarise(mu = max(mu)) %>%
+      dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
+      dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "B.change", "pB0", "p.LRP", "p.USR"))
+
   
   
   ################## Decision impact ####################
