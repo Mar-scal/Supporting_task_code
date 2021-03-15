@@ -107,13 +107,13 @@ dev.off()
 
 # A HCR is used to select catch for year 1 and year 2. 
 png(paste0("./", folder, "/", area, "/catch_diff_eval_HCR1.png"), height=6, width=22, res=400, units="in")
-plot_grid(out[[1]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright"), 
+plot_grid(out[[1]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab("Catch potential (mt)"), 
           out[[2]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), 
           out[[3]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), ncol=3, align="v")
 dev.off()
 
 png(paste0("./", folder, "/", area, "/catch_diff_eval_HCR2.png"), height=6, width=22, res=400, units="in")
-plot_grid(out[[1]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright"), 
+plot_grid(out[[1]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright")+ ylab("Catch potential (mt)"),  
           out[[2]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), 
           out[[3]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), ncol=3, align="v")
 dev.off()
@@ -179,7 +179,7 @@ saveWorkbook(dt, file = paste0("./", folder, "/", area, "/decisiontables.xlsx"),
 
 # Plot values
 ```{r}
-
+load(paste0("./", folder, "/", area, "/twoyearprojections.RData"))
 SP <- c("zero", "median", "lastyear")
 
 pred.eval.dat <- map_df(1:3, function(x) cbind(out[[x]]$realized$all_sum, surplus=SP[x]))
@@ -216,7 +216,7 @@ writeData(plotdat, sheet=4,
           )
 
 addWorksheet(wb=plotdat, sheetName = "HCR.2.dat")
-writeData(plotdat, sheet=4,
+writeData(plotdat, sheet=5,
           HCR.2.dat
           )
 
