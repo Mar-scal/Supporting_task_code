@@ -42,8 +42,8 @@ two_year_projections <- function(
   
   ############### Set up new landings, exploitation, and reference point info ############################
   RP <- data.frame(area = c("1A", "1B", "3", "4", "6", "29A", "29B", "29C", "29D", "GBa", "BBn"),
-                   LRP = c(480, 880, 600, 530, 500, NA, 1.12, 1.41, 1.3, 7137, NA),
-                   USR = c(1000, 1800, 1000, 750, 600, NA, 2.24, 2.82, 2.6, 13284, NA))
+                   LRP = c(480, 880, 600, 530, NA, NA, 1.12, 1.41, 1.3, 7137, NA),
+                   USR = c(1000, 1800, 1000, 750, NA, NA, 2.24, 2.82, 2.6, 13284, NA))
   
   LRP <- RP$LRP[RP$area == as.character(area)]
   USR <- RP$USR[RP$area == as.character(area)]
