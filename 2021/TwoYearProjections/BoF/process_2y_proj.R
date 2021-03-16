@@ -29,9 +29,11 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
                                                   1, 2), "R[")][, i]
     P <- object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 
                                                    1, 2), "P[")][, i]
+    
     m <- object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 
-                                                   1, 2), "m[")][, i]
+                                                   1, 2), "m[")]
 
+    m <- apply(m[, i - (0:(5 - 1))], 1, mean)
     
 ############### current year ##################################
     B.next0[[paste0(object$Years[i])]] <- data.frame(Biomass = object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 1, 2), "B[")][, i], 
