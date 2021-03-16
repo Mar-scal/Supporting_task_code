@@ -31,7 +31,9 @@ HCRs <- data.frame(area = c("BBn", "GBa",
                                     0.05, 0.06, 0.06, 0.09))
 time1 <- Sys.time()
 
-for(area in c("1A", "1B", "3", "4", "6")){
+for(area in c(#"1A", "1B", "3", "4", "6", 
+              "GBa"#, "BBn"
+              )){
   
   ####################
   
@@ -48,9 +50,9 @@ for(area in c("1A", "1B", "3", "4", "6")){
                                                           exploitation=HCRs$exploitation[HCRs$area==area], 
                                                           runtype=c("Decision tables and plots"), #"Decision tables only"),
                                                           surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
-                                                          sample=0.3,
+                                                          sample=0.001,
                                                           path="Repo working directory (fast)", 
-                                                          save=T,
+                                                          save=F,
                                                           pred.eval=T))
   
   
@@ -184,6 +186,34 @@ SP <- c("zero", "median", "lastyear")
 
 pred.eval.dat <- map_df(1:3, function(x) cbind(out[[x]]$realized$all_sum, surplus=SP[x]))
 
+pred.eval.dat$range <- pred.eval.dat$max - pred.eval.dat$min
+
+range.pred <- pred.eval.dat %>%
+  dplyr::select(year, proj, range, surplus) %>%
+  tidyr::pivot_wider(values_from=range, names_from = proj, id_cols = c(year, surplus), names_prefix="range") %>%
+  dplyr::mutate(to_real = range2 - range0,
+                to_1 = range2 - range1,
+                range_greater_than_real = ifelse(range2 > range0, 1, 0),
+                range_greater_than_1 = ifelse(range2 > range1, 1, 0))
+
+med.pred <- pred.eval.dat %>%
+  dplyr::select(year, proj, med, surplus) %>%
+  tidyr::pivot_wider(values_from=med, names_from = proj, id_cols = c(year, surplus), names_prefix="med") %>%
+  dplyr::mutate(med_real = med2-med0,
+                med_1 = med2-med1,
+                med_greater_than_real = ifelse(med2 > med0, 1, 0),
+                med_greater_than_1 = ifelse(med2 > med1, 1, 0))
+
+pred.eval.summary <- full_join(range.pred, med.pred, by=c("year", "surplus"))
+
+scenario.pred <- full_join(range.pred, med.pred, by=c("year", "surplus")) %>%
+  dplyr::filter(!is.na(range2) & !is.na(range0)) %>%
+  dplyr::group_by(surplus) %>%
+  dplyr::summarise(prop_range_greater_real = (sum(range_greater_than_real)/n()),
+                   prop_range_greater_1 = (sum(range_greater_than_1)/n()),
+                   prop_med_greater_real = (sum(med_greater_than_real)/n()),
+                   prop_med_greater_1 = (sum(med_greater_than_1)/n()))
+  
 eval.1.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation1)$data[[1]], x, ymin, ymax), surplus=SP[x]))
 
 eval.2.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation2)$data[[1]], x, ymin, ymax), surplus=SP[x]))
@@ -200,23 +230,33 @@ writeData(plotdat, sheet=1,
           pred.eval.dat
           )
 
+addWorksheet(wb=plotdat, sheetName = "pred.eval.summary")
+writeData(plotdat, sheet=2, 
+          pred.eval.summary
+          )
+
+addWorksheet(wb=plotdat, sheetName = "scenario.pred")
+writeData(plotdat, sheet=3, 
+          scenario.pred
+          )
+
 addWorksheet(wb=plotdat, sheetName = "eval.1.dat")
-writeData(plotdat, sheet=2,
+writeData(plotdat, sheet=4,
           eval.1.dat
           )
 
 addWorksheet(wb=plotdat, sheetName = "eval.2.dat")
-writeData(plotdat, sheet=3,
+writeData(plotdat, sheet=5,
           eval.2.dat
           )
 
 addWorksheet(wb=plotdat, sheetName = "HCR.1.dat")
-writeData(plotdat, sheet=4,
+writeData(plotdat, sheet=6,
           HCR.1.dat
           )
 
 addWorksheet(wb=plotdat, sheetName = "HCR.2.dat")
-writeData(plotdat, sheet=5,
+writeData(plotdat, sheet=7,
           HCR.2.dat
           )
 
