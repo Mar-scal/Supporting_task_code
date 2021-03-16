@@ -29,24 +29,14 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
                                                   1, 2), "R[")][, i]
     P <- object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 
                                                    1, 2), "P[")][, i]
-    if(i < length(object$Years)){
-      m <- object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 
-                                                     1, 2), "m[")][, i+1]
-      mR <- object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 
-                                                      1, 3), "mR[")][, i+1]
-    }
-    
-    if(i == length(object$Years)){
-      m <- object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 
-                                                     1, 2), "m[")][, i]
-      mR <- object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 
-                                                      1, 3), "mR[")][, i]
-    }
+    m <- object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 
+                                                   1, 2), "m[")][, i]
+
     
 ############### current year ##################################
     B.next0[[paste0(object$Years[i])]] <- data.frame(Biomass = object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 1, 2), "B[")][, i], 
                                                      year =  object$Years[i], 
-                                                     catch=object$data$C[i], 
+                                                     catch=object$data$C[i-1], 
                                                      mu = NA,
                                                      Fmort = NA,
                                                      proj=0,
@@ -66,12 +56,14 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
     # # Instantaneous fishing mortality
     # Fmort[t] <- -log(max(1 - mu[t], 0.0001))	
     if(is.na(mu[1])){
-      Pmed <- exp(-m) * object$data$g[i] * (P - object$data$C[i+1]/K) + exp(-mR) * object$data$gR[i] * r
-      catch <- object$data$C[i+1]
+      Pmed <- exp(-m) * object$data$g[i] * (P - object$data$C[i]/K) + exp(-m) * object$data$gR[i] * r
+      catch <- object$data$C[i]
       Pmed <- ifelse(Pmed > 0.001, Pmed, 0.001)
       Pmed <- log(Pmed)
       #offshore doesn't use SSModel gen.lnorm! (inshore does!)
-      P.out <- sapply(1:length(Pmed),function(x){rlnorm(1,Pmed[x], sigma[x])})
+      Max.P <- 8
+      set.seed(1)
+      P.out <- SSModel:::gen.lnorm(Pmed, sigma, Max.P)
       
       B.next1[[paste0(object$Years[i])]] <- data.frame(Biomass = P.out * K, 
                                                        year =  object$Years[i]+1, 
@@ -85,11 +77,13 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
     if(!is.na(mu[1])){
       # instantaneous vs. finite mortality
       # proportion survived = exp(-mu)
-      Pmed <- exp(-m) * object$data$g[i] * P + exp(-mR) * object$data$gR[i] * r
+      Pmed <- exp(-m) * object$data$g[i] * P + exp(-m) * object$data$gR[i] * r
       Pmed <- ifelse(Pmed > 0.001, Pmed, 0.001)
       Pmed <- log(Pmed)
       #offshore doesn't use SSModel gen.lnorm! (inshore does!)
-      P.out <- sapply(1:length(Pmed),function(x){rlnorm(1,Pmed[x], sigma[x])})
+      Max.P <- 8
+      set.seed(1)
+      P.out <- SSModel:::gen.lnorm(Pmed, sigma, Max.P)
       catch <- P.out * K * mu[1]
 
       B.next1[[paste0(object$Years[i])]] <- data.frame(Biomass = P.out * K * (1-mu[1]),
@@ -114,12 +108,15 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
     if(is.null(surplus)) {
       # include K for the catch option (scale catch by carrying capacity?)
       if(is.na(mu[2])){
-        Pmed2 <- exp(-m) * object$data$g[i] * (P.out - object$data$C[i+2]/K) + exp(-mR) * object$data$gR[i] * r
-        catch <- object$data$C[i+2]
+        Pmed2 <- exp(-m) * object$data$g[i] * (P.out - object$data$C[i+1]/K) + exp(-m) * object$data$gR[i] * r
+        catch <- object$data$C[i+1]
         # add process noise
         Pmed2 <- ifelse(Pmed2 > 0.001, Pmed2, 0.001)
         Pmed2 <- log(Pmed2)
-        P.out2 <- sapply(1:length(Pmed2),function(x){rlnorm(1,Pmed2[x], sigma[x])})
+        
+        Max.P <- 8
+        set.seed(1)
+        P.out2 <- SSModel:::gen.lnorm(Pmed2, sigma, Max.P)
         
         B.next2[[paste0(object$Years[i])]] <- data.frame(Biomass = (P.out2 * K), 
                                                          year =  object$Years[i]+2, 
@@ -131,11 +128,13 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
       if(!is.na(mu[2])){
         # instantaneous vs. finite mortality
         # proportion survived = exp(-mu)
-        Pmed2 <- exp(-m) * object$data$g[i] * (P.out) + exp(-mR) * object$data$gR[i] * r
+        Pmed2 <- exp(-m) * object$data$g[i] * (P.out) + exp(-m) * object$data$gR[i] * r
         # add process noise
         Pmed2 <- ifelse(Pmed2 > 0.001, Pmed2, 0.001)
         Pmed2 <- log(Pmed2)
-        P.out2 <- sapply(1:length(Pmed2),function(x){rlnorm(1,Pmed2[x], sigma[x])})
+        Max.P <- 8
+        set.seed(1)
+        P.out2 <- SSModel:::gen.lnorm(Pmed2, sigma, Max.P)
         catch <- P.out2 * K * mu[2]
         B.next2[[paste0(object$Years[i])]] <- data.frame(Biomass = (P.out2 * K * (1-mu[2])), 
                                                          year =  object$Years[i]+2, 
@@ -154,14 +153,17 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
       surplus_multiplier <- 1 + surplus
 
       if(is.na(mu[2])){
-        Pmed2 <- (P.out - object$data$C[i+2]/K) * surplus_multiplier # could put the multiplier on P.out directly for offshore because of the 
+        Pmed2 <- (P.out - object$data$C[i+1]/K) * surplus_multiplier # could put the multiplier on P.out directly for offshore because of the 
                                                                     #timing of growth relative to the timing of the majority of catch, 
                                                                     #but doing this to be consistent across areas (and it's more conservative)
-        catch <- object$data$C[i+2]
+        catch <- object$data$C[i+1]
         # apply process error
         Pmed2 <- ifelse(Pmed2 > 0.001, Pmed2, 0.001)
         Pmed2 <- log(Pmed2)
-        P.out2 <- sapply(1:length(Pmed2),function(x){rlnorm(1,Pmed2[x], sigma[x])})
+        
+        Max.P <- 8
+        set.seed(1)
+        P.out2 <- SSModel:::gen.lnorm(Pmed2, sigma, Max.P)
         
         B.next2[[paste0(object$Years[i])]] <- data.frame(Biomass = (P.out2 * K), 
                                                          year =  object$Years[i]+2, 
@@ -178,7 +180,11 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
         # apply process error
         Pmed2 <- ifelse(Pmed2 > 0.001, Pmed2, 0.001)
         Pmed2 <- log(Pmed2)
-        P.out2 <- sapply(1:length(Pmed2),function(x){rlnorm(1,Pmed2[x], sigma[x])})
+      
+        Max.P <- 8
+        set.seed(1)
+        P.out2 <- SSModel:::gen.lnorm(Pmed2, sigma, Max.P)
+        
         catch <- P.out2 * K * mu[2]
         B.next2[[paste0(object$Years[i])]] <- data.frame(Biomass = (P.out2 * K * (1-mu[2])), 
                                                          year =  object$Years[i]+2, 
