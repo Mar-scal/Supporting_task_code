@@ -59,12 +59,6 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
       else return(list(exploit = rep(exploit, SDM.num), Effort = 0))
     }
     
-    # only need this if specifying mu in arguments
-    if (any(!is.na(mu))) {
-      mu.exploit <- Proj.exploit(mn.Bh, mn.Bh/object$data$Area, 
-                                 mu[1], object$e.parms, object$data$Area)
-    }
-    
     # need this for current year and potentially other years
     c.exploit <- list(exploit = sweep(sweep(sweep(Bh, 
                                                   2, object$data$Area, "/")/apply(Bh, 1, sum), 
@@ -73,20 +67,17 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
     PCatch <- mn.Bh * c.exploit$exploit
     
     
-    
-    
 ############### current year ##################################
     totalcatch <- object$data$C[i-1]
-    PCatch <- totalcatch * sweep(PCatch, 1, apply(PCatch, 1, sum), 
+    PCatch.h <- totalcatch * sweep(PCatch, 1, apply(PCatch, 1, sum), 
                                  "/")/Kh
-    catch <- PCatch[,strata] * K
+    catch <- PCatch.h[,strata] * K
     
     B.next0[[paste0(object$Years[i])]] <- data.frame(Biomass = B.last, 
                                                      year =  object$Years[i], 
                                                      catch = catch,
                                                      totalcatch = object$data$C[i-1], 
                                                      mu = NA,
-                                                     Fmort = NA,
                                                      proj=0,
                                                      B.change=NA,
                                                      pB0_increase=NA)
@@ -103,20 +94,19 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
     # mu[t] <- C[t]/(B[t]+C[t])
     # # Instantaneous fishing mortality
     # Fmort[t] <- -log(max(1 - mu[t], 0.0001))	
-    browser()
-  
+    
     if(is.na(mu[1])){
       
       totalcatch <- object$data$C[i]
-      PCatch <- totalcatch * sweep(PCatch, 1, apply(PCatch, 1, sum), 
+      PCatch.h <- totalcatch * sweep(PCatch, 1, apply(PCatch, 1, sum), 
                               "/")/Kh
-      catch <- PCatch[,strata] * K
+      catch <- PCatch.h[,strata] * K
       
       # process equation for 29W
       Pmed.p <- exp(-m) * (object$data$g[i] * (P + R))
       # remove catch
       #Pcatch <- Pmed.p * exploit
-      Pmed <- Pmed.p - PCatch[,strata]
+      Pmed <- Pmed.p - PCatch.h[,strata]
       
       Pmed[Pmed < 1e-05] <- 1e-04
       Pmed <- log(Pmed)
@@ -128,29 +118,37 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
                                                        year =  object$Years[i]+1, 
                                                        catch = catch, 
                                                        totalcatch=totalcatch,
-                                                       mu = mu[1],
-                                                       Fmort = catch/((P.out*K)+ catch),
+                                                       mu = catch/((P.out*K)+ catch),
                                                        proj=1)
     }
-    browser()
+    
     # For offshore, don't remove removals using mu. Use CATCH! This is just here for kicks.... 
     if(!is.na(mu[1])){
+      
+      # only need this if specifying mu in arguments
+      mu.exploit <- Proj.exploit(mn.Bh, mn.Bh/object$data$Area, 
+                                 mu[1], object$e.parms, object$data$Area)
+      
       # instantaneous vs. finite mortality
       # proportion survived = exp(-mu)
       # process equation for 29W
       Pmed <- exp(-m) * (object$data$g[i] * (P + R))
+      PCatch.h <- Pmed * mu.exploit$exploit[strata]
+      Pmed <- Pmed - PCatch.h
+      catch <- PCatch.h * K
+      
+      
       Pmed[Pmed < 1e-05] <- 1e-04
       Pmed <- log(Pmed)
       Max.P <- 6
       set.seed(1)
       P.out <- SSModeltest:::gen.lnorm(Pmed, sigma, Max.P)
-      catch <- P.out * K * mu[1]
-
+      
       B.next1[[paste0(object$Years[i])]] <- data.frame(Biomass = P.out * K * (1-mu[1]),
                                                        year =  object$Years[i]+1,
                                                        catch = catch,
+                                                       totalcatch = NA,
                                                        mu = mu[1],
-                                                       Fmort = catch/((P.out*K*(1-mu[1]))+ catch),
                                                        proj=1)
     }
    
@@ -170,15 +168,15 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
       if(is.na(mu[2])){
         
         totalcatch <- object$data$C[i+1]
-        PCatch <- totalcatch * sweep(PCatch, 1, apply(PCatch, 1, sum), 
+        PCatch.h <- totalcatch * sweep(PCatch, 1, apply(PCatch, 1, sum), 
                                      "/")/Kh
-        catch <- PCatch[,strata] * K
+        catch <- PCatch.h[,strata] * K
         
         # process equation for 29W
         Pmed2.p <- exp(-m) * (object$data$g[i] * (P.out + R))
         # remove catch
         #Pcatch <- Pmed.p * exploit
-        Pmed2 <- Pmed2.p - PCatch[,strata]
+        Pmed2 <- Pmed2.p - PCatch.h[,strata]
         
         Pmed2[Pmed2 < 1e-05] <- 1e-04
         Pmed2 <- log(Pmed2)
@@ -190,33 +188,37 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
                                                          year =  object$Years[i]+2, 
                                                          catch = catch,
                                                          totalcatch=totalcatch,
-                                                         mu = mu[2],
-                                                         Fmort = catch/(P.out2*K + catch),
+                                                         mu = catch/(P.out2*K + catch),
                                                          proj = 2)
         
       }
         
-        
-        
-      }
       if(!is.na(mu[2])){
         # instantaneous vs. finite mortality
         # proportion survived = exp(-mu)
         
+        # only need this if specifying mu in arguments
+        mu.exploit <- Proj.exploit(mn.Bh, mn.Bh/object$data$Area, 
+                                   mu[2], object$e.parms, object$data$Area)
+        
         # process equation for 29W
         Pmed2.p <- exp(-m) * (object$data$g[i] * (P.out + R))
         # remove catch
+        PCatch.h <- Pmed2.p * mu.exploit$exploit[strata]
+        Pmed <- Pmed2.p - PCatch.h
+        catch <- PCatch.h * K
+        
         Pmed2.p[Pmed2.p < 1e-05] <- 1e-04
         Pmed2.p <- log(Pmed2.p)
         Max.P <- 6
         set.seed(1)
         P.out2 <- SSModeltest:::gen.lnorm(Pmed2.p, sigma, Max.P)
-        catch <- P.out2 * K * mu[2]
+        
         B.next2[[paste0(object$Years[i])]] <- data.frame(Biomass = (P.out2 * K * (1-mu[2])), 
                                                          year =  object$Years[i]+2, 
                                                          catch = catch,
+                                                         totalcatch = NA,
                                                          mu = mu[2],
-                                                         Fmort = catch/(P.out2*K*(1-mu[2]) + catch),
                                                          proj = 2)
       }
       
@@ -231,15 +233,15 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
       if(is.na(mu[2])){
         
         totalcatch <- object$data$C[i+1]
-        PCatch <- totalcatch * sweep(PCatch, 1, apply(PCatch, 1, sum), 
+        PCatch.h <- totalcatch * sweep(PCatch, 1, apply(PCatch, 1, sum), 
                                      "/")/Kh
-        catch <- PCatch[,strata] * K
+        catch <- PCatch.h[,strata] * K
         
         # process equation for 29W
         Pmed2.p <- (P.out + R) * surplus_multiplier
         # remove catch
         #Pcatch <- Pmed.p * exploit
-        Pmed2 <- Pmed2.p - PCatch[,strata]
+        Pmed2 <- Pmed2.p - PCatch.h[,strata]
         
         Pmed2[Pmed2 < 1e-05] <- 1e-04
         Pmed2 <- log(Pmed2)
@@ -260,6 +262,17 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
         # instantaneous vs. finite mortality
         # proportion survived = exp(-mu)
         
+        # only need this if specifying mu in arguments
+        mu.exploit <- Proj.exploit(mn.Bh, mn.Bh/object$data$Area, 
+                                   mu[2], object$e.parms, object$data$Area)
+        
+        # process equation for 29W
+        Pmed2.p <- (P.out + R) * surplus_multiplier
+        # remove catch
+        PCatch <- Pmed2.p * mu.exploit$exploit[strata]
+        Pmed <- Pmed2.p - PCatch
+        catch <- PCatch * K
+        
         # process equation for 29W
         Pmed2.p <- (P.out + R) * surplus_multiplier
         # remove catch
@@ -273,6 +286,7 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
         B.next2[[paste0(object$Years[i])]] <- data.frame(Biomass = (P.out2 * K * (1-mu[2])), 
                                                          year =  object$Years[i]+2, 
                                                          catch = catch,
+                                                         totalcatch=NA,
                                                          mu = mu[2],
                                                          Fmort = catch/((P.out2*K * (1-mu[2]))+ catch),
                                                          proj = 2)

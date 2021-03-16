@@ -50,7 +50,7 @@ two_year_projections <- function(
   
   LRP <- RP$LRP[RP$area == as.character(area)]
   USR <- RP$USR[RP$area == as.character(area)]
-  browser()
+  
   # for 2020 projections, use 2020 landings.
   if(max(mod.res$Years)==2019){
     landings2020 <- data.frame(area=c("1A", "1B", "3", "4", "6", "29A", "29B", "29C", "29D", "GBa", "BBn"), 
@@ -68,7 +68,6 @@ two_year_projections <- function(
     mod.res$data$C[length(mod.res$data$C)+1] <- landings2021$landings[landings2021$area==as.character(area)]
   }
   
-  browser()
   # for 29W, deal with the different strata and tidy up. We decided to only look at the ones that are compared to reference points
   if(area == "29A") strata <- which(mod.res$labels == "Medium")
   if(area %in% c("29B", "29C", "29D")) strata <- which(mod.res$labels == "High")
@@ -171,13 +170,13 @@ if(pred.eval==F){
   message("generating decision tables")
   source(paste0("./", folder, "/process_2y_proj.R"))
   exp.range <- seq(0, 0.3, 0.01)
-  
-  checktable <- do.call(rbind, map_df(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(x, NA), decisiontable=T))$B.next1)
-  
-  decision1 <- do.call(rbind, process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(exploitation, NA), decisiontable=F)$B.next1)
-  
-  decision2 <- map(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(NA, x), decisiontable=F))
   browser()
+  checktable <- do.call(rbind, map_df(exp.range, function(x) process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(x, NA), decisiontable=T))$B.next1)
+  
+  decision1 <- do.call(rbind, process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(exploitation, NA), decisiontable=F)$B.next1)
+  
+  decision2 <- map(exp.range, function(x) process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(NA, x), decisiontable=F))
+  
   # tidy up the output
   decision.df <- NULL
   for(i in 1:length(decision2)){
@@ -187,7 +186,7 @@ if(pred.eval==F){
     process <- rbind(B.next0, B.next1, B.next2)
     decision.df <- rbind(decision.df, process)
   }
-  browser()
+  
   decisiontable <- function(object, proj, year, LRP, USR){
     object <- object[object$proj==proj & object$year == year,]
     return(
@@ -198,11 +197,14 @@ if(pred.eval==F){
                          catch=median(catch),
                          mu=median(mu),
                          B.change=median(B.change),
-                         pB0 = sum(pB0)/length(pB0),
+                         pB0_increase = sum(pB0_increase)/length(pB0_increase),
                          p.LRP = round(sum(Biomass > LRP)/length(Biomass), 3),
                          p.USR = round(sum(Biomass > USR)/length(Biomass), 3))
     )
   }
+  
+  # source("./predict.ssmodeltest.r")
+  # predict.ssmodeltest(A.mod.res)
   
   checktable <- decisiontable(checktable, proj=1, year=2020, LRP=LRP, USR=USR)
   
@@ -219,7 +221,7 @@ if(pred.eval==F){
     dplyr::select(year, mu, catch, p.USR) %>%
     dplyr::summarise(mu = max(mu)) %>%
     dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
-    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "B.change", "pB0", "p.LRP", "p.USR"))
+    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "B.change", "pB0_increase", "p.LRP", "p.USR"))
   
   
   HCRscenario2 <- decision.2 %>%
@@ -229,7 +231,7 @@ if(pred.eval==F){
       dplyr::select(year, mu, catch, p.USR) %>%
       dplyr::summarise(mu = max(mu)) %>%
       dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
-      dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "B.change", "pB0", "p.LRP", "p.USR"))
+      dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "B.change", "pB0_increase", "p.LRP", "p.USR"))
 
   
   
