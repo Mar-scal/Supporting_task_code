@@ -27,10 +27,10 @@ two_year_projections <- function(
   }
   
   if(path == "Repo working directory (fast)"){
-    load(file = paste0("./", folder, "/SPA", area, "_Model_2019.RData"))
+    load(file = paste0("./", folder, "/SFA_", area, "_2019.RData"))
   } 
-  
-  mod.res <- get(ls()[which(grepl(x=ls(), paste0("Spa", area)))])
+
+  mod.res <- get(ls()[which(grepl(x=ls(), paste0("mod.res")))])
   
   if(path == "Repo working directory (fast)") message_txt <- paste0("Loading RData file from ", getwd())
   if(path == "Network (slow)") message_txt <- paste0("Loading RData file from ESS or Sky")
@@ -50,7 +50,7 @@ two_year_projections <- function(
   
   LRP <- RP$LRP[RP$area == as.character(area)]
   USR <- RP$USR[RP$area == as.character(area)]
-  
+  browser()
   # for 2020 projections, use 2020 landings.
   if(max(mod.res$Years)==2019){
     landings2020 <- data.frame(area=c("1A", "1B", "3", "4", "6", "29A", "29B", "29C", "29D", "GBa", "BBn"), 
@@ -68,6 +68,52 @@ two_year_projections <- function(
     mod.res$data$C[length(mod.res$data$C)+1] <- landings2021$landings[landings2021$area==as.character(area)]
   }
   
+  browser()
+  # for 29W, deal with the different strata and tidy up. We decided to only look at the ones that are compared to reference points
+  if(area == "29A") strata <- which(mod.res$labels == "Medium")
+  if(area %in% c("29B", "29C", "29D")) strata <- which(mod.res$labels == "High")
+  
+  if(grepl(area, pattern="29")) {
+    
+    #this gets used for SSModeltest_predict_2y function (for decision table)
+    mod.res.original <- mod.res
+    
+    # the rest is for the boxplots
+    # make an NY variable in SFA29 data
+    mod.res$data$NY <- length(unique(mod.res$Years))
+    double <- map(mod.res$data, function(x) class(x) =="matrix")
+    single <- map(mod.res$data, function(x) !class(x) == "matrix")
+    #for these, only keep the one with the strata
+    stratified <- names(double[which(double==TRUE)])
+    stratified <- map(mod.res$data[stratified], function(x) x[, strata])
+    single <- names(single[which(single==TRUE)])
+    single <- mod.res$data[single]
+    mod.res$data <- c(single, stratified)
+    
+    sims.names <- names(as.data.frame(mod.res$sims.matrix))
+    sims.names.strat <- which(grepl(x=sims.names, pattern=paste0(",", strata, "]"), fixed=T))
+    sims.names.no <- which(!grepl(x=sims.names, pattern="[", fixed=T))
+    sims.names.strat2 <- which(grepl(x=sims.names, pattern=paste0("[", strata, "]"), fixed=T))
+    mod.res$sims.matrix <- mod.res$sims.matrix[,c(sims.names.strat, sims.names.no, sims.names.strat2)]
+    colnames(mod.res$sims.matrix) <- gsub(x=colnames(mod.res$sims.matrix), pattern=paste0("[", strata,"]"), replacement = "", fixed=T)
+    colnames(mod.res$sims.matrix) <- gsub(x=colnames(mod.res$sims.matrix), pattern=paste0(",", strata,"]"), replacement = "]", fixed=T)
+    colnames(mod.res$sims.matrix) <- gsub(x=colnames(mod.res$sims.matrix), pattern="h", replacement = "", fixed=T)
+    
+    names(mod.res$data) <- gsub(x=names(mod.res$data), pattern="h", replacement = "", fixed=T)
+    names(mod.res$data) <- gsub(x=names(mod.res$data), pattern="Catc", replacement = "Catch", fixed=T)
+    
+    mod.res$summary <- mod.res$summary[which(row.names(mod.res$summary) %in% names(as.data.frame(mod.res$sims.matrix))),]
+    rownames(mod.res$summary) <- gsub(x=rownames(mod.res$summary), pattern=paste0("[", strata,"]"), replacement = "", fixed=T)
+    rownames(mod.res$summary) <- gsub(x=rownames(mod.res$summary), pattern=paste0(",", strata,"]"), replacement = "]", fixed=T)
+    rownames(mod.res$summary) <- gsub(x=rownames(mod.res$summary), pattern="h", replacement = "", fixed=T)
+    
+    mod.res$sims.matrix <- as.data.frame(mod.res$sims.matrix)
+    
+    for(i in 1:length(mod.res$data$r)){
+      mod.res$sims.matrix$r <- mod.res$data$r[i]
+      names(mod.res$sims.matrix)[names(mod.res$sims.matrix)=="r"] <- paste0("r[", i,"]")
+    }
+  }
   
   
   #################### loop through years from beginning of time series up to y, to get 1 and 2y projections for each year. We opt to do this instead of reading in all of the old model run RDatas.  ############################
@@ -131,7 +177,7 @@ if(pred.eval==F){
   decision1 <- do.call(rbind, process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(exploitation, NA), decisiontable=F)$B.next1)
   
   decision2 <- map(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(NA, x), decisiontable=F))
-  
+  browser()
   # tidy up the output
   decision.df <- NULL
   for(i in 1:length(decision2)){
@@ -141,7 +187,7 @@ if(pred.eval==F){
     process <- rbind(B.next0, B.next1, B.next2)
     decision.df <- rbind(decision.df, process)
   }
-  
+  browser()
   decisiontable <- function(object, proj, year, LRP, USR){
     object <- object[object$proj==proj & object$year == year,]
     return(
