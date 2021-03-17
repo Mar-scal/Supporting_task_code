@@ -171,9 +171,13 @@ if(pred.eval==F){
   source(paste0("./", folder, "/process_2y_proj.R"))
   exp.range <- seq(0, 0.3, 0.01)
   browser()
-  checktable <- do.call(rbind, map_df(exp.range, function(x) process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(x, NA), decisiontable=T))$B.next1)
   
-  decision1 <- do.call(rbind, process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(exploitation, NA), decisiontable=F)$B.next1)
+  checktable <- map_df(exp.range, function(x) process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(x, NA), decisiontable=T))$B.next1
+  checktable <- do.call(rbind, checktable[[1]])
+  
+  decision1 <- process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(exploitation, NA), decisiontable=F)$B.next1
+  
+  decision1 <- map_df(names(decision1), function(x) do.call(rbind, decision1[[x]]))
   
   decision2 <- map(exp.range, function(x) process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(NA, x), decisiontable=F))
   

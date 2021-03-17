@@ -33,7 +33,7 @@ time1 <- Sys.time()
 
 for(area in c(#"1A", "1B", "3", "4", "6", 
               #"GBa", "BBn",
-  "29A"
+  "29A", "29B", "29C", "29D"
               )){
   
   ####################
@@ -54,7 +54,7 @@ for(area in c(#"1A", "1B", "3", "4", "6",
                                                           sample=0.001,
                                                           path="Repo working directory (fast)", 
                                                           save=F,
-                                                          pred.eval=T))
+                                                          pred.eval=F))
   
   
   save(out, file = paste0("./", folder, "/", area, "/twoyearprojections.RData"))
