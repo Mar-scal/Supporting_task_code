@@ -29,12 +29,13 @@ HCRs <- data.frame(area = c("BBn", "GBa",
                    exploitation = c(0.15, 0.25, 
                                     0.15, 0.15, 0.15, 0.15, 0.18,
                                     0.05, 0.06, 0.06, 0.09))
-time1 <- Sys.time()
 
-for(area in c(#"1A", "1B", "3", "4", "6", 
-              #"GBa", "BBn",
-  "29A"
-              )){
+
+areas <- c("1A", "1B", "3", "4", "6", 
+              "GBa", "BBn")
+
+time1 <- Sys.time()
+for(area in areas){
   
   ####################
   
@@ -51,9 +52,9 @@ for(area in c(#"1A", "1B", "3", "4", "6",
                                                           exploitation=HCRs$exploitation[HCRs$area==area], 
                                                           runtype=c("Decision tables and plots"), #"Decision tables only"),
                                                           surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
-                                                          sample=0.001,
+                                                          sample=100,
                                                           path="Repo working directory (fast)", 
-                                                          save=F,
+                                                          save=T,
                                                           pred.eval=T))
   
   
@@ -61,213 +62,223 @@ for(area in c(#"1A", "1B", "3", "4", "6",
 }
 time2 <- Sys.time()
 time2-time1
-#Time difference of 1.600737 hours for all BoF
+#Time difference of 1.600737 hours for all BoF at 30%
 ```
 
 
 # Results
 ```{r}
-
-load(paste0("./", folder, "/", area, "/twoyearprojections.RData"))
-#load(paste0("Y:/Projects/CSAS/2y_Projection_RAP/data/", area, "/twoyearprojections.RData"))
-require(patchwork)
-require(cowplot)
-# plot_grid(plot_drt_cod$drt + xlab(NULL), plot_drt_had$drt + ylab(NULL) + xlab(NULL), plot_drt_ytf$drt +ylab(NULL) + xlab(NULL), plot_dt_cod$dt, plot_dt_had$dt + ylab(NULL), plot_dt_ytf$dt + ylab(NULL), ncol=3, align="v")
-
-# pred.eval
-
-# Using the realized catch for all projections (except 2021), we get biomass posterior distributions which we can compare between projection timings. 
-png(paste0("./", folder, "/", area, "/pred_eval.png"), height=6, width=22, res=400, units="in")
-plot_grid(out[[1]]$realized$pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
-          out[[2]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
-          out[[3]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
-          ncol=3, align="v")
-dev.off()
-# GBa 150000 and 150000
-# BB 30000 and 10000
-
-# This simply shows the biomass projections for the most recent year. 
-png(paste0("./", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
-plot_grid(out[[1]]$realized$zoom.pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
-          out[[2]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
-          out[[3]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
-          ncol=3, align="v")
-dev.off()
-
-
-# the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
-png(paste0("./", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
-plot_grid(out[[1]]$realized$evaluation1, 
-          out[[2]]$realized$evaluation1+ ylab(NULL) , 
-          out[[3]]$realized$evaluation1+ ylab(NULL) ,
-          out[[1]]$realized$evaluation2, 
-          out[[2]]$realized$evaluation2+ ylab(NULL) , 
-          out[[3]]$realized$evaluation2+ ylab(NULL) , 
-          ncol=3, align="v")
-dev.off()
-# GBa 20000 and 1.2
-# BBn 4000 and 0.8
-
-# A HCR is used to select catch for year 1 and year 2. 
-png(paste0("./", folder, "/", area, "/catch_diff_eval_HCR1.png"), height=6, width=22, res=400, units="in")
-plot_grid(out[[1]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab("Catch potential (mt)"), 
-          out[[2]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), 
-          out[[3]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), ncol=3, align="v")
-dev.off()
-
-png(paste0("./", folder, "/", area, "/catch_diff_eval_HCR2.png"), height=6, width=22, res=400, units="in")
-plot_grid(out[[1]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright")+ ylab("Catch potential (mt)"),  
-          out[[2]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), 
-          out[[3]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), ncol=3, align="v")
-dev.off()
-
-png(paste0("./", folder, "/", area, "/decision_impact_HCR1.png"), height=12, width=22, res=400, units="in")
-plot_grid(out[[1]]$impact_HCR1$evaluation3, 
-          out[[2]]$impact_HCR1$evaluation3 + ylab(NULL), 
-          out[[3]]$impact_HCR1$evaluation3 + ylab(NULL),
-          out[[1]]$impact_HCR1$evaluation4, 
-          out[[2]]$impact_HCR1$evaluation4 + ylab(NULL), 
-          out[[3]]$impact_HCR1$evaluation4 + ylab(NULL), ncol=3, align="v")
-dev.off()
-# GBa 10000 and 3
-# BBn 1000 and 4
-
-png(paste0("./", folder, "/", area, "/decision_impact_HCR2.png"), height=12, width=22, res=400, units="in")
-plot_grid(out[[1]]$impact_HCR2$evaluation3, 
-          out[[2]]$impact_HCR2$evaluation3 + ylab(NULL), 
-          out[[3]]$impact_HCR2$evaluation3 + ylab(NULL),
-          out[[1]]$impact_HCR2$evaluation4, 
-          out[[2]]$impact_HCR2$evaluation4 + ylab(NULL), 
-          out[[3]]$impact_HCR2$evaluation4 + ylab(NULL), ncol=3, align="v")
-dev.off()
-# GBa 10000 and 3
-# BBn NA
-
-
-```
-
-
-## decision tables
-```{r}
-require(openxlsx)
-dt <- createWorkbook()
-addWorksheet(wb=dt, sheetName = "2020_1yr")
-writeData(dt, sheet=1, 
-          out[[1]]$checktable
-          )
-
-addWorksheet(wb=dt, sheetName = "2020_2yr")
-writeData(dt, sheet=2, 
-          out[[1]]$decision.2[out[[1]]$decision.2$year==2020 & out[[1]]$decision.2$proj==2,]
-          )
-
-addWorksheet(wb=dt, sheetName = "2021_Surplus0")
-writeData(dt, sheet=3,
-          out[[1]]$decision.2[out[[1]]$decision.2$year==2021,]
-          )
-
-addWorksheet(wb=dt, sheetName = "2021_SurplusMedian")
-writeData(dt, sheet=4,
-          out[[2]]$decision.2[out[[1]]$decision.2$year==2021,]
-          )
-
-addWorksheet(wb=dt, sheetName = "2021_SurplusPrevious")
-writeData(dt, sheet=5,
-          out[[3]]$decision.2[out[[1]]$decision.2$year==2021,]
-          )
-
-saveWorkbook(dt, file = paste0("./", folder, "/", area, "/decisiontables.xlsx"), overwrite=T)
-
-```
-
-# Plot values
-```{r}
-load(paste0("./", folder, "/", area, "/twoyearprojections.RData"))
-SP <- c("zero", "median", "lastyear")
-
-pred.eval.dat <- map_df(1:3, function(x) cbind(out[[x]]$realized$all_sum, surplus=SP[x]))
-
-pred.eval.dat$range <- pred.eval.dat$max - pred.eval.dat$min
-
-range.pred <- pred.eval.dat %>%
-  dplyr::select(year, proj, range, surplus) %>%
-  tidyr::pivot_wider(values_from=range, names_from = proj, id_cols = c(year, surplus), names_prefix="range") %>%
-  dplyr::mutate(to_real = range2 - range0,
-                to_1 = range2 - range1, 
-                range_greater_than_real = ifelse(range2 > range0, 1, 0),
-                range_greater_than_1 = ifelse(range2 > range1, 1, 0))
-
-range.summary <- range.pred %>%
-  dplyr::group_by(surplus) %>%
-  dplyr::summarise(
-    p_y2range_greater_than_realized = sum(range_greater_than_real, na.rm=T)/sum(!is.na(range_greater_than_real)),
-    p_y2range_greater_than_1 = sum(range_greater_than_1, na.rm=T)/sum(!is.na(range_greater_than_1)))
-
-
-med.pred <- pred.eval.dat %>%
-  dplyr::select(year, proj, med, surplus) %>%
-  tidyr::pivot_wider(values_from=med, names_from = proj, id_cols = c(year, surplus), names_prefix="med") %>%
-  dplyr::mutate(med_real = med2-med0,
-                med_1 = med2-med1,
-                y1diff = abs(med1 - med0),
-                y2diff = abs(med2 - med0),
-                y2_closer_than_y1 = ifelse(y2diff < y1diff, 1, 0))
-
-med.summary <- med.pred %>%
-  dplyr::group_by(surplus) %>%
-  dplyr::summarise(p_y2med_closer_to_real_than_y1med = sum(y2_closer_than_y1, na.rm=T)/sum(!is.na(y2_closer_than_y1)))
-
-pred.eval.summary <- full_join(range.pred, med.pred, by=c("year", "surplus"))
-
-scenario.pred <- full_join(range.summary, med.summary, by="surplus")
+for (area in areas){
   
-eval.1.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation1)$data[[1]], x, ymin, ymax), surplus=SP[x]))
-
-eval.2.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation2)$data[[1]], x, ymin, ymax), surplus=SP[x]))
-
-HCR.1.dat <- map_df(1:3, function(x) cbind(out[[x]]$impact_HCR1$decisions, surplus=SP[x]))
-
-HCR.2.dat <- map_df(1:3, function(x) cbind(out[[x]]$impact_HCR2$decisions, surplus=SP[x]))
-
-
-require(openxlsx)
-plotdat <- createWorkbook()
-addWorksheet(wb=plotdat, sheetName = "pred.eval.dat")
-writeData(plotdat, sheet=1, 
-          pred.eval.dat
-          )
-
-addWorksheet(wb=plotdat, sheetName = "pred.eval.summary")
-writeData(plotdat, sheet=2, 
-          pred.eval.summary
-          )
-
-addWorksheet(wb=plotdat, sheetName = "scenario.pred")
-writeData(plotdat, sheet=3, 
-          scenario.pred
-          )
-
-addWorksheet(wb=plotdat, sheetName = "eval.1.dat")
-writeData(plotdat, sheet=4,
-          eval.1.dat
-          )
-
-addWorksheet(wb=plotdat, sheetName = "eval.2.dat")
-writeData(plotdat, sheet=5,
-          eval.2.dat
-          )
-
-addWorksheet(wb=plotdat, sheetName = "HCR.1.dat")
-writeData(plotdat, sheet=6,
-          HCR.1.dat
-          )
-
-addWorksheet(wb=plotdat, sheetName = "HCR.2.dat")
-writeData(plotdat, sheet=7,
-          HCR.2.dat
-          )
-
-saveWorkbook(plotdat, file = paste0("./", folder, "/", area, "/plot_data.xlsx"), overwrite=T)
+  print(area)
+  if(area %in% c("GBa", "BBn")) folder <- "Offshore"
+  if(area %in% c("1A", "1B", "3", "4", "6")) folder <- "BoF"
+  if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"
+  
+  load(paste0("./", folder, "/", area, "/twoyearprojections.RData"))
+  #load(paste0("Y:/Projects/CSAS/2y_Projection_RAP/data/", area, "/twoyearprojections.RData"))
+  require(patchwork)
+  require(cowplot)
+  # plot_grid(plot_drt_cod$drt + xlab(NULL), plot_drt_had$drt + ylab(NULL) + xlab(NULL), plot_drt_ytf$drt +ylab(NULL) + xlab(NULL), plot_dt_cod$dt, plot_dt_had$dt + ylab(NULL), plot_dt_ytf$dt + ylab(NULL), ncol=3, align="v")
+  
+  # pred.eval
+  
+  # Using the realized catch for all projections (except 2021), we get biomass posterior distributions which we can compare between projection timings. 
+  png(paste0("./", folder, "/", area, "/pred_eval.png"), height=6, width=22, res=400, units="in")
+  plot_grid(out[[1]]$realized$pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+            out[[2]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+            out[[3]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
+            ncol=3, align="v")
+  dev.off()
+  # GBa 150000 and 150000
+  # BB 30000 and 10000
+  
+  # This simply shows the biomass projections for the most recent year. 
+  png(paste0("./", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
+  plot_grid(out[[1]]$realized$zoom.pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+            out[[2]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+            out[[3]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
+            ncol=3, align="v")
+  dev.off()
+  
+  
+  # the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
+  png(paste0("./", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+  plot_grid(out[[1]]$realized$evaluation1, 
+            out[[2]]$realized$evaluation1+ ylab(NULL) , 
+            out[[3]]$realized$evaluation1+ ylab(NULL) ,
+            out[[1]]$realized$evaluation2, 
+            out[[2]]$realized$evaluation2+ ylab(NULL) , 
+            out[[3]]$realized$evaluation2+ ylab(NULL) , 
+            ncol=3, align="v")
+  dev.off()
+  # GBa 20000 and 1.2
+  # BBn 4000 and 0.8
+  
+  # A HCR is used to select catch for year 1 and year 2. 
+  png(paste0("./", folder, "/", area, "/catch_diff_eval_HCR1.png"), height=6, width=22, res=400, units="in")
+  plot_grid(out[[1]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab("Catch potential (mt)"), 
+            out[[2]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), 
+            out[[3]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), ncol=3, align="v")
+  dev.off()
+  
+  png(paste0("./", folder, "/", area, "/decision_impact_HCR1.png"), height=12, width=22, res=400, units="in")
+  plot_grid(out[[1]]$impact_HCR1$evaluation3, 
+            out[[2]]$impact_HCR1$evaluation3 + ylab(NULL), 
+            out[[3]]$impact_HCR1$evaluation3 + ylab(NULL),
+            out[[1]]$impact_HCR1$evaluation4, 
+            out[[2]]$impact_HCR1$evaluation4 + ylab(NULL), 
+            out[[3]]$impact_HCR1$evaluation4 + ylab(NULL), ncol=3, align="v")
+  dev.off()
+  # GBa 10000 and 3
+  # BBn 1000 and 4
+  
+  if(!area %in% c("BBn", "6")){
+    png(paste0("./", folder, "/", area, "/catch_diff_eval_HCR2.png"), height=6, width=22, res=400, units="in")
+    plot_grid(out[[1]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright")+ ylab("Catch potential (mt)"),  
+              out[[2]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), 
+              out[[3]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), ncol=3, align="v")
+    dev.off()
+    
+    
+    png(paste0("./", folder, "/", area, "/decision_impact_HCR2.png"), height=12, width=22, res=400, units="in")
+    plot_grid(out[[1]]$impact_HCR2$evaluation3, 
+              out[[2]]$impact_HCR2$evaluation3 + ylab(NULL), 
+              out[[3]]$impact_HCR2$evaluation3 + ylab(NULL),
+              out[[1]]$impact_HCR2$evaluation4, 
+              out[[2]]$impact_HCR2$evaluation4 + ylab(NULL), 
+              out[[3]]$impact_HCR2$evaluation4 + ylab(NULL), ncol=3, align="v")
+    dev.off()
+  }
+  # GBa 10000 and 3
+  # BBn NA
+  
+  
+  
+  ## decision tables
+  require(openxlsx)
+  dt <- createWorkbook()
+  addWorksheet(wb=dt, sheetName = "2020_1yr")
+  writeData(dt, sheet=1, 
+            out[[1]]$checktable
+  )
+  
+  addWorksheet(wb=dt, sheetName = "2020_2yr")
+  writeData(dt, sheet=2, 
+            out[[1]]$decision.2[out[[1]]$decision.2$year==2020 & out[[1]]$decision.2$proj==2,]
+  )
+  
+  addWorksheet(wb=dt, sheetName = "2021_Surplus0")
+  writeData(dt, sheet=3,
+            out[[1]]$decision.2[out[[1]]$decision.2$year==2021,]
+  )
+  
+  addWorksheet(wb=dt, sheetName = "2021_SurplusMedian")
+  writeData(dt, sheet=4,
+            out[[2]]$decision.2[out[[1]]$decision.2$year==2021,]
+  )
+  
+  addWorksheet(wb=dt, sheetName = "2021_SurplusPrevious")
+  writeData(dt, sheet=5,
+            out[[3]]$decision.2[out[[1]]$decision.2$year==2021,]
+  )
+  
+  saveWorkbook(dt, file = paste0("./", folder, "/", area, "/decisiontables.xlsx"), overwrite=T)
+  
+  
+  
+  
+  # Plot values
+  #load(paste0("./", folder, "/", area, "/twoyearprojections.RData"))
+  SP <- c("zero", "median", "lastyear")
+  
+  pred.eval.dat <- map_df(1:3, function(x) cbind(out[[x]]$realized$all_sum, surplus=SP[x]))
+  
+  pred.eval.dat$range <- pred.eval.dat$max - pred.eval.dat$min
+  
+  range.pred <- pred.eval.dat %>%
+    dplyr::select(year, proj, range, surplus) %>%
+    tidyr::pivot_wider(values_from=range, names_from = proj, id_cols = c(year, surplus), names_prefix="range") %>%
+    dplyr::mutate(to_real = range2 - range0,
+                  to_1 = range2 - range1, 
+                  range_greater_than_real = ifelse(range2 > range0, 1, 0),
+                  range_greater_than_1 = ifelse(range2 > range1, 1, 0))
+  
+  range.summary <- range.pred %>%
+    dplyr::group_by(surplus) %>%
+    dplyr::summarise(
+      p_y2range_greater_than_realized = sum(range_greater_than_real, na.rm=T)/sum(!is.na(range_greater_than_real)),
+      p_y2range_greater_than_1 = sum(range_greater_than_1, na.rm=T)/sum(!is.na(range_greater_than_1)))
+  
+  
+  med.pred <- pred.eval.dat %>%
+    dplyr::select(year, proj, med, surplus) %>%
+    tidyr::pivot_wider(values_from=med, names_from = proj, id_cols = c(year, surplus), names_prefix="med") %>%
+    dplyr::mutate(med_real = med2-med0,
+                  med_1 = med2-med1,
+                  y1diff = abs(med1 - med0),
+                  y2diff = abs(med2 - med0),
+                  y2_closer_than_y1 = ifelse(y2diff < y1diff, 1, 0))
+  
+  med.summary <- med.pred %>%
+    dplyr::group_by(surplus) %>%
+    dplyr::summarise(p_y2med_closer_to_real_than_y1med = sum(y2_closer_than_y1, na.rm=T)/sum(!is.na(y2_closer_than_y1)))
+  
+  pred.eval.summary <- full_join(range.pred, med.pred, by=c("year", "surplus"))
+  
+  scenario.pred <- full_join(range.summary, med.summary, by="surplus")
+  
+  eval.1.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation1)$data[[1]], x, ymin, ymax), surplus=SP[x]))
+  
+  eval.2.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation2)$data[[1]], x, ymin, ymax), surplus=SP[x]))
+  
+  HCR.1.dat <- map_df(1:3, function(x) cbind(out[[x]]$impact_HCR1$decisions, surplus=SP[x]))
+  
+  if(!area %in% c("BBn", "6")){
+    HCR.2.dat <- map_df(1:3, function(x) cbind(out[[x]]$impact_HCR2$decisions, surplus=SP[x]))
+  }
+  
+  require(openxlsx)
+  plotdat <- createWorkbook()
+  addWorksheet(wb=plotdat, sheetName = "pred.eval.dat")
+  writeData(plotdat, sheet=1, 
+            pred.eval.dat
+  )
+  
+  addWorksheet(wb=plotdat, sheetName = "pred.eval.summary")
+  writeData(plotdat, sheet=2, 
+            pred.eval.summary
+  )
+  
+  addWorksheet(wb=plotdat, sheetName = "scenario.pred")
+  writeData(plotdat, sheet=3, 
+            scenario.pred
+  )
+  
+  addWorksheet(wb=plotdat, sheetName = "eval.1.dat")
+  writeData(plotdat, sheet=4,
+            eval.1.dat
+  )
+  
+  addWorksheet(wb=plotdat, sheetName = "eval.2.dat")
+  writeData(plotdat, sheet=5,
+            eval.2.dat
+  )
+  
+  addWorksheet(wb=plotdat, sheetName = "HCR.1.dat")
+  writeData(plotdat, sheet=6,
+            HCR.1.dat
+  )
+  
+  if(!area %in% c("BBn", "6")){
+    addWorksheet(wb=plotdat, sheetName = "HCR.2.dat")
+    writeData(plotdat, sheet=7,
+              HCR.2.dat
+    )
+  }
+  
+  saveWorkbook(plotdat, file = paste0("./", folder, "/", area, "/plot_data.xlsx"), overwrite=T)
+}
 
 ```
 
