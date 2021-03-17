@@ -1,6 +1,7 @@
-predict.SSModelSFA29 <- function (object, exploit = NULL, Catch = NULL, g.parm, m.avg = 5, 
+predict.ssmodeltest <- function (object, exploit = NULL, Catch = NULL, g.parm, m.avg = 5, 
           Max.P = 6, ...) 
 {
+  require(SSModeltest)
   pB0 <- B.change <- mu.p <- B.p <- vector(mode = "list", 
                                            length = length(object$labels))
   names(B.p) <- names(mu.p) <- names(B.change) <- names(pB0) <- object$labels
@@ -30,14 +31,15 @@ predict.SSModelSFA29 <- function (object, exploit = NULL, Catch = NULL, g.parm, 
   sigma <- object$sims.matrix[, test.col[7, ]]
   if (m.avg > 1) {
     for (i in 1:(m.avg - 1)) {
-      for (h in 1:H) {
+      
         test.col[5, h] <- paste("m[", object$data$N - 
                                   i, ",", h, "]", sep = "")
-      }
+      
       m <- m + object$sims.matrix[, test.col[5, ]]
     }
     m <- m/m.avg
   }
+  browser()
   Catchm <- matrix(NA, dim(Bh)[1], dim(Bh)[2])
   Bptot <- rep(0, dim(Bh)[1])
   SDM.num <- length(object$labels)
@@ -63,7 +65,7 @@ predict.SSModelSFA29 <- function (object, exploit = NULL, Catch = NULL, g.parm, 
     if (temp.exploit$exploit[h] > 0) {
       Pmed.p <- Pmed.p - PCatch.h
     }
-    Pmed.p[Pmed.p < 0.00001] <- 0.0001
+    Pmed.p[Pmed.p < 1e-05] <- 1e-04
     Pmed.p <- log(Pmed.p)
     P.p <- gen.lnorm(Pmed.p, sigma = sigma[, h], Max.P)
     B.p[[h]] <- P.p * Kh[, h]
@@ -76,3 +78,5 @@ predict.SSModelSFA29 <- function (object, exploit = NULL, Catch = NULL, g.parm, 
   class(out) <- "predict.ssmodelSFA29"
   out
 }
+# <bytecode: 0x00000163c59a68e8>
+#   <environment: namespace:SSModeltest>
