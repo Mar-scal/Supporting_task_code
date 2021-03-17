@@ -169,17 +169,18 @@ if(pred.eval==F){
   # run projections using a range of exploitation values
   message("generating decision tables")
   source(paste0("./", folder, "/process_2y_proj.R"))
-  exp.range <- seq(0, 0.3, 0.01)
+  exp.range <- seq(0, 0.2, 0.01)
   browser()
   
-  checktable <- map_df(exp.range, function(x) process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(x, NA), decisiontable=T))$B.next1
+  checktable <- map_df(exp.range, function(x) process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(x, NA), lastyear=T, decisiontable=F))$B.next1
   checktable <- do.call(rbind, checktable[[1]])
   
-  decision1 <- process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(exploitation, NA), decisiontable=F)$B.next1
+  decision1 <- process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(exploitation, NA), lastyear=F)$B.next1
   
   decision1 <- map_df(names(decision1), function(x) do.call(rbind, decision1[[x]]))
   
-  decision2 <- map(exp.range, function(x) process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(NA, x), decisiontable=F))
+  #20s minutes to run for 29W with 0.001 sampling.
+  decision2 <- map(exp.range, function(x) process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(NA, x), lastyear=F, decisiontable=T, LRP=LRP, USR=USR))
   
   # tidy up the output
   decision.df <- NULL
