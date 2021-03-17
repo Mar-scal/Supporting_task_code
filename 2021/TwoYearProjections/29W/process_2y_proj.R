@@ -7,9 +7,7 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
   if(lastyear==F) year.start <- length(object$Years)-9
   if(lastyear==T) year.start <- length(object$Years)
   
-  allyears <- vector("list", length(year.start:length(object$Years)))
-  for (i in year.start:length(object$Years)){
-    
+  yearloop <- function(i){
     pB0 <- B.change <- mu.p <- B.p <- vector(mode = "list", 
                                              length = length(object$labels))
     names(B.p) <- names(mu.p) <- names(B.change) <- names(pB0) <- object$labels
@@ -355,9 +353,10 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
       return(out=list(B.next0 = B.next0, B.next1=B.next1, B.next2=B.next2))
     }
     
-    allyears[[paste0(object$Years[i])]] <- map(1:H, function(h) projections(h))
+    return(map(1:H, function(h) projections(h)))
     
   }
   
-  return(output=list(out=allyears))
+  return(lapply(year.start:length(object$Years), function(i) yearloop(i)))
+  
 }
