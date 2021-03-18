@@ -6,25 +6,26 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
   if(area %in% c("1A", "1B", "3", "4", "6")) folder <- "BoF"
   if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"
   source(paste0("./", folder, "/process_2y_proj.R"))
-  browser()
+  
   results_process <- process_2y_proj(object=object, area=area, surplus=surplus, mu=mu, LRP = LRP, USR = USR, lastyear=F, decisiontable=F)
   
   options(scipen = 999)
+
+  if(area == "29A") strata <- which(object$labels == "Medium")
+  if(area %in% c("29B", "29C", "29D")) strata <- which(object$labels == "High")
+  
   
   # tidy up the output
-  map(results_process, rbind)
-  
-  
-  B.next0 <- do.call(rbind, results_process$B.next0)
-  B.next1 <- do.call(rbind, results_process$B.next1)
-  B.next2 <- do.call(rbind, results_process$B.next2)
+  B.next0 <- map_df(1:length(results_process$B.next0), function(x) rbind(results_process$B.next0[[x]][[strata]]))
+  B.next1 <- map_df(1:length(results_process$B.next1), function(x) rbind(results_process$B.next1[[x]][[strata]]))
+  B.next2 <- map_df(1:length(results_process$B.next2), function(x) rbind(results_process$B.next2[[x]][[strata]]))
   process <- rbind(B.next0, B.next1, B.next2)
-
+  
   # summarize it
   all_sum <- process %>%
     dplyr::group_by(year, proj) %>%
     dplyr::summarize(catch = median(catch),
-                     mu=unique(mu),
+                     mu=median(mu),
                      min=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[1],
                      lower=quantile(Biomass, na.rm = T,  c(0.05,0.25, 0.75, 0.95))[2],
                      med=median(Biomass, na.rm = T),
@@ -91,13 +92,19 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     break4 <- seq(-0.8, 0.8, 0.4)
   }
   
-  if(area =="6") {
+  if(area ==6) {
     break1 <- seq(0,4000, 1000)
     break2 <- seq(0,4000, 1000)
     break3 <- seq(-1500,1500, 500)
     break4 <- seq(-0.8, 0.8, 0.4)
   }
   
+  if(area %in% c("29A", "29B", "29C", "29D")) {
+    break1 <- seq(0,600, 200)
+    break2 <- seq(0,600, 200)
+    break3 <- seq(-200,200, 50)
+    break4 <- seq(-1, 1, 0.5)
+  }
   
   # boxplot code here
   pred.eval <- ggplot() +
@@ -220,5 +227,5 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     dev.off()
   }
   
-  return(list(results_process=process, all_sum = all_sum, pred.eval=pred.eval, zoom.pred.eval=zoom.pred.eval, pred.eval=pred.eval.F, zoom.pred.eval=zoom.pred.eval.F, evaluation1=evaluation1, evaluation2=evaluation2))
+  return(list(results_process=process, all_sum = all_sum, pred.eval=pred.eval, zoom.pred.eval=zoom.pred.eval, pred.eval.F=pred.eval.F, zoom.pred.eval.F=zoom.pred.eval.F, evaluation1=evaluation1, evaluation2=evaluation2))
 }

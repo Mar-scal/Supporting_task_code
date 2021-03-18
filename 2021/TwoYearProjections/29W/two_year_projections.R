@@ -72,48 +72,48 @@ two_year_projections <- function(
   if(area == "29A") strata <- which(mod.res$labels == "Medium")
   if(area %in% c("29B", "29C", "29D")) strata <- which(mod.res$labels == "High")
   
-  if(grepl(area, pattern="29")) {
-    
-    #this gets used for SSModeltest_predict_2y function (for decision table)
-    mod.res.original <- mod.res
-    
-    # the rest is for the boxplots
-    # make an NY variable in SFA29 data
-    mod.res$data$NY <- length(unique(mod.res$Years))
-    double <- map(mod.res$data, function(x) class(x) =="matrix")
-    single <- map(mod.res$data, function(x) !class(x) == "matrix")
-    #for these, only keep the one with the strata
-    stratified <- names(double[which(double==TRUE)])
-    stratified <- map(mod.res$data[stratified], function(x) x[, strata])
-    single <- names(single[which(single==TRUE)])
-    single <- mod.res$data[single]
-    mod.res$data <- c(single, stratified)
-    
-    sims.names <- names(as.data.frame(mod.res$sims.matrix))
-    sims.names.strat <- which(grepl(x=sims.names, pattern=paste0(",", strata, "]"), fixed=T))
-    sims.names.no <- which(!grepl(x=sims.names, pattern="[", fixed=T))
-    sims.names.strat2 <- which(grepl(x=sims.names, pattern=paste0("[", strata, "]"), fixed=T))
-    mod.res$sims.matrix <- mod.res$sims.matrix[,c(sims.names.strat, sims.names.no, sims.names.strat2)]
-    colnames(mod.res$sims.matrix) <- gsub(x=colnames(mod.res$sims.matrix), pattern=paste0("[", strata,"]"), replacement = "", fixed=T)
-    colnames(mod.res$sims.matrix) <- gsub(x=colnames(mod.res$sims.matrix), pattern=paste0(",", strata,"]"), replacement = "]", fixed=T)
-    colnames(mod.res$sims.matrix) <- gsub(x=colnames(mod.res$sims.matrix), pattern="h", replacement = "", fixed=T)
-    
-    names(mod.res$data) <- gsub(x=names(mod.res$data), pattern="h", replacement = "", fixed=T)
-    names(mod.res$data) <- gsub(x=names(mod.res$data), pattern="Catc", replacement = "Catch", fixed=T)
-    
-    mod.res$summary <- mod.res$summary[which(row.names(mod.res$summary) %in% names(as.data.frame(mod.res$sims.matrix))),]
-    rownames(mod.res$summary) <- gsub(x=rownames(mod.res$summary), pattern=paste0("[", strata,"]"), replacement = "", fixed=T)
-    rownames(mod.res$summary) <- gsub(x=rownames(mod.res$summary), pattern=paste0(",", strata,"]"), replacement = "]", fixed=T)
-    rownames(mod.res$summary) <- gsub(x=rownames(mod.res$summary), pattern="h", replacement = "", fixed=T)
-    
-    mod.res$sims.matrix <- as.data.frame(mod.res$sims.matrix)
-    
-    for(i in 1:length(mod.res$data$r)){
-      mod.res$sims.matrix$r <- mod.res$data$r[i]
-      names(mod.res$sims.matrix)[names(mod.res$sims.matrix)=="r"] <- paste0("r[", i,"]")
-    }
-  }
-  
+  # if(grepl(area, pattern="29")) {
+  #   
+  #   #this gets used for SSModeltest_predict_2y function (for decision table)
+  #   mod.res.original <- mod.res
+  #   
+  #   # the rest is for the boxplots
+  #   # make an NY variable in SFA29 data
+  #   mod.res$data$NY <- length(unique(mod.res$Years))
+  #   double <- map(mod.res$data, function(x) class(x) =="matrix")
+  #   single <- map(mod.res$data, function(x) !class(x) == "matrix")
+  #   #for these, only keep the one with the strata
+  #   stratified <- names(double[which(double==TRUE)])
+  #   stratified <- map(mod.res$data[stratified], function(x) x[, strata])
+  #   single <- names(single[which(single==TRUE)])
+  #   single <- mod.res$data[single]
+  #   mod.res$data <- c(single, stratified)
+  #   
+  #   sims.names <- names(as.data.frame(mod.res$sims.matrix))
+  #   sims.names.strat <- which(grepl(x=sims.names, pattern=paste0(",", strata, "]"), fixed=T))
+  #   sims.names.no <- which(!grepl(x=sims.names, pattern="[", fixed=T))
+  #   sims.names.strat2 <- which(grepl(x=sims.names, pattern=paste0("[", strata, "]"), fixed=T))
+  #   mod.res$sims.matrix <- mod.res$sims.matrix[,c(sims.names.strat, sims.names.no, sims.names.strat2)]
+  #   colnames(mod.res$sims.matrix) <- gsub(x=colnames(mod.res$sims.matrix), pattern=paste0("[", strata,"]"), replacement = "", fixed=T)
+  #   colnames(mod.res$sims.matrix) <- gsub(x=colnames(mod.res$sims.matrix), pattern=paste0(",", strata,"]"), replacement = "]", fixed=T)
+  #   colnames(mod.res$sims.matrix) <- gsub(x=colnames(mod.res$sims.matrix), pattern="h", replacement = "", fixed=T)
+  #   
+  #   names(mod.res$data) <- gsub(x=names(mod.res$data), pattern="h", replacement = "", fixed=T)
+  #   names(mod.res$data) <- gsub(x=names(mod.res$data), pattern="Catc", replacement = "Catch", fixed=T)
+  #   
+  #   mod.res$summary <- mod.res$summary[which(row.names(mod.res$summary) %in% names(as.data.frame(mod.res$sims.matrix))),]
+  #   rownames(mod.res$summary) <- gsub(x=rownames(mod.res$summary), pattern=paste0("[", strata,"]"), replacement = "", fixed=T)
+  #   rownames(mod.res$summary) <- gsub(x=rownames(mod.res$summary), pattern=paste0(",", strata,"]"), replacement = "]", fixed=T)
+  #   rownames(mod.res$summary) <- gsub(x=rownames(mod.res$summary), pattern="h", replacement = "", fixed=T)
+  #   
+  #   mod.res$sims.matrix <- as.data.frame(mod.res$sims.matrix)
+  #   
+  #   for(i in 1:length(mod.res$data$r)){
+  #     mod.res$sims.matrix$r <- mod.res$data$r[i]
+  #     names(mod.res$sims.matrix)[names(mod.res$sims.matrix)=="r"] <- paste0("r[", i,"]")
+  #   }
+  # }
+  # 
   
   #################### loop through years from beginning of time series up to y, to get 1 and 2y projections for each year. We opt to do this instead of reading in all of the old model run RDatas.  ############################
   if(runtype=="Decision tables and plots") {
@@ -159,7 +159,7 @@ if(pred.eval==T){
   message("running projection evaluation (incl. figures)")
   source(paste0("./", folder, "/proj_eval_plot.R"))
   # note, proj_eval_plot uses process_2y_proj inside!
-  realized <- proj_eval_plot(object=mod.res.original, area=area, surplus=surplus, mu=c(NA, NA), ref.pts=RP, save=save)
+  realized <- proj_eval_plot(object=mod.res, area=area, surplus=surplus, mu=c(NA, NA), ref.pts=RP, save=save)
 }
 if(pred.eval==F){
   message("skipping projection evaluation")
@@ -170,36 +170,27 @@ if(pred.eval==F){
   message("generating decision tables")
   source(paste0("./", folder, "/process_2y_proj.R"))
   exp.range <- seq(0, 0.2, 0.01)
-  browser()
   
-  checktable <- map_df(exp.range, function(x) process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(x, NA), lastyear=T, decisiontable=F))$B.next1
-  checktable <- do.call(rbind, checktable[[1]])
-  
-  decision1 <- process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(exploitation, NA), lastyear=F)$B.next1
-  
-  decision1 <- map_df(names(decision1), function(x) do.call(rbind, decision1[[x]]))
-  
-  #20s minutes to run for 29W with 0.001 sampling.
-  decision2 <- map(exp.range, function(x) process_2y_proj(object=mod.res.original, area=area, surplus=surplus, mu=c(NA, x), lastyear=F, decisiontable=T, LRP=LRP, USR=USR))
-  
-  # tidy up the output
-  decision.df <- NULL
-  for(i in 1:length(decision2)){
-    B.next0 <- do.call(rbind, decision2[[i]]$B.next0)
-    B.next1 <- do.call(rbind, decision2[[i]]$B.next1)
-    B.next2 <- do.call(rbind, decision2[[i]]$B.next2)
-    process <- rbind(B.next0, B.next1, B.next2)
-    decision.df <- rbind(decision.df, process)
-  }
+  checktable <- map_df(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(x, NA), lastyear=T, decisiontable=F, LRP=LRP, USR=USR))$B.next1
+  checktable <- map_df(1:length(checktable), function(i) map_df(1:length(checktable[[i]]), function(x) rbind(checktable[[i]][[x]])))
+  checktable <- checktable %>%
+    dplyr::select(-totalcatch)%>%
+    dplyr::group_by(year, proj, mu, modelyear, strata) %>%
+    dplyr::summarize(catch = median(catch)) %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(year, proj, mu, modelyear) %>%
+    dplyr::summarize(totalcatch=sum(catch)) %>%
+    dplyr::left_join(., dplyr::select(checktable, -totalcatch), by = c("year", "proj", "mu", "modelyear"))
   
   decisiontable <- function(object, proj, year, LRP, USR){
     object <- object[object$proj==proj & object$year == year,]
     return(
       object %>%
         dplyr::mutate(mu = round(mu,2)) %>%
-        dplyr::group_by(year, proj, mu) %>%
+        dplyr::group_by(year, proj, mu, strata) %>%
         dplyr::summarize(biomass=median(Biomass),
                          catch=median(catch),
+                         totalcatch=unique(totalcatch),
                          mu=median(mu),
                          B.change=median(B.change),
                          pB0_increase = sum(pB0_increase)/length(pB0_increase),
@@ -211,34 +202,59 @@ if(pred.eval==F){
   # source("./predict.ssmodeltest.r")
   # predict.ssmodeltest(A.mod.res)
   
-  checktable <- decisiontable(checktable, proj=1, year=2020, LRP=LRP, USR=USR)
+  checktable <- decisiontable(checktable, proj=1, year=2020, LRP=LRP, USR=USR)  
   
-  decision.1 <- map_df(2:length(unique(decision1$year)), function(x) 
-    decisiontable(decision1, proj=1, year=unique(decision1$year)[x], LRP=LRP, USR=USR))
+
+  decision1 <- process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(exploitation, NA), lastyear=F, decisiontable=T, LRP=LRP, USR=USR)$B.next1
+  decision1 <- map_df(1:length(decision1), function(i) map_df(1:length(decision1[[i]]), function(x) rbind(decision1[[i]][[x]])))
+  decision1 <- decision1 %>%
+    dplyr::group_by(year, proj, mu, modelyear) %>%
+    dplyr::summarize(totalcatch=sum(catch)) %>%
+    dplyr::left_join(., decision1, by = c("year", "proj", "mu", "modelyear"))
   
-  decision.2 <- map_df(2:length(unique(decision.df$year)), function(x) 
-    decisiontable(decision.df, proj=2, year=unique(decision.df$year)[x], LRP=LRP, USR=USR))
+  # decision1 <- map_df(names(decision1), function(x) do.call(rbind, decision1[[x]]))
   
+  # indexing of list is [[exp]][[year]][[strata]]
+  decision2 <- map(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(NA, x), lastyear=F, decisiontable=T, LRP=LRP, USR=USR))
   
-  HCRscenario1 <- decision.2 %>%
-    dplyr::group_by(year) %>%
+  decision.df <- NULL
+  for(i in 1:length(decision2)) {
+    for(j in 1:length(decision2[[i]]$B.next0)){
+      B.next0 <- map_df(1:length(decision2[[i]]$B.next0[[j]]), function(x) rbind(decision2[[i]]$B.next0[[j]][[x]]))
+      B.next1 <- map_df(1:length(decision2[[i]]$B.next1[[j]]), function(x) rbind(decision2[[i]]$B.next1[[j]][[x]]))
+      B.next2 <- map_df(1:length(decision2[[i]]$B.next2[[j]]), function(x) rbind(decision2[[i]]$B.next2[[j]][[x]]))
+      process <- rbind(B.next0, B.next1, B.next2)
+      decision.df <- rbind(decision.df, process)
+    }
+  }
+  
+  totalcatches <- decision.df %>%
+    dplyr::group_by(year, proj, mu, modelyear) %>%
+    dplyr::summarize(totalcatch=sum(catch))
+    
+  decision.df <- left_join(decision.df, totalcatches, by = c("year", "modelyear", "proj", "mu"))
+  
+  medium <- decision.df[decision.df$strata == mod.res$labels[strata] & decision.df$proj==2,]
+  
+  HCRscenario1 <- medium %>%
+    dplyr::group_by(year, strata) %>%
     dplyr::filter(mu == exploitation) %>%
-    dplyr::select(year, mu, catch, p.USR) %>%
+    dplyr::select(year, mu, totalcatch, p.USR, strata) %>%
     dplyr::summarise(mu = max(mu)) %>%
-    dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
-    dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "B.change", "pB0_increase", "p.LRP", "p.USR"))
-  
-  
-  HCRscenario2 <- decision.2 %>%
-      dplyr::group_by(year) %>%
+    dplyr::left_join(., medium, by=c("year", "mu", "strata")) %>%
+    dplyr::full_join(., decision.df[decision.df$strata == mod.res$labels[strata],], by = c("year", "mu", "modelyear", "proj", "strata", "biomass", "totalcatch", "catch", "B.change", "pB0_increase", "p.LRP", "p.USR")) 
+    
+  HCRscenario2 <- medium %>%
+    dplyr::filter(proj==2)%>%
+      dplyr::group_by(year, strata) %>%
       dplyr::filter(p.USR>0.75 | mu==0) %>%
       dplyr::filter(mu <= exploitation) %>%
-      dplyr::select(year, mu, catch, p.USR) %>%
+      dplyr::select(year, mu, totalcatch, p.USR, strata) %>%
       dplyr::summarise(mu = max(mu)) %>%
-      dplyr::left_join(., decision.2, by=c("year", "mu")) %>%
-      dplyr::full_join(., decision.1, by = c("year", "mu", "proj", "biomass", "catch", "B.change", "pB0_increase", "p.LRP", "p.USR"))
+      dplyr::left_join(., medium, by=c("year", "mu", "strata")) %>%
+      dplyr::full_join(.,  decision.df[decision.df$strata == mod.res$labels[strata],], 
+                       by = c("year", "mu", "modelyear", "proj", "strata", "biomass", "totalcatch", "catch", "B.change", "pB0_increase", "p.LRP", "p.USR")) 
 
-  
   
   ################## Decision impact ####################
   message("running decision impact analysis")
@@ -250,8 +266,8 @@ if(pred.eval==F){
   print("*******Done this scenario run!*******")
   
   return(list(checktable=checktable,
-              decision.1=decision.1,
-              decision.2=decision.2, 
+              decision1=decision1,
+              decision.df=decision.df, 
               realized=realized,
               #exploit.based = exploit.based,
               impact_HCR1=impact_HCR1,

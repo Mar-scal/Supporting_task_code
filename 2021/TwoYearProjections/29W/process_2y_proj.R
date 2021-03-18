@@ -4,10 +4,15 @@
 
 process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F, decisiontable=T, LRP, USR){
   
-  if(lastyear==F) year.start <- length(object$Years)-9
+  if(lastyear==F) year.start <- length(object$Years)-5
   if(lastyear==T) year.start <- length(object$Years)
   
-  yearloop <- function(i){
+  B.next0 <- NULL
+  B.next1 <- NULL
+  B.next2 <- NULL
+  
+  for(i in year.start:length(object$Years)) {
+    
     pB0 <- B.change <- mu.p <- B.p <- vector(mode = "list", 
                                              length = length(object$labels))
     names(B.p) <- names(mu.p) <- names(B.change) <- names(pB0) <- object$labels
@@ -73,14 +78,14 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
                                       "+"))
     PCatch <- mn.Bh * c.exploit$exploit
     
-    projections <- function(h){
+    for(h in 1:H){
       ############### current year ##################################
       totalcatch <- object$data$C[i-1]
       PCatch.h <- totalcatch * sweep(PCatch, 1, apply(PCatch, 1, sum), 
                                      "/")/Kh
       catch <- PCatch.h[,h] * Kh[,h]
       
-      B.next0 <- data.frame(Biomass = Bh[,h], 
+      B.next0[[paste0(object$Years[i])]][[paste0(object$labels[h])]] <- data.frame(Biomass = Bh[,h], 
                             year =  object$Years[i], 
                             catch = catch,
                             totalcatch = object$data$C[i-1], 
@@ -124,11 +129,11 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
         P.out <- SSModeltest:::gen.lnorm(Pmed, sigma[,h], Max.P)
         
         
-        B.next1 <- data.frame(Biomass = P.out * Kh[,h], 
+        B.next1[[paste0(object$Years[i])]][[paste0(object$labels[h])]] <- data.frame(Biomass = P.out * Kh[,h], 
                               year =  object$Years[i]+1, 
                               catch = catch, 
                               totalcatch=totalcatch,
-                              mu = catch/((P.out*Kh[,h])+ catch),
+                              mu = mu[1], #catch/((P.out*Kh[,h])+ catch),
                               proj=1,
                               strata=object$labels[h],
                               modelyear = object$Years[i])
@@ -156,7 +161,7 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
         set.seed(1)
         P.out <- SSModeltest:::gen.lnorm(Pmed, sigma[,h], Max.P)
         
-        B.next1 <- data.frame(Biomass = P.out * Kh[,h] * (1-mu[1]),
+        B.next1[[paste0(object$Years[i])]][[paste0(object$labels[h])]] <- data.frame(Biomass = P.out * Kh[,h] * (1-mu[1]),
                               year =  object$Years[i]+1,
                               catch = catch,
                               totalcatch = NA,
@@ -169,9 +174,9 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
       
       # for decision table
       # This is the projected biomass change (%) from this year to next.  > 0 = increase.
-      B.next1$B.change <- (B.next1$Biomass  - B.next0$Biomass) / B.next0$Biomass * 100
+      B.next1[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$B.change <- (B.next1[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$Biomass  - B.next0[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$Biomass) / B.next0[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$Biomass * 100
       # Probability of biomass decline.  What runs are less than 0.
-      B.next1$pB0_increase <- 0 > (B.next1$Biomass-B.next0$Biomass)
+      B.next1[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$pB0_increase <- 0 < (B.next1[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$Biomass-B.next0[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$Biomass)
       
       
       ################## now for 2y projection. #################
@@ -198,11 +203,11 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
           set.seed(1)
           P.out2 <- SSModeltest:::gen.lnorm(Pmed2, sigma[,h], Max.P)
           
-          B.next2 <- data.frame(Biomass = (P.out2 * Kh[,h]), 
+          B.next2[[paste0(object$Years[i])]][[paste0(object$labels[h])]] <- data.frame(Biomass = (P.out2 * Kh[,h]), 
                                 year =  object$Years[i]+2, 
                                 catch = catch,
                                 totalcatch=totalcatch,
-                                mu = catch/(P.out2*Kh[,h] + catch),
+                                mu = mu[2], #catch/(P.out2*Kh[,h] + catch),
                                 proj = 2,
                                 strata=object$labels[h],
                                 modelyear = object$Years[i])
@@ -230,7 +235,7 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
           set.seed(1)
           P.out2 <- SSModeltest:::gen.lnorm(Pmed2.p, sigma[,h], Max.P)
           
-          B.next2 <- data.frame(Biomass = (P.out2 * Kh[,h] * (1-mu[2])), 
+          B.next2[[paste0(object$Years[i])]][[paste0(object$labels[h])]] <- data.frame(Biomass = (P.out2 * Kh[,h] * (1-mu[2])), 
                                 year =  object$Years[i]+2, 
                                 catch = catch,
                                 totalcatch = NA,
@@ -267,11 +272,11 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
           set.seed(1)
           P.out2 <- SSModeltest:::gen.lnorm(Pmed2, sigma[,h], Max.P)
           
-          B.next2<- data.frame(Biomass = (P.out2 * Kh[,h]), 
+          B.next2[[paste0(object$Years[i])]][[paste0(object$labels[h])]]<- data.frame(Biomass = (P.out2 * Kh[,h]), 
                                year =  object$Years[i]+2, 
                                catch = catch,
                                totalcatch=totalcatch,
-                               mu = catch/(P.out2*Kh[,h] + catch),
+                               mu = mu[2], #catch/(P.out2*Kh[,h] + catch),
                                proj = 2,
                                strata=object$labels[h],
                                modelyear = object$Years[i])
@@ -301,7 +306,7 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
           set.seed(1)
           P.out2 <- SSModeltest:::gen.lnorm(Pmed2.p, sigma[,h], Max.P)
           
-          B.next2 <- data.frame(Biomass = (P.out2 * Kh[,h] * (1-mu[2])), 
+          B.next2[[paste0(object$Years[i])]][[paste0(object$labels[h])]] <- data.frame(Biomass = (P.out2 * Kh[,h] * (1-mu[2])), 
                                 year =  object$Years[i]+2, 
                                 catch = catch,
                                 totalcatch=NA,
@@ -314,13 +319,13 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
       
       # for decision table
       # This is the projected biomass change (%) from this year to next.  > 0 = increase.
-      B.next2$B.change <- (B.next2$Biomass  - B.next1$Biomass) / B.next1$Biomass * 100
+      B.next2[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$B.change <- (B.next2[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$Biomass  - B.next1[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$Biomass) / B.next1[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$Biomass * 100
       # Probability of biomass increase.  What runs are less than 0.
-      B.next2$pB0_increase <- 0 < (B.next2$Biomass-B.next1$Biomass)
+      B.next2[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$pB0_increase <- 0 < (B.next2[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$Biomass-B.next1[[paste0(object$Years[i])]][[paste0(object$labels[h])]]$Biomass)
       
       if(decisiontable==T){
         
-        B.next0 <- B.next0 %>%
+        B.next0[[paste0(object$Years[i])]][[paste0(object$labels[h])]] <- B.next0[[paste0(object$Years[i])]][[paste0(object$labels[h])]] %>%
           dplyr::group_by(year, modelyear, proj, strata) %>%
           dplyr::summarize(biomass=median(Biomass),
                            catch=median(catch),
@@ -330,7 +335,7 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
                            p.LRP = round(sum(Biomass > LRP)/length(Biomass), 3),
                            p.USR = round(sum(Biomass > USR)/length(Biomass), 3))
         
-        B.next1 <- B.next1 %>%
+        B.next1[[paste0(object$Years[i])]][[paste0(object$labels[h])]] <- B.next1[[paste0(object$Years[i])]][[paste0(object$labels[h])]] %>%
           dplyr::group_by(year, modelyear, proj, strata) %>%
           dplyr::summarize(biomass=median(Biomass),
                            catch=median(catch),
@@ -340,7 +345,7 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
                            p.LRP = round(sum(Biomass > LRP)/length(Biomass), 3),
                            p.USR = round(sum(Biomass > USR)/length(Biomass), 3))
         
-        B.next2 <- B.next2 %>%
+        B.next2[[paste0(object$Years[i])]][[paste0(object$labels[h])]] <- B.next2[[paste0(object$Years[i])]][[paste0(object$labels[h])]] %>%
           dplyr::group_by(year, modelyear, proj, strata) %>%
           dplyr::summarize(biomass=median(Biomass),
                            catch=median(catch),
@@ -350,13 +355,9 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
                            p.LRP = round(sum(Biomass > LRP)/length(Biomass), 3),
                            p.USR = round(sum(Biomass > USR)/length(Biomass), 3))
       }
-      return(out=list(B.next0 = B.next0, B.next1=B.next1, B.next2=B.next2))
     }
-    
-    return(map(1:H, function(h) projections(h)))
-    
   }
   
-  return(lapply(year.start:length(object$Years), function(i) yearloop(i)))
+  return(output=list(B.next0 = B.next0, B.next1=B.next1, B.next2=B.next2))
   
 }
