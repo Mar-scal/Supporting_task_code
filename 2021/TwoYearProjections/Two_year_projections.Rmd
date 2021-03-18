@@ -23,6 +23,11 @@ require(purrr)
 ## run the projections
 SP <- read.csv("Y:/Projects/CSAS/2y_Projection_RAP/data/SP_by_areas_by_DK.csv")
 SP$Subarea <- gsub(x=SP$Subarea, pattern="SPA ", replacement = "")
+SP$Subarea[SP$Subarea=="A"] <- "29A"
+SP$Subarea[SP$Subarea=="B"] <- "29B"
+SP$Subarea[SP$Subarea=="C"] <- "29C"
+SP$Subarea[SP$Subarea=="D"] <- "29D"
+
 HCRs <- data.frame(area = c("BBn", "GBa", 
                             "1A", "1B", "3", "4", "6",
                             "29A", "29B", "29C", "29D"), 
@@ -45,7 +50,6 @@ for(area in areas){
   if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"
   
   SPscenario <- list(0, SP$med[SP$Subarea==area], NULL)
-  #SPscenario <- 0
   source(paste0("./", folder, "/two_year_projections.R"))
   
   out <- map(SPscenario, function(x) two_year_projections(area=area,
@@ -53,9 +57,9 @@ for(area in areas){
                                                           exploitation=HCRs$exploitation[HCRs$area==area], 
                                                           runtype=c("Decision tables and plots"), #"Decision tables only"),
                                                           surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
-                                                          sample=0.001,
+                                                          sample=0.1,
                                                           path="Repo working directory (fast)", 
-                                                          save=F,
+                                                          save=T,
                                                           pred.eval=T))
   
   
@@ -169,38 +173,71 @@ if(area=="GBa")  {
   # BBn NA
   
   
+  if(!grepl(x=area, "29")){
+    ## decision tables
+    require(openxlsx)
+    dt <- createWorkbook()
+    addWorksheet(wb=dt, sheetName = "2020_1yr")
+    writeData(dt, sheet=1, 
+              out[[1]]$checktable
+    )
+    
+    addWorksheet(wb=dt, sheetName = "2020_2yr")
+    writeData(dt, sheet=2, 
+              out[[1]]$decision.2[out[[1]]$decision.2$year==2020 & out[[1]]$decision.2$proj==2,]
+    )
+    
+    addWorksheet(wb=dt, sheetName = "2021_Surplus0")
+    writeData(dt, sheet=3,
+              out[[1]]$decision.2[out[[1]]$decision.2$year==2021,]
+    )
+    
+    addWorksheet(wb=dt, sheetName = "2021_SurplusMedian")
+    writeData(dt, sheet=4,
+              out[[2]]$decision.2[out[[1]]$decision.2$year==2021,]
+    )
+    
+    addWorksheet(wb=dt, sheetName = "2021_SurplusPrevious")
+    writeData(dt, sheet=5,
+              out[[3]]$decision.2[out[[1]]$decision.2$year==2021,]
+    )
+    
+    saveWorkbook(dt, file = paste0("./data/", folder, "/", area, "/decisiontables.xlsx"), overwrite=T)
+    
+  }
   
-  ## decision tables
-  require(openxlsx)
-  dt <- createWorkbook()
-  addWorksheet(wb=dt, sheetName = "2020_1yr")
-  writeData(dt, sheet=1, 
-            out[[1]]$checktable
-  )
-  
-  addWorksheet(wb=dt, sheetName = "2020_2yr")
-  writeData(dt, sheet=2, 
-            out[[1]]$decision.2[out[[1]]$decision.2$year==2020 & out[[1]]$decision.2$proj==2,]
-  )
-  
-  addWorksheet(wb=dt, sheetName = "2021_Surplus0")
-  writeData(dt, sheet=3,
-            out[[1]]$decision.2[out[[1]]$decision.2$year==2021,]
-  )
-  
-  addWorksheet(wb=dt, sheetName = "2021_SurplusMedian")
-  writeData(dt, sheet=4,
-            out[[2]]$decision.2[out[[1]]$decision.2$year==2021,]
-  )
-  
-  addWorksheet(wb=dt, sheetName = "2021_SurplusPrevious")
-  writeData(dt, sheet=5,
-            out[[3]]$decision.2[out[[1]]$decision.2$year==2021,]
-  )
-  
-  saveWorkbook(dt, file = paste0("./data/", folder, "/", area, "/decisiontables.xlsx"), overwrite=T)
-  
-  
+   if(grepl(x=area, "29")){
+    ## decision tables
+    require(openxlsx)
+    dt <- createWorkbook()
+    addWorksheet(wb=dt, sheetName = "2020_1yr")
+    writeData(dt, sheet=1, 
+              out[[1]]$checktable
+    )
+    
+    addWorksheet(wb=dt, sheetName = "2020_2yr")
+    writeData(dt, sheet=2, 
+              out[[1]]$decision.2[out[[1]]$decision.df$year==2020 & out[[1]]$decision.df$proj==2,]
+    )
+    
+    addWorksheet(wb=dt, sheetName = "2021_Surplus0")
+    writeData(dt, sheet=3,
+              out[[1]]$decision.2[out[[1]]$decision.df$year==2021,]
+    )
+    
+    addWorksheet(wb=dt, sheetName = "2021_SurplusMedian")
+    writeData(dt, sheet=4,
+              out[[2]]$decision.2[out[[1]]$decision.df$year==2021,]
+    )
+    
+    addWorksheet(wb=dt, sheetName = "2021_SurplusPrevious")
+    writeData(dt, sheet=5,
+              out[[3]]$decision.2[out[[1]]$decision.df$year==2021,]
+    )
+    
+    saveWorkbook(dt, file = paste0("./data/", folder, "/", area, "/decisiontables.xlsx"), overwrite=T)
+    
+  }
   
   
   # Plot values
