@@ -4,7 +4,7 @@
 
 process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F, decisiontable=T, LRP, USR){
   
-  if(lastyear==F) year.start <- length(object$Years)-5
+  if(lastyear==F) year.start <- length(object$Years)-9
   if(lastyear==T) year.start <- length(object$Years)
   
   B.next0 <- NULL
