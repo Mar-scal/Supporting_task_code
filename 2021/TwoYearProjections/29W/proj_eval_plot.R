@@ -6,11 +6,15 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
   if(area %in% c("1A", "1B", "3", "4", "6")) folder <- "BoF"
   if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"
   source(paste0("./", folder, "/process_2y_proj.R"))
-  results_process <- process_2y_proj(object=object, area=area, surplus=surplus, mu=mu, decisiontable=F)
+  browser()
+  results_process <- process_2y_proj(object=object, area=area, surplus=surplus, mu=mu, LRP = LRP, USR = USR, lastyear=F, decisiontable=F)
   
   options(scipen = 999)
   
   # tidy up the output
+  map(results_process, rbind)
+  
+  
   B.next0 <- do.call(rbind, results_process$B.next0)
   B.next1 <- do.call(rbind, results_process$B.next1)
   B.next2 <- do.call(rbind, results_process$B.next2)

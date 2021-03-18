@@ -32,7 +32,7 @@ HCRs <- data.frame(area = c("BBn", "GBa",
 
 
 areas <- c(#"1A", "1B", "3", "4", "6", 
-            #  "GBa", "BBn", 
+             # "GBa", "BBn")#, 
            "29A")#, "29B", "29C", "29D")
 
 time1 <- Sys.time()
@@ -56,7 +56,7 @@ for(area in areas){
                                                           sample=0.001,
                                                           path="Repo working directory (fast)", 
                                                           save=F,
-                                                          pred.eval=F))
+                                                          pred.eval=T))
   
   
   save(out, file = paste0("./", folder, "/", area, "/twoyearprojections.RData"))
@@ -105,15 +105,28 @@ for (area in areas){
   
   
   # the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
+if(area=="GBa")  {
   png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
   print(plot_grid(out[[1]]$realized$evaluation1, 
             out[[2]]$realized$evaluation1+ ylab(NULL) , 
             out[[3]]$realized$evaluation1+ ylab(NULL) ,
-            out[[1]]$realized$evaluation2, 
-            out[[2]]$realized$evaluation2+ ylab(NULL) , 
-            out[[3]]$realized$evaluation2+ ylab(NULL) , 
+            out[[1]]$realized$evaluation2 + ylim(-1.4,1.4), 
+            out[[2]]$realized$evaluation2+ ylab(NULL) + ylim(-1.4,1.4), 
+            out[[3]]$realized$evaluation2+ ylab(NULL) + ylim(-1.4,1.4) , 
             ncol=3, align="v"))
   dev.off()
+}
+  if(!area=="GBa")  {
+  png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+  print(plot_grid(out[[1]]$realized$evaluation1, 
+            out[[2]]$realized$evaluation1+ ylab(NULL), 
+            out[[3]]$realized$evaluation1+ ylab(NULL),
+            out[[1]]$realized$evaluation2, 
+            out[[2]]$realized$evaluation2+ ylab(NULL), 
+            out[[3]]$realized$evaluation2+ ylab(NULL), 
+            ncol=3, align="v"))
+  dev.off()
+}
   # GBa 20000 and 1.2
   # BBn 4000 and 0.8
   
@@ -232,8 +245,11 @@ for (area in areas){
   
   eval.1.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation1)$data[[1]], x, ymin, ymax), surplus=SP[x]))
   
-  eval.2.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation2)$data[[1]], x, ymin, ymax), surplus=SP[x]))
-  
+ if(area=="GBa") eval.2.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation2 + ylim(-1.4, 1.4))$data[[1]], x, ymin, ymax), surplus=SP[x]))
+ 
+  if(!area=="GBa") eval.2.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation2)$data[[1]], x, ymin, ymax), surplus=SP[x]))
+ 
+   
   HCR.1.dat <- map_df(1:3, function(x) cbind(out[[x]]$impact_HCR1$decisions, surplus=SP[x]))
   
   if(!area %in% c("BBn", "6")){

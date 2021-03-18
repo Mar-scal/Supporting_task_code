@@ -159,7 +159,7 @@ if(pred.eval==T){
   message("running projection evaluation (incl. figures)")
   source(paste0("./", folder, "/proj_eval_plot.R"))
   # note, proj_eval_plot uses process_2y_proj inside!
-  realized <- proj_eval_plot(object=mod.res, area=area, surplus=surplus, mu=c(NA, NA), ref.pts=RP, save=save)
+  realized <- proj_eval_plot(object=mod.res.original, area=area, surplus=surplus, mu=c(NA, NA), ref.pts=RP, save=save)
 }
 if(pred.eval==F){
   message("skipping projection evaluation")
