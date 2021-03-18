@@ -209,7 +209,7 @@ two_year_projections <- function(
   
   HCRscenario2 <- decision.2 %>%
     dplyr::group_by(year) %>%
-    dplyr::filter(p.USR>0.75) %>%
+    dplyr::filter(p.USR>0.75|mu==0) %>%
     dplyr::filter(mu <= exploitation) %>%
     dplyr::select(year, mu, catch, p.USR) %>%
     dplyr::summarise(mu = max(mu)) %>%

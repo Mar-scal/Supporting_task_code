@@ -29,9 +29,11 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
                                                   1, 2), "R[")][, i]
     P <- object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 
                                                    1, 2), "P[")][, i]
+    
     m <- object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 
-                                                   1, 2), "m[")][, i]
+                                                   1, 2), "m[")]
 
+    m <- apply(m[, i - (0:(5 - 1))], 1, mean)
     
 ############### current year ##################################
     B.next0[[paste0(object$Years[i])]] <- data.frame(Biomass = object$sims.matrix[, is.element(substring(dimnames(object$sims.matrix)[[2]], 1, 2), "B[")][, i], 
@@ -41,7 +43,7 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
                                                      Fmort = NA,
                                                      proj=0,
                                                      B.change=NA,
-                                                     pB0=NA)
+                                                     pB0_increase=NA)
 
 ############## 1 y projection ############################
     # calculate the standardized Biomass (P) for y 1
@@ -99,7 +101,7 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
     # This is the projected biomass change (%) from this year to next.  > 0 = increase.
     B.next1[[paste0(object$Years[i])]]$B.change <- (B.next1[[paste0(object$Years[i])]]$Biomass  - B.next0[[paste0(object$Years[i])]]$Biomass) / B.next0[[paste0(object$Years[i])]]$Biomass * 100
     # Probability of biomass decline.  What runs are less than 0.
-    B.next1[[paste0(object$Years[i])]]$pB0 <- 0 > (B.next1[[paste0(object$Years[i])]]$Biomass-B.next0[[paste0(object$Years[i])]]$Biomass)
+    B.next1[[paste0(object$Years[i])]]$pB0_increase <- 0 < (B.next1[[paste0(object$Years[i])]]$Biomass-B.next0[[paste0(object$Years[i])]]$Biomass)
     
     
 ################## now for 2y projection. #################
@@ -199,7 +201,7 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, decisionta
     # This is the projected biomass change (%) from this year to next.  > 0 = increase.
     B.next2[[paste0(object$Years[i])]]$B.change <- (B.next2[[paste0(object$Years[i])]]$Biomass  - B.next1[[paste0(object$Years[i])]]$Biomass) / B.next1[[paste0(object$Years[i])]]$Biomass * 100
     # Probability of biomass decline.  What runs are less than 0.
-    B.next2[[paste0(object$Years[i])]]$pB0 <- 0 > (B.next2[[paste0(object$Years[i])]]$Biomass-B.next1[[paste0(object$Years[i])]]$Biomass)
+    B.next2[[paste0(object$Years[i])]]$pB0_increase <- 0 < (B.next2[[paste0(object$Years[i])]]$Biomass-B.next1[[paste0(object$Years[i])]]$Biomass)
   }
   return(output=list(B.next0 = B.next0, B.next1=B.next1, B.next2=B.next2))
 }

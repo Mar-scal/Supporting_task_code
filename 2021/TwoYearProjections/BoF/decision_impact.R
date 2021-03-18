@@ -67,7 +67,7 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
     theme(panel.grid=element_blank(), text = element_text(size=18)) +
     scale_fill_brewer(type = "qual", palette = "Paired", name=NULL, labels=c(expression(C[y[2]]), expression(C[y[1]]))) +
     scale_shape_manual(values=c(21,24), name=NULL, labels=c(expression(C[y[2]]), expression(C[y[1]]))) + 
-    ylab("Difference in catch potential (mt)") +
+    ylab("Catch potential (mt)") +
     annotate(geom="text", label=HCRscenario, hjust=0) +
     ggtitle(paste0(area, " - ", tag1))+
     scale_y_continuous(breaks=break3, limits=c(min(break3), max(break3)))

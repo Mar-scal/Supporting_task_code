@@ -28,7 +28,7 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
                      upper=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[3],
                      max=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[4]) 
   
-  diffs <- all_sum %>%
+  diffs <- out[[3]]$realized$all_sum %>%
     dplyr::select(year, med, proj) %>%
     tidyr::pivot_wider(names_from=proj, values_from=med) %>%
     dplyr::rename(actual = `0`,
@@ -56,7 +56,7 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     break1 <- seq(0,140000, 20000)
     break2 <- seq(0,140000, 20000)
     break3 <- seq(-30000,30000, 5000)
-    break4 <- seq(-1.2, 1.2, 0.6)
+    break4 <- seq(-1.4, 1.4, 0.7)
   }
   
   if(area =="BBn") {
