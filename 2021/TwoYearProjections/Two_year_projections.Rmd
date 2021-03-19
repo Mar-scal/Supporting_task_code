@@ -38,7 +38,7 @@ HCRs <- data.frame(area = c("BBn", "GBa",
 
 areas <- c(#"1A", "1B", "3", "4", "6", 
              # "GBa", "BBn")#, 
-           "29A")#, "29B", "29C", "29D")
+           "29A", "29B", "29C", "29D")
 
 time1 <- Sys.time()
 for(area in areas){
@@ -57,7 +57,7 @@ for(area in areas){
                                                           exploitation=HCRs$exploitation[HCRs$area==area], 
                                                           runtype=c("Decision tables and plots"), #"Decision tables only"),
                                                           surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
-                                                          sample=0.1,
+                                                          sample=0.01,
                                                           path="Repo working directory (fast)", 
                                                           save=T,
                                                           pred.eval=T))
@@ -67,7 +67,7 @@ for(area in areas){
 }
 time2 <- Sys.time()
 time2-time1
-#Time difference of 1.600737 hours for all BoF at 30%
+# Time difference of 9.624839 mins for 29W with 1% subsample
 ```
 
 

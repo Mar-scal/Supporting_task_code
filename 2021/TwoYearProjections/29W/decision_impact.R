@@ -55,7 +55,7 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
   }
   
   if(area %in% c("29A", "29B", "29C", "29D")){
-    break1 <- seq(-50, 50, 25)
+    break1 <- seq(-50, 50, 10)
     break2 <- seq(-5, 5, 1) 
     break3 <- seq(0, 50, 10) 
   }
@@ -75,7 +75,7 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
     scale_shape_manual(values=c(21,24), name=NULL, labels=c(expression(C[y[2]]), expression(C[y[1]]))) + 
     ylab("Catch potential (mt)") +
     annotate(geom="text", label=HCRscenario, hjust=0) +
-    #ggtitle(paste0(area, " - ", tag1))+
+    ggtitle(paste0(area, " - ", tag1))+
     scale_y_continuous(breaks=break3, limits=c(min(break3), max(break3)))
   
   
@@ -90,7 +90,7 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
     theme(panel.grid=element_blank(), text = element_text(size=18)) +
     ylab("Difference in catch potential (mt)") +
     annotate(geom="text", label=HCRscenario, hjust=0) +
-    #ggtitle(paste0(area, " - ", tag1), subtitle=expression(C[y[2]]-C[y[1]]))+
+    ggtitle(paste0(area, " - ", tag1), subtitle=expression(C[y[2]]-C[y[1]]))+
     scale_y_continuous(breaks=break1, limits=c(min(break1), max(break1)))
   
   evaluation4 <- 
@@ -104,12 +104,12 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
     theme(panel.grid=element_blank(), text = element_text(size=18)) +
     ylab("Proportional difference in catch potential") +
     annotate(geom="text", label=HCRscenario, hjust=0) +
-    #ggtitle(paste0(area, " - ", tag1), subtitle=expression((C[y[2]]/C[y[1]])-1))+
+    ggtitle(paste0(area, " - ", tag1), subtitle=expression((C[y[2]]/C[y[1]])-1))+
     scale_y_continuous(breaks=break2, limits=c(min(break2), max(break2)))
   
   if(Inf %in% decisions$missedout.p){
     Infinite.p <- decisions[decisions$missedout.p==Inf &!is.na(decisions$missedout.p),]
-    Infinite.p$label <- "No realized\ncatch"
+    Infinite.p$label <- "No\nrealized\ncatch"
     evaluation4 <- evaluation4 + geom_text(data=Infinite.p,
                             aes(x=year, y=max(break2)*0.1, label=label))
   }
