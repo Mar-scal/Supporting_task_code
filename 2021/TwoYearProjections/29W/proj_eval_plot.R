@@ -114,9 +114,9 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
   
   if(area %in% c("29A", "29B", "29C", "29D")) {
     break1 <- seq(0,750, 250)
-    break2 <- seq(0,750, 250)
+    break2 <- seq(0,50, 10)
     break3 <- seq(-200,200, 50)
-    break4 <- seq(-1.5, 1.5, 0.5)
+    break4 <- seq(-2.5, 2.5, 1)
   }
   
   # boxplot code here

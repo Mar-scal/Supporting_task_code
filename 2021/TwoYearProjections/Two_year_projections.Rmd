@@ -217,22 +217,22 @@ if(area=="GBa")  {
     
     addWorksheet(wb=dt, sheetName = "2020_2yr")
     writeData(dt, sheet=2, 
-              out[[1]]$decision.2[out[[1]]$decision.df$year==2020 & out[[1]]$decision.df$proj==2,]
+              out[[1]]$decision.df[out[[1]]$decision.df$year==2020 & out[[1]]$decision.df$proj==2,]
     )
     
     addWorksheet(wb=dt, sheetName = "2021_Surplus0")
     writeData(dt, sheet=3,
-              out[[1]]$decision.2[out[[1]]$decision.df$year==2021,]
+              out[[1]]$decision.df[out[[1]]$decision.df$year==2021,]
     )
     
     addWorksheet(wb=dt, sheetName = "2021_SurplusMedian")
     writeData(dt, sheet=4,
-              out[[2]]$decision.2[out[[1]]$decision.df$year==2021,]
+              out[[2]]$decision.df[out[[1]]$decision.df$year==2021,]
     )
     
     addWorksheet(wb=dt, sheetName = "2021_SurplusPrevious")
     writeData(dt, sheet=5,
-              out[[3]]$decision.2[out[[1]]$decision.df$year==2021,]
+              out[[3]]$decision.df[out[[1]]$decision.df$year==2021,]
     )
     
     saveWorkbook(dt, file = paste0("./data/", folder, "/", area, "/decisiontables.xlsx"), overwrite=T)

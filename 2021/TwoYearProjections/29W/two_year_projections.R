@@ -258,24 +258,33 @@ two_year_projections <- function(
   decision.2 <- map_df(2:length(unique(decision2.2$year)), function(x) 
     decisiontable(decision2.2, proj=2, year=unique(decision2.2$year)[x], LRP=LRP, USR=USR))
   
-  total <- decision.2[decision.2$strata == "Total" & decision.2$proj==2,]
+  medium <- decision.2[decision.2$strata == "Medium" & decision.2$proj==2,]
+  total2 <- decision.2[decision.2$strata == "Total",] %>%
+    dplyr::select(year, mu, catch, proj) %>%
+    dplyr::rename(totalcatch=catch)
+  total1 <- decision.1[decision.1$strata == "Total",] %>%
+    dplyr::select(year, mu, catch, proj) %>%
+    dplyr::rename(totalcatch=catch)
   
-  HCRscenario1 <- total %>%
+  HCRscenario1 <- medium %>%
     dplyr::group_by(year, strata) %>%
     dplyr::filter(mu == exploitation) %>%
-    dplyr::select(year, mu, p.USR, strata) %>%
+    dplyr::select(year, mu, p.USR, strata, proj) %>%
     dplyr::summarise(mu = max(mu)) %>%
-    dplyr::left_join(., total, by=c("year", "mu", "strata")) %>%
-    dplyr::full_join(., decision.1[decision.1$strata == "Total",], by = c("year", "mu", "proj", "strata", "biomass", "catch", "B.change", "pB0_increase", "p.LRP", "p.USR")) 
+    dplyr::ungroup() %>%
+    dplyr::left_join(., total2, by=c("year", "mu")) %>%
+    dplyr::full_join(., total1, by=c("year", "mu", "totalcatch", "proj")) %>%
+    dplyr::rename(catch=totalcatch)
   
-  HCRscenario2 <- total %>%
+  HCRscenario2 <- medium %>%
     dplyr::group_by(year, strata) %>%
     dplyr::filter(p.USR>0.75 | mu==0) %>%
     dplyr::filter(mu <= exploitation) %>%
     dplyr::select(year, mu, p.USR, strata) %>%
     dplyr::summarise(mu = max(mu)) %>%
-    dplyr::left_join(., total, by=c("year", "mu", "strata")) %>%
-    dplyr::full_join(., decision.1[decision.1$strata == "Total",], by = c("year", "mu", "proj", "strata", "biomass", "catch", "B.change", "pB0_increase", "p.LRP", "p.USR")) 
+    dplyr::left_join(., total2, by=c("year", "mu")) %>%
+    dplyr::full_join(., total1, by=c("year", "mu", "totalcatch", "proj")) %>%
+    dplyr::rename(catch=totalcatch)
   
   ################## Decision impact ####################
   message("running decision impact analysis")
