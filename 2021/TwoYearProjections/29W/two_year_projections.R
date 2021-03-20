@@ -169,7 +169,8 @@ two_year_projections <- function(
   # run projections using a range of exploitation values
   message("generating decision tables")
   source(paste0("./", folder, "/process_2y_proj.R"))
-  exp.range <- seq(0,0.21, 0.03)
+  exp.range <- c(seq(0,0.21, 0.03), 0.05)
+  exp.range <- sort(exp.range)
   
   checktable <- map_df(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(x, NA), lastyear=T, decisiontable=F, LRP=LRP, USR=USR))
   checktable0 <- checktable$B.next0
@@ -269,7 +270,7 @@ two_year_projections <- function(
   HCRscenario1 <- medium %>%
     dplyr::group_by(year, strata) %>%
     dplyr::filter(mu == exploitation) %>%
-    dplyr::select(year, mu, p.USR, strata, proj) %>%
+    dplyr::select(year, mu, strata, proj) %>%
     dplyr::summarise(mu = max(mu)) %>%
     dplyr::ungroup() %>%
     dplyr::left_join(., total2, by=c("year", "mu")) %>%
