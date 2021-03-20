@@ -21,7 +21,7 @@ require(purrr)
 
 ```{r}
 ## run the projections
-SP <- read.csv("Y:/Projects/CSAS/2y_Projection_RAP/data/SP_by_areas_by_DK.csv")
+SP <- read.csv("./SP_by_areas_by_DK.csv")
 SP$Subarea <- gsub(x=SP$Subarea, pattern="SPA ", replacement = "")
 SP$Subarea[SP$Subarea=="A"] <- "29A"
 SP$Subarea[SP$Subarea=="B"] <- "29B"
@@ -38,7 +38,9 @@ HCRs <- data.frame(area = c("BBn", "GBa",
 
 areas <- c(#"1A", "1B", "3", "4", "6", 
              # "GBa", "BBn")#, 
-           "29A")#, "29B", "29C", "29D")
+           #"29A", 
+  "29B"#, "29C", "29D"
+  )
 
 time1 <- Sys.time()
 for(area in areas){
@@ -57,9 +59,9 @@ for(area in areas){
                                                           exploitation=HCRs$exploitation[HCRs$area==area], 
                                                           runtype=c("Decision tables and plots"), #"Decision tables only"),
                                                           surplus = x, # if NULL, then it runs the full model, using m, mR, g, gR, etc. For final years, it just repeats them. 
-                                                          sample=0.1,
+                                                          sample=100,
                                                           path="Repo working directory (fast)", 
-                                                          save=T,
+                                                          save=F,
                                                           pred.eval=T))
   
   
@@ -67,7 +69,7 @@ for(area in areas){
 }
 time2 <- Sys.time()
 time2-time1
-#Time difference of 1.600737 hours for all BoF at 30%
+# Time difference of 9.624839 mins for 29W with 1% subsample
 ```
 
 
@@ -99,13 +101,24 @@ for (area in areas){
   # GBa 150000 and 150000
   # BB 30000 and 10000
   
-  # This simply shows the biomass projections for the most recent year. 
-  png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
-  print(plot_grid(out[[1]]$realized$zoom.pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
-            out[[2]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
-            out[[3]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
-            ncol=3, align="v"))
-  dev.off()
+  if(grepl(x=area, "29")){
+    # This simply shows the biomass projections for the most recent year. 
+    png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
+    print(plot_grid(out[[1]]$realized$zoom.pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ylab("Commercial biomass density\n(metric tonnes/square kilometre)"),  
+                    out[[2]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+                    out[[3]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
+                    ncol=3, align="v"))
+    dev.off()
+  }
+  if(!grepl(x=area, "29")){
+    # This simply shows the biomass projections for the most recent year. 
+    png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
+    print(plot_grid(out[[1]]$realized$zoom.pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+                    out[[2]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+                    out[[3]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
+                    ncol=3, align="v"))
+    dev.off()
+  }
   
   
   # the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
@@ -217,22 +230,22 @@ if(area=="GBa")  {
     
     addWorksheet(wb=dt, sheetName = "2020_2yr")
     writeData(dt, sheet=2, 
-              out[[1]]$decision.2[out[[1]]$decision.df$year==2020 & out[[1]]$decision.df$proj==2,]
+              out[[1]]$decision.df[out[[1]]$decision.df$year==2020 & out[[1]]$decision.df$proj==2,]
     )
     
     addWorksheet(wb=dt, sheetName = "2021_Surplus0")
     writeData(dt, sheet=3,
-              out[[1]]$decision.2[out[[1]]$decision.df$year==2021,]
+              out[[1]]$decision.df[out[[1]]$decision.df$year==2021,]
     )
     
     addWorksheet(wb=dt, sheetName = "2021_SurplusMedian")
     writeData(dt, sheet=4,
-              out[[2]]$decision.2[out[[1]]$decision.df$year==2021,]
+              out[[2]]$decision.df[out[[1]]$decision.df$year==2021,]
     )
     
     addWorksheet(wb=dt, sheetName = "2021_SurplusPrevious")
     writeData(dt, sheet=5,
-              out[[3]]$decision.2[out[[1]]$decision.df$year==2021,]
+              out[[3]]$decision.df[out[[1]]$decision.df$year==2021,]
     )
     
     saveWorkbook(dt, file = paste0("./data/", folder, "/", area, "/decisiontables.xlsx"), overwrite=T)

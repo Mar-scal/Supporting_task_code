@@ -14,6 +14,7 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
   if(area == "29A") strata <- which(object$labels == "Medium")
   if(area %in% c("29B", "29C", "29D")) strata <- which(object$labels == "High")
   
+  strata.area <- object$data$Area[strata]
   
   # tidy up the output
   B.next0 <- map_df(1:length(results_process$B.next0), function(x) rbind(results_process$B.next0[[x]][[strata]]))
@@ -32,6 +33,18 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
                      meanB = mean(Biomass, na.rm = T),
                      upper=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[3],
                      max=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[4]) 
+  
+  densities <- process %>%
+    dplyr::mutate(density = Biomass/strata.area) %>%
+    dplyr::group_by(year, proj) %>%
+    dplyr::summarize(catch = median(catch),
+                     mu=median(mu),
+                     min=quantile(density, na.rm = T, c(0.05,0.25, 0.75, 0.95))[1],
+                     lower=quantile(density, na.rm = T,  c(0.05,0.25, 0.75, 0.95))[2],
+                     med=median(density, na.rm = T),
+                     meanB = mean(density, na.rm = T),
+                     upper=quantile(density, na.rm = T, c(0.05,0.25, 0.75, 0.95))[3],
+                     max=quantile(density, na.rm = T, c(0.05,0.25, 0.75, 0.95))[4]) 
   
   diffs <- all_sum %>%
     dplyr::select(year, med, proj) %>%
@@ -71,7 +84,7 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     break4 <- seq(-0.8, 0.8, 0.4)
   }
   
-  if(!area %in% c("BBn", "GBa", "1B", "3", "4", "6")) {
+  if(area == "1A") {
     break1 <- seq(0,8000, 2000)
     break2 <- seq(0,8000, 2000)
     break3 <- seq(-2500,2500, 500)
@@ -92,7 +105,7 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     break4 <- seq(-0.8, 0.8, 0.4)
   }
   
-  if(area ==6) {
+  if(area == 6) {
     break1 <- seq(0,4000, 1000)
     break2 <- seq(0,4000, 1000)
     break3 <- seq(-1500,1500, 500)
@@ -100,10 +113,18 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
   }
   
   if(area %in% c("29A", "29B", "29C", "29D")) {
-    break1 <- seq(0,600, 200)
-    break2 <- seq(0,600, 200)
+    break1 <- seq(0,750, 250)
+    break2 <- seq(0,30, 5)
     break3 <- seq(-200,200, 50)
-    break4 <- seq(-1, 1, 0.5)
+    break4 <- seq(-3, 3, 1)
+  }
+  
+  if(area =="29B"){
+    break2 <- seq(0,20,5)
+    break4 <- seq(-3.5, 3.5, 1.75)
+  }
+  if(area =="29A"){
+    break2 <- seq(0,10,2)
   }
   
   # boxplot code here
@@ -119,10 +140,10 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     scale_y_continuous(breaks=break1, limits=c(min(break1), max(break1)))
   
   zoom.pred.eval <- ggplot() +
-    geom_boxplot(data=all_sum[all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),],
+    geom_boxplot(data=densities[densities$year %in% ((max(densities$year)-3):max(densities$year)),],
                  aes(x=factor(year), ymin=min, lower=lower, middle=med, upper=upper, ymax=max, fill=as.factor(proj)), stat="identity", position = position_dodge2(preserve = "single", padding=0.2), width=0.7) +
     theme_bw() +
-    ylab("Commercial biomass estimate (metric tonnes)") +
+    ylab("Commercial biomass density (metric tonnes/square kilometre)") +
     xlab("Year") +
     scale_fill_brewer(type = "qual", palette = "Paired", name=NULL, direction=-1, labels=c("actual", "year 1", "year 2")) +
     theme(panel.grid=element_blank(), text = element_text(size=18))+
@@ -150,13 +171,13 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     scale_y_continuous(breaks=break1, limits=c(min(break1), max(break1)))
   
   zoom.pred.eval.F <- ggplot() +
-    geom_ribbon(data=all_sum[all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),],
+    geom_ribbon(data=densities[densities$year %in% ((max(densities$year)-3):max(densities$year)),],
                 aes(year, ymin=lower, ymax=upper,fill=as.factor(proj)), alpha=0.3) +
     geom_line(data=all_sum[all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),], aes(year, colour=as.factor(proj), y=med), lwd=2) +
     geom_line(data=all_sum[all_sum$year %in% ((max(all_sum$year)-3):max(all_sum$year)),], aes(year, colour=as.factor(proj), y=meanB), lwd=2, lty=3) +
     theme_bw() +
     theme(panel.grid=element_blank(), text = element_text(size=18))+
-    ylab("Commercial biomass estimate (metric tonnes)") +
+    ylab("Commercial biomass density (metric tonnes/square kilometre)") +
     xlab("Year") +
     scale_fill_brewer(type = "qual", palette = "Set2", name=NULL, labels=c("actual", "year 1", "year 2")) +
     scale_colour_brewer(type = "qual", palette = "Set2", name=NULL, labels=c("actual", "year 1", "year 2")) +
@@ -208,6 +229,10 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     print(pred.eval)
     dev.off()
     
+    png(filename = paste0("./", folder, "/", area, "/", tag1, "/zoom_pred_eval_", tag, ".png"), width=11, height=8.5, units="in", res=400)
+    print(pred.eval)
+    dev.off()
+    
     png(filename = paste0("./", folder, "/", area, "/", tag1, "/pred_eval_F", tag, ".png"), width=11, height=8.5, units="in", res=400)
     print(pred.eval.F)
     dev.off()
@@ -227,5 +252,5 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     dev.off()
   }
   
-  return(list(results_process=process, all_sum = all_sum, pred.eval=pred.eval, zoom.pred.eval=zoom.pred.eval, pred.eval.F=pred.eval.F, zoom.pred.eval.F=zoom.pred.eval.F, evaluation1=evaluation1, evaluation2=evaluation2))
+  return(list(results_process=process, all_sum = all_sum, densities = densities, pred.eval=pred.eval, zoom.pred.eval=zoom.pred.eval, pred.eval.F=pred.eval.F, zoom.pred.eval.F=zoom.pred.eval.F, evaluation1=evaluation1, evaluation2=evaluation2))
 }
