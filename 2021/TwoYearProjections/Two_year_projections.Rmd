@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 options(dplyr.summarise.inform = FALSE)
 options(dplyr.join.inform = FALSE)
 require(purrr)
+require(tidyverse)
 
 ```
 
@@ -39,7 +40,8 @@ HCRs <- data.frame(area = c("BBn", "GBa",
 areas <- c(#"1A", "1B", "3", "4", "6", 
              # "GBa", "BBn")#, 
            #"29A", 
-  "29B"#, "29C", "29D"
+  #"29B"#, 
+  "29C"#, "29D"
   )
 
 time1 <- Sys.time()

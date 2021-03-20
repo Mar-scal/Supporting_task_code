@@ -169,7 +169,7 @@ two_year_projections <- function(
   # run projections using a range of exploitation values
   message("generating decision tables")
   source(paste0("./", folder, "/process_2y_proj.R"))
-  exp.range <- seq(0, 0.2, 0.02)
+  exp.range <- seq(0,0.21, 0.03)
   
   checktable <- map_df(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(x, NA), lastyear=T, decisiontable=F, LRP=LRP, USR=USR))
   checktable0 <- checktable$B.next0
