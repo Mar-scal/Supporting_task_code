@@ -85,8 +85,8 @@ for (area in areas){
   if(area %in% c("1A", "1B", "3", "4", "6")) folder <- "BoF"
   if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"
   
-  #load(paste0("./", folder, "/", area, "/twoyearprojections.RData"))
-  load(paste0("Y:/Projects/CSAS/2y_Projection_RAP/data/", folder, "/", area, "/twoyearprojections.RData"))
+  load(paste0("./", folder, "/", area, "/twoyearprojections.RData"))
+  #load(paste0("Y:/Projects/CSAS/2y_Projection_RAP/data/", folder, "/", area, "/twoyearprojections.RData"))
   require(patchwork)
   require(cowplot)
   # plot_grid(plot_drt_cod$drt + xlab(NULL), plot_drt_had$drt + ylab(NULL) + xlab(NULL), plot_drt_ytf$drt +ylab(NULL) + xlab(NULL), plot_dt_cod$dt, plot_dt_had$dt + ylab(NULL), plot_dt_ytf$dt + ylab(NULL), ncol=3, align="v")
