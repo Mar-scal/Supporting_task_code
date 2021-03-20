@@ -84,7 +84,7 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     break4 <- seq(-0.8, 0.8, 0.4)
   }
   
-  if(!area %in% c("BBn", "GBa", "1B", "3", "4", "6")) {
+  if(area == "1A") {
     break1 <- seq(0,8000, 2000)
     break2 <- seq(0,8000, 2000)
     break3 <- seq(-2500,2500, 500)
@@ -105,7 +105,7 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     break4 <- seq(-0.8, 0.8, 0.4)
   }
   
-  if(area ==6) {
+  if(area == 6) {
     break1 <- seq(0,4000, 1000)
     break2 <- seq(0,4000, 1000)
     break3 <- seq(-1500,1500, 500)
@@ -226,6 +226,10 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
     if(!dir.exists(paste0("./", folder, "/", area, "/", tag1))) dir.create(paste0("./", folder, "/", area, "/", tag1))
     
     png(filename = paste0("./", folder, "/", area, "/", tag1, "/pred_eval_", tag, ".png"), width=11, height=8.5, units="in", res=400)
+    print(pred.eval)
+    dev.off()
+    
+    png(filename = paste0("./", folder, "/", area, "/", tag1, "/zoom_pred_eval_", tag, ".png"), width=11, height=8.5, units="in", res=400)
     print(pred.eval)
     dev.off()
     
