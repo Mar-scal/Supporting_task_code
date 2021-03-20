@@ -258,7 +258,7 @@ two_year_projections <- function(
   decision.2 <- map_df(2:length(unique(decision2.2$year)), function(x) 
     decisiontable(decision2.2, proj=2, year=unique(decision2.2$year)[x], LRP=LRP, USR=USR))
   
-  medium <- decision.2[decision.2$strata == "Medium" & decision.2$proj==2,]
+  medium <- decision.2[decision.2$strata == mod.res$labels[strata] & decision.2$proj==2,]
   total2 <- decision.2[decision.2$strata == "Total",] %>%
     dplyr::select(year, mu, catch, proj) %>%
     dplyr::rename(totalcatch=catch)
