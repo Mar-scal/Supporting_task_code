@@ -39,9 +39,9 @@ HCRs <- data.frame(area = c("BBn", "GBa",
 
 areas <- c(#"1A", "1B", "3", "4", "6", 
   # "GBa", "BBn")#, 
-  #"29A", 
-  #"29B"#, 
-  "29C"#, "29D"
+  "29A", 
+  "29B", 
+  "29C", "29D"
 )
 
 time1 <- Sys.time()
@@ -72,6 +72,7 @@ for(area in areas){
 time2 <- Sys.time()
 time2-time1
 # Time difference of 9.624839 mins for 29W with 1% subsample
+#Time difference of 4.326614 hours for 29W with no subsample and reduced exp.range
 ```
 
 
