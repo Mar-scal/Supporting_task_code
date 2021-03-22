@@ -56,7 +56,7 @@ decision_impact <- function(object, surplus, area, save, HCRscenario){
   
   if(area %in% c("29A", "29B", "29C", "29D")){
     break1 <- seq(-50, 50, 10)
-    break2 <- seq(-5, 5, 1) 
+    break2 <- seq(-2, 2, 1) 
     break3 <- seq(0, 50, 10) 
   }
   

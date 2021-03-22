@@ -7,7 +7,8 @@ two_year_projections <- function(
   sample=0.1,
   path="Repo working directory (fast)",
   save=F, 
-  pred.eval=T)
+  pred.eval=T,
+  load=T) # will LOAD RDATA AND THEN OVERWRITE IT!
 {
   ## packages
   require(tidyverse)
@@ -163,13 +164,23 @@ two_year_projections <- function(
   }
   if(pred.eval==F){
     message("skipping projection evaluation")
-    realized <- NULL
+    if(load==T) {
+      message(paste0("loading pred.eval from ./", folder, "/", area, "/twoyearprojections.RData"))
+      load(paste0("./", folder, "/", area, "/twoyearprojections.RData"))
+      if(!is.null(surplus)){
+        if(surplus==0) realized <- out[[1]]$realized
+        if(!surplus==0) realized <- out[[2]]$realized
+      }
+      if(is.null(surplus)) realized <- out[[3]]$realized
+    }
+    if(load==F) realized <- NULL
   }
   
   # run projections using a range of exploitation values
   message("generating decision tables")
   source(paste0("./", folder, "/process_2y_proj.R"))
-  exp.range <- c(seq(0,0.21, 0.03), 0.05)
+  if(!area == "29D")exp.range <- c(seq(0,0.21, 0.03), 0.05)
+  if(area == "29D")exp.range <- c(seq(0,0.3, 0.03), 0.05)
   exp.range <- sort(exp.range)
   
   checktable <- map_df(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(x, NA), lastyear=T, decisiontable=F, LRP=LRP, USR=USR))
@@ -182,8 +193,9 @@ two_year_projections <- function(
   checktable0 <- overall_29_stats(object=checktable0, strata.labs = mod.res$labels) %>%
     dplyr::arrange(row, strata)
   
+  print(1)
   
-    checktable1$B.change[is.na(checktable1$B.change)] <- (checktable1$Biomass[is.na(checktable1$B.change)]  - checktable0$Biomass[is.na(checktable1$B.change)]) / checktable0$Biomass[is.na(checktable1$B.change)] * 100
+  checktable1$B.change[is.na(checktable1$B.change)] <- (checktable1$Biomass[is.na(checktable1$B.change)]  - checktable0$Biomass[is.na(checktable1$B.change)]) / checktable0$Biomass[is.na(checktable1$B.change)] * 100
   # Probability of biomass increase.  What runs are less than 0.
   checktable1$pB0_increase[is.na(checktable1$pB0_increase)] <- 0 < (checktable1$Biomass[is.na(checktable1$pB0_increase)]-checktable0$Biomass[is.na(checktable1$pB0_increase)])
   
@@ -214,6 +226,8 @@ two_year_projections <- function(
   
   decision <- process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(exploitation, NA), lastyear=F, decisiontable=F, LRP=LRP, USR=USR)
   
+  print(2)
+  
   decision0 <- decision$B.next0
   decision1 <- decision$B.next1
   
@@ -227,13 +241,13 @@ two_year_projections <- function(
   decision1$B.change[is.na(decision1$B.change)] <- (decision1$Biomass[is.na(decision1$B.change)]  - decision0$Biomass[is.na(decision1$B.change)]) / decision0$Biomass[is.na(decision1$B.change)] * 100
   # Probability of biomass increase.  What runs are less than 0.
   decision1$pB0_increase[is.na(decision1$pB0_increase)] <- 0 < (decision1$Biomass[is.na(decision1$pB0_increase)]-decision0$Biomass[is.na(decision1$pB0_increase)])
-
+  
   # source("./predict.ssmodeltest.r")
   # predict.ssmodeltest(A.mod.res)
   
   # indexing of list is [[exp]][[year]][[strata]]
   decision2 <- map_df(exp.range, function(x) process_2y_proj(object=mod.res, area=area, surplus=surplus, mu=c(NA, x), lastyear=F, decisiontable=F, LRP=LRP, USR=USR))
-
+  
   source(paste0(folder, "/overall_29_stats.R"))
   decision2.0 <- overall_29_stats(object=decision2$B.next0, strata.labs = mod.res$labels) %>%
     dplyr::arrange(row, strata)
@@ -242,6 +256,7 @@ two_year_projections <- function(
   decision2.2 <- overall_29_stats(object=decision2$B.next2, strata.labs = mod.res$labels) %>%
     dplyr::arrange(row, strata)
   
+  print(3)
   
   decision2.1$B.change[is.na(decision2.1$B.change)] <- (decision2.1$Biomass[is.na(decision2.1$B.change)]  - decision2.0$Biomass[is.na(decision2.1$B.change)]) / decision2.0$Biomass[is.na(decision2.1$B.change)] * 100
   # Probability of biomass increase.  What runs are less than 0.
@@ -256,8 +271,9 @@ two_year_projections <- function(
   decision.1 <- map_df(2:length(unique(decision1$year)), function(x) 
     decisiontable(decision1, proj=1, year=unique(decision1$year)[x], LRP=LRP, USR=USR))
   
-  decision.2 <- map_df(2:length(unique(decision2.2$year)), function(x) 
+  decision.2 <- map_df(1:length(unique(decision2.2$year)), function(x) 
     decisiontable(decision2.2, proj=2, year=unique(decision2.2$year)[x], LRP=LRP, USR=USR))
+  
   
   medium <- decision.2[decision.2$strata == mod.res$labels[strata] & decision.2$proj==2,]
   total2 <- decision.2[decision.2$strata == "Total",] %>%
@@ -286,6 +302,7 @@ two_year_projections <- function(
     dplyr::left_join(., total2, by=c("year", "mu")) %>%
     dplyr::full_join(., total1, by=c("year", "mu", "totalcatch", "proj")) %>%
     dplyr::rename(catch=totalcatch)
+  
   
   ################## Decision impact ####################
   message("running decision impact analysis")
