@@ -261,7 +261,8 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
           catch <- PCatch.h[,h] * Kh[,h]
           
           # process equation for 29W
-          Pmed2.p <- (P.out + Rh[,h]) * surplus_multiplier
+          #Pmed2.p <- (P.out + Rh[,h]) * surplus_multiplier
+          Pmed2.p <- P.out * surplus_multiplier
           # remove catch
           #Pcatch <- Pmed.p * exploit
           Pmed2 <- Pmed2.p - PCatch.h[,h]
@@ -290,14 +291,16 @@ process_2y_proj <- function(object, area, mu=c(NA, NA), surplus=NULL, lastyear=F
                                      mu[2], object$e.parms, object$data$Area)
           
           # process equation for 29W
-          Pmed2.p <- (P.out + Rh[,h]) * surplus_multiplier
+          #Pmed2.p <- (P.out + Rh[,h]) * surplus_multiplier
+          Pmed2.p <- P.out * surplus_multiplier
           # remove catch
           PCatch.h <- Pmed2.p * mu.exploit$exploit[h]
           Pmed <- Pmed2.p - PCatch
           catch <- PCatch.h * Kh[,h]
           
           # process equation for 29W
-          Pmed2.p <- (P.out + Rh[,h]) * surplus_multiplier
+          #Pmed2.p <- (P.out + Rh[,h]) * surplus_multiplier
+          Pmed2.p <- P.out * surplus_multiplier
           # remove catch
           #Pcatch <- Pmed.p * exploit
           Pmed2.p[Pmed2.p < 1e-05] <- 1e-04

@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 options(dplyr.summarise.inform = FALSE)
 options(dplyr.join.inform = FALSE)
 require(purrr)
+require(tidyverse)
 
 ```
 
@@ -37,10 +38,12 @@ HCRs <- data.frame(area = c("BBn", "GBa",
 
 
 areas <- c(#"1A", "1B", "3", "4", "6", 
-             # "GBa", "BBn")#, 
-           #"29A", 
-  "29B"#, "29C", "29D"
-  )
+  # "GBa", "BBn")#, 
+  "29A", 
+  "29B", 
+  "29C", 
+  "29D"
+)
 
 time1 <- Sys.time()
 for(area in areas){
@@ -62,7 +65,8 @@ for(area in areas){
                                                           sample=100,
                                                           path="Repo working directory (fast)", 
                                                           save=F,
-                                                          pred.eval=T))
+                                                          pred.eval=F,
+                                                          load=T))
   
   
   save(out, file = paste0("./", folder, "/", area, "/twoyearprojections.RData"))
@@ -70,6 +74,7 @@ for(area in areas){
 time2 <- Sys.time()
 time2-time1
 # Time difference of 9.624839 mins for 29W with 1% subsample
+#Time difference of 4.326614 hours for 29W with no subsample and reduced exp.range
 ```
 
 
@@ -84,7 +89,7 @@ for (area in areas){
   if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"
   
   load(paste0("./", folder, "/", area, "/twoyearprojections.RData"))
-  #load(paste0("Y:/Projects/CSAS/2y_Projection_RAP/data/", area, "/twoyearprojections.RData"))
+  #load(paste0("Y:/Projects/CSAS/2y_Projection_RAP/data/", folder, "/", area, "/twoyearprojections.RData"))
   require(patchwork)
   require(cowplot)
   # plot_grid(plot_drt_cod$drt + xlab(NULL), plot_drt_had$drt + ylab(NULL) + xlab(NULL), plot_drt_ytf$drt +ylab(NULL) + xlab(NULL), plot_dt_cod$dt, plot_dt_had$dt + ylab(NULL), plot_dt_ytf$dt + ylab(NULL), ncol=3, align="v")
@@ -94,9 +99,9 @@ for (area in areas){
   # Using the realized catch for all projections (except 2021), we get biomass posterior distributions which we can compare between projection timings. 
   png(paste0("./figures/", folder, "/", area, "/pred_eval.png"), height=6, width=22, res=400, units="in")
   print(plot_grid(out[[1]]$realized$pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
-            out[[2]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
-            out[[3]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
-            ncol=3, align="v"))
+                  out[[2]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"),  
+                  out[[3]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal"), 
+                  ncol=3, align="v"))
   dev.off()
   # GBa 150000 and 150000
   # BB 30000 and 10000
@@ -122,45 +127,45 @@ for (area in areas){
   
   
   # the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
-if(area=="GBa")  {
-  png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
-  print(plot_grid(out[[1]]$realized$evaluation1, 
-            out[[2]]$realized$evaluation1+ ylab(NULL) , 
-            out[[3]]$realized$evaluation1+ ylab(NULL) ,
-            out[[1]]$realized$evaluation2 + ylim(-1.4,1.4), 
-            out[[2]]$realized$evaluation2+ ylab(NULL) + ylim(-1.4,1.4), 
-            out[[3]]$realized$evaluation2+ ylab(NULL) + ylim(-1.4,1.4) , 
-            ncol=3, align="v"))
-  dev.off()
-}
+  if(area=="GBa")  {
+    png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+    print(plot_grid(out[[1]]$realized$evaluation1, 
+                    out[[2]]$realized$evaluation1+ ylab(NULL) , 
+                    out[[3]]$realized$evaluation1+ ylab(NULL) ,
+                    out[[1]]$realized$evaluation2 + ylim(-1.4,1.4), 
+                    out[[2]]$realized$evaluation2+ ylab(NULL) + ylim(-1.4,1.4), 
+                    out[[3]]$realized$evaluation2+ ylab(NULL) + ylim(-1.4,1.4) , 
+                    ncol=3, align="v"))
+    dev.off()
+  }
   if(!area=="GBa")  {
-  png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
-  print(plot_grid(out[[1]]$realized$evaluation1, 
-            out[[2]]$realized$evaluation1+ ylab(NULL), 
-            out[[3]]$realized$evaluation1+ ylab(NULL),
-            out[[1]]$realized$evaluation2, 
-            out[[2]]$realized$evaluation2+ ylab(NULL), 
-            out[[3]]$realized$evaluation2+ ylab(NULL), 
-            ncol=3, align="v"))
-  dev.off()
-}
+    png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+    print(plot_grid(out[[1]]$realized$evaluation1, 
+                    out[[2]]$realized$evaluation1+ ylab(NULL), 
+                    out[[3]]$realized$evaluation1+ ylab(NULL),
+                    out[[1]]$realized$evaluation2, 
+                    out[[2]]$realized$evaluation2+ ylab(NULL), 
+                    out[[3]]$realized$evaluation2+ ylab(NULL), 
+                    ncol=3, align="v"))
+    dev.off()
+  }
   # GBa 20000 and 1.2
   # BBn 4000 and 0.8
   
   # A HCR is used to select catch for year 1 and year 2. 
   png(paste0("./figures/", folder, "/", area, "/catch_diff_eval_HCR1.png"), height=6, width=22, res=400, units="in")
   print(plot_grid(out[[1]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab("Catch potential (mt)"), 
-            out[[2]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), 
-            out[[3]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), ncol=3, align="v"))
+                  out[[2]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), 
+                  out[[3]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), ncol=3, align="v"))
   dev.off()
   
   png(paste0("./figures/", folder, "/", area, "/decision_impact_HCR1.png"), height=12, width=22, res=400, units="in")
   print(plot_grid(out[[1]]$impact_HCR1$evaluation3, 
-            out[[2]]$impact_HCR1$evaluation3 + ylab(NULL), 
-            out[[3]]$impact_HCR1$evaluation3 + ylab(NULL),
-            out[[1]]$impact_HCR1$evaluation4, 
-            out[[2]]$impact_HCR1$evaluation4 + ylab(NULL), 
-            out[[3]]$impact_HCR1$evaluation4 + ylab(NULL), ncol=3, align="v"))
+                  out[[2]]$impact_HCR1$evaluation3 + ylab(NULL), 
+                  out[[3]]$impact_HCR1$evaluation3 + ylab(NULL),
+                  out[[1]]$impact_HCR1$evaluation4, 
+                  out[[2]]$impact_HCR1$evaluation4 + ylab(NULL), 
+                  out[[3]]$impact_HCR1$evaluation4 + ylab(NULL), ncol=3, align="v"))
   dev.off()
   # GBa 10000 and 3
   # BBn 1000 and 4
@@ -168,22 +173,29 @@ if(area=="GBa")  {
   if(!area %in% c("BBn", "6")){
     png(paste0("./figures/", folder, "/", area, "/catch_diff_eval_HCR2.png"), height=6, width=22, res=400, units="in")
     print(plot_grid(out[[1]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright")+ ylab("Catch potential (mt)"),  
-              out[[2]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), 
-              out[[3]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), ncol=3, align="v"))
+                    out[[2]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), 
+                    out[[3]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL), ncol=3, align="v"))
     dev.off()
     
     
     png(paste0("./figures/", folder, "/", area, "/decision_impact_HCR2.png"), height=12, width=22, res=400, units="in")
     print(plot_grid(out[[1]]$impact_HCR2$evaluation3, 
-              out[[2]]$impact_HCR2$evaluation3 + ylab(NULL), 
-              out[[3]]$impact_HCR2$evaluation3 + ylab(NULL),
-              out[[1]]$impact_HCR2$evaluation4, 
-              out[[2]]$impact_HCR2$evaluation4 + ylab(NULL), 
-              out[[3]]$impact_HCR2$evaluation4 + ylab(NULL), ncol=3, align="v"))
+                    out[[2]]$impact_HCR2$evaluation3 + ylab(NULL), 
+                    out[[3]]$impact_HCR2$evaluation3 + ylab(NULL),
+                    out[[1]]$impact_HCR2$evaluation4, 
+                    out[[2]]$impact_HCR2$evaluation4 + ylab(NULL), 
+                    out[[3]]$impact_HCR2$evaluation4 + ylab(NULL), ncol=3, align="v"))
     dev.off()
   }
   # GBa 10000 and 3
   # BBn NA
+  
+  if(folder=="BoF"){
+    out[[1]]$checktable$pB0 <- 1-out[[1]]$checktable$pB0
+    out[[1]]$decision.2$pB0 <- 1-out[[1]]$decision.2$pB0
+    names(out[[1]]$checktable)[which(names(out[[1]]$checktable)=="pB0")] <- "pB0_increase"
+    names(out[[1]]$decision.2)[which(names(out[[1]]$decision.2)=="pB0")] <- "pB0_increase"
+  }
   
   
   if(!grepl(x=area, "29")){
@@ -219,7 +231,7 @@ if(area=="GBa")  {
     
   }
   
-   if(grepl(x=area, "29")){
+  if(grepl(x=area, "29")){
     ## decision tables
     require(openxlsx)
     dt <- createWorkbook()
@@ -295,11 +307,11 @@ if(area=="GBa")  {
   
   eval.1.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation1)$data[[1]], x, ymin, ymax), surplus=SP[x]))
   
- if(area=="GBa") eval.2.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation2 + ylim(-1.4, 1.4))$data[[1]], x, ymin, ymax), surplus=SP[x]))
- 
+  if(area=="GBa") eval.2.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation2 + ylim(-1.4, 1.4))$data[[1]], x, ymin, ymax), surplus=SP[x]))
+  
   if(!area=="GBa") eval.2.dat <- map_df(1:3, function(x) cbind(dplyr::select(ggplot_build(out[[x]]$realized$evaluation2)$data[[1]], x, ymin, ymax), surplus=SP[x]))
- 
-   
+  
+  
   HCR.1.dat <- map_df(1:3, function(x) cbind(out[[x]]$impact_HCR1$decisions, surplus=SP[x]))
   
   if(!area %in% c("BBn", "6")){
