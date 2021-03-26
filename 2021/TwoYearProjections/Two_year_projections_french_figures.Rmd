@@ -7,17 +7,26 @@ output: html_document
 require(purrr)
 require(tidyverse)
 
-areas <- c(#"1A", "1B", "3", "4", "6", 
-           "GBa", "BBn"#, 
-           # "29A", 
-           # "29B", 
-           # "29C", 
-           # "29D"
+areas <- c("1A", "1B", "3", "4", "6", 
+           "GBa", "BBn", 
+           "29A",
+           "29B",
+           "29C",
+           "29D"
 )
 
 require(rosettafish)
 rosetta_terms <- as.data.frame(readr::read_csv("terms.csv"))
 french <- T
+if(french==F) {
+  catch_diff <- "Difference in catch potential (mt)"
+  prop_catch_diff <- "Proportional difference in catch potential"
+}
+if(french==T) {
+  catch_diff <- "Différence des prises\npotentielles (tonnes)"
+  prop_catch_diff <- "Différence proportionelle\ndes prises potentielles"
+}
+
 
 for (area in areas){
   
@@ -28,6 +37,8 @@ for (area in areas){
   
   load(paste0("./", folder, "/", area, "/twoyearprojections.RData"))
   
+  if(french==T) folder <- paste0("french/", folder)
+  
   require(patchwork)
   require(cowplot)
   # plot_grid(plot_drt_cod$drt + xlab(NULL), plot_drt_had$drt + ylab(NULL) + xlab(NULL), plot_drt_ytf$drt +ylab(NULL) + xlab(NULL), plot_dt_cod$dt, plot_dt_had$dt + ylab(NULL), plot_dt_ytf$dt + ylab(NULL), ncol=3, align="v")
@@ -35,7 +46,7 @@ for (area in areas){
   # pred.eval
   if(folder %in% c("BoF", "29W")){
     # Using the realized catch for all projections (except 2021), we get biomass posterior distributions which we can compare between projection timings. 
-    png(paste0("./figures/french/", folder, "/", area, "/pred_eval.png"), height=6, width=22, res=400, units="in")
+    png(paste0("./figures/", folder, "/", area, "/pred_eval.png"), height=6, width=22, res=400, units="in")
     print(plot_grid(out[[1]]$realized$pred.eval + 
                       theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + 
                       scale_fill_brewer(type = "qual", palette = "Paired", name=NULL, direction=-1, labels=c(en2fr("actual",french,custom=rosetta_terms,case = 'lower'), en2fr("year 1",french,custom=rosetta_terms,case = 'lower'), en2fr("year 2",french,custom=rosetta_terms,case = 'lower'))) +
@@ -60,7 +71,7 @@ for (area in areas){
     
     if(grepl(x=area, "29")){
       # This simply shows the biomass projections for the most recent year. 
-      png(paste0("./figures/french/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
+      png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
       print(plot_grid(out[[1]]$realized$zoom.pred.eval + 
                         theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + 
                         ylab(en2fr("Commercial biomass density (metric tonnes/square kilometre",french,custom=rosetta_terms,case = 'sentence')) + 
@@ -81,7 +92,7 @@ for (area in areas){
     }
     if(!grepl(x=area, "29")){
       # This simply shows the biomass projections for the most recent year. 
-      png(paste0("./figures/french/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
+      png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
       print(plot_grid(out[[1]]$realized$zoom.pred.eval + 
                         theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + 
                          scale_fill_brewer(type = "qual", palette = "Paired", name=NULL, direction=-1, labels=c(en2fr("actual",french,custom=rosetta_terms,case = 'lower'), en2fr("year 1",french,custom=rosetta_terms,case = 'lower'), en2fr("year 2",french,custom=rosetta_terms,case = 'lower')))+
@@ -102,7 +113,7 @@ for (area in areas){
     
     # the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
     if(area=="GBa")  {
-      png(paste0("./figures/french/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+      png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
       print(plot_grid(out[[1]]$realized$evaluation1 + 
                         ggtitle(NULL, subtitle=NULL) +ylab(en2fr("Difference in biomass (mt)",french,custom=rosetta_terms,case = 'sentence'))+ 
                         xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),  
@@ -128,7 +139,7 @@ for (area in areas){
       dev.off()
     }
     if(!area=="GBa")  {
-      png(paste0("./figures/french/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+      png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
       print(plot_grid(out[[1]]$realized$evaluation1 + 
                         ggtitle(NULL, subtitle=NULL) +ylab(en2fr("Difference in biomass (mt)",french,custom=rosetta_terms,case = 'sentence'))+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
                       out[[2]]$realized$evaluation1+ 
@@ -156,7 +167,7 @@ for (area in areas){
   if(!folder %in% c("BoF", "29W")){
     
     # Using the realized catch for all projections (except 2021), we get biomass posterior distributions which we can compare between projection timings. 
-    png(paste0("./figures/french/", folder, "/", area, "/pred_eval.png"), height=6, width=22, res=400, units="in")
+    png(paste0("./figures/", folder, "/", area, "/pred_eval.png"), height=6, width=22, res=400, units="in")
     print(plot_grid(out[[1]]$realized$pred.eval + 
                       theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + 
                        scale_fill_brewer(type = "qual", palette = "Paired", name=NULL, direction=-1, labels=c(en2fr("actual",french,custom=rosetta_terms,case = 'lower'), en2fr("year 1",french,custom=rosetta_terms,case = 'lower'), en2fr("year 2",french,custom=rosetta_terms,case = 'lower')))+
@@ -180,7 +191,7 @@ for (area in areas){
     
     if(!grepl(x=area, "29")){
       # This simply shows the biomass projections for the most recent year. 
-      png(paste0("./figures/french/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
+      png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
       print(plot_grid(out[[1]]$realized$zoom.pred.eval + 
                          scale_fill_brewer(type = "qual", palette = "Paired", name=NULL, direction=-1, labels=c(en2fr("actual",french,custom=rosetta_terms,case = 'lower'), en2fr("year 1",french,custom=rosetta_terms,case = 'lower'), en2fr("year 2",french,custom=rosetta_terms,case = 'lower')))+
                         theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + 
@@ -202,7 +213,7 @@ for (area in areas){
     
     # the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
      if(area=="GBa")  {
-      png(paste0("./figures/french/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+      png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
       print(plot_grid(out[[1]]$realized$evaluation1 + 
                         ggtitle(NULL, subtitle=NULL) +
                         ylab(en2fr("Difference in biomass (mt)",french,custom=rosetta_terms,case = 'sentence'))+
@@ -229,7 +240,7 @@ for (area in areas){
       dev.off()
     }
     if(!area=="GBa")  {
-      png(paste0("./figures/french/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+      png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
       print(plot_grid(out[[1]]$realized$evaluation1 + 
                         ggtitle(NULL, subtitle=NULL) +
                         ylab(en2fr("Difference in biomass (mt)",french,custom=rosetta_terms,case = 'sentence'))+ 
@@ -257,7 +268,7 @@ for (area in areas){
   }
   
   # A HCR is used to select catch for year 1 and year 2. 
-  png(paste0("./figures/french/", folder, "/", area, "/catch_diff_eval_HCR1.png"), height=6, width=22, res=400, units="in")
+  png(paste0("./figures/", folder, "/", area, "/catch_diff_eval_HCR1.png"), height=6, width=22, res=400, units="in")
   print(plot_grid(out[[1]]$impact_HCR1$evaluation_catch + 
                     theme(legend.position = "topright") + 
                     ylab(en2fr("Catch potential (mt)",french,custom=rosetta_terms,case = 'sentence')) +
@@ -272,10 +283,10 @@ for (area in areas){
                   ncol=3, align="v"))
   dev.off()
   
-  png(paste0("./figures/french/", folder, "/", area, "/decision_impact_HCR1.png"), height=12, width=22, res=400, units="in")
+  png(paste0("./figures/", folder, "/", area, "/decision_impact_HCR1.png"), height=12, width=22, res=400, units="in")
   print(plot_grid(out[[1]]$impact_HCR1$evaluation3 + 
                     ggtitle(NULL, subtitle=NULL) +
-                    ylab(en2fr("Difference in catch potential (mt)",french,custom=rosetta_terms,case = 'sentence')) +
+                    ylab(catch_diff) +
                     xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
                   out[[2]]$impact_HCR1$evaluation3 + 
                     ylab(NULL) + 
@@ -285,7 +296,7 @@ for (area in areas){
                     ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),
                   out[[1]]$impact_HCR1$evaluation4 + 
                     ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')) +
-                    ylab(en2fr("Proportional difference in catch potential",french,custom=rosetta_terms,case = 'sentence')), 
+                    ylab(prop_catch_diff), 
                   out[[2]]$impact_HCR1$evaluation4 + 
                     ylab(NULL) + 
                     ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
@@ -298,7 +309,7 @@ for (area in areas){
   # BBn 1000 and 4
   
   if(!area %in% c("BBn", "6")){
-    png(paste0("./figures/french/", folder, "/", area, "/catch_diff_eval_HCR2.png"), height=6, width=22, res=400, units="in")
+    png(paste0("./figures/", folder, "/", area, "/catch_diff_eval_HCR2.png"), height=6, width=22, res=400, units="in")
     print(plot_grid(out[[1]]$impact_HCR2$evaluation_catch + 
                       theme(legend.position = "topright")+ 
                       ylab(en2fr("Catch potential (mt)",french,custom=rosetta_terms,case = 'sentence')) +
@@ -315,10 +326,11 @@ for (area in areas){
     dev.off()
     
     
-    png(paste0("./figures/french/", folder, "/", area, "/decision_impact_HCR2.png"), height=12, width=22, res=400, units="in")
+    png(paste0("./figures/", folder, "/", area, "/decision_impact_HCR2.png"), height=12, width=22, res=400, units="in")
     print(plot_grid(out[[1]]$impact_HCR2$evaluation3 + 
                       ggtitle(NULL, subtitle=NULL)+
-                       ylab(en2fr("Difference in catch potential (mt)",french,custom=rosetta_terms,case = 'sentence')) + xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),
+                       ylab(catch_diff) + 
+                      xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),
                     out[[2]]$impact_HCR2$evaluation3 + 
                       ylab(NULL) + 
                       ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
@@ -326,7 +338,7 @@ for (area in areas){
                       ylab(NULL) + 
                       ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),
                     out[[1]]$impact_HCR2$evaluation4 + 
-                      ylab(en2fr("Proportional difference in catch potential",french,custom=rosetta_terms,case = 'sentence'))+
+                      ylab(prop_catch_diff)+
                       ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
                     out[[2]]$impact_HCR2$evaluation4 + 
                       ylab(NULL) + 
