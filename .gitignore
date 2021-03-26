@@ -86,3 +86,6 @@ markdown\
 
 *presentation.R
 *.tex
+
+# keep the terms.csv for two year projections. there are no data in here.
+!terms.csv
