@@ -1,0 +1,346 @@
+
+```{r load-dat,echo=F,warning=F}
+direct.proj <- "Y:/Projects/CSAS/2y_Projection_RAP/"
+require(readxl)
+
+# SPA 1A
+pe.1A.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1A/plot_data.xlsx"),sheet="pred.eval.dat")
+pes.1A.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1A/plot_data.xlsx"),sheet="pred.eval.summary")
+pred.1A.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1A/plot_data.xlsx"),sheet="scenario.pred")
+ev1.1A.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1A/plot_data.xlsx"),sheet="eval.1.dat")
+ev2.1A.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1A/plot_data.xlsx"),sheet="eval.2.dat")
+hcr1.1A.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1A/plot_data.xlsx"),sheet="HCR.1.dat")
+#hcr2.1A.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1A/plot_data.xlsx"),sheet="HCR.2.dat")
+# Data for the surplus production calcs
+sp.1A.dat <- readRDS(paste0(direct.proj,"data/BoF/1A/dat.spa1a.sp.rds"))
+#1B
+pe.1B.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1B/plot_data.xlsx"),sheet="pred.eval.dat")
+pes.1B.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1B/plot_data.xlsx"),sheet="pred.eval.summary")
+pred.1B.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1B/plot_data.xlsx"),sheet="scenario.pred")
+ev1.1B.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1B/plot_data.xlsx"),sheet="eval.1.dat")
+ev2.1B.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1B/plot_data.xlsx"),sheet="eval.2.dat")
+hcr1.1B.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1B/plot_data.xlsx"),sheet="HCR.1.dat")
+#hcr2.1B.dat <- read_xlsx(paste0(direct.proj,"data/BoF/1B/plot_data.xlsx"),sheet="HCR.2.dat")
+# Data for the surplus production calcs
+sp.1B.dat <- readRDS(paste0(direct.proj,"data/BoF/1B/dat.spa1b.sp.rds"))
+#3
+pe.3.dat <- read_xlsx(paste0(direct.proj,"data/BoF/3/plot_data.xlsx"),sheet="pred.eval.dat")
+pes.3.dat <- read_xlsx(paste0(direct.proj,"data/BoF/3/plot_data.xlsx"),sheet="pred.eval.summary")
+pred.3.dat <- read_xlsx(paste0(direct.proj,"data/BoF/3/plot_data.xlsx"),sheet="scenario.pred")
+ev1.3.dat <- read_xlsx(paste0(direct.proj,"data/BoF/3/plot_data.xlsx"),sheet="eval.1.dat")
+ev2.3.dat <- read_xlsx(paste0(direct.proj,"data/BoF/3/plot_data.xlsx"),sheet="eval.2.dat")
+hcr1.3.dat <- read_xlsx(paste0(direct.proj,"data/BoF/3/plot_data.xlsx"),sheet="HCR.1.dat")
+#hcr2.3.dat <- read_xlsx(paste0(direct.proj,"data/BoF/3/plot_data.xlsx"),sheet="HCR.2.dat")
+# Data for the surplus production calcs
+sp.3.dat <- readRDS(paste0(direct.proj,"data/BoF/3/dat.spa3.sp.rds"))
+#4
+pe.4.dat <- read_xlsx(paste0(direct.proj,"data/BoF/4/plot_data.xlsx"),sheet="pred.eval.dat")
+pes.4.dat <- read_xlsx(paste0(direct.proj,"data/BoF/4/plot_data.xlsx"),sheet="pred.eval.summary")
+pred.4.dat <- read_xlsx(paste0(direct.proj,"data/BoF/4/plot_data.xlsx"),sheet="scenario.pred")
+ev1.4.dat <- read_xlsx(paste0(direct.proj,"data/BoF/4/plot_data.xlsx"),sheet="eval.1.dat")
+ev2.4.dat <- read_xlsx(paste0(direct.proj,"data/BoF/4/plot_data.xlsx"),sheet="eval.2.dat")
+hcr1.4.dat <- read_xlsx(paste0(direct.proj,"data/BoF/4/plot_data.xlsx"),sheet="HCR.1.dat")
+#hcr2.4.dat <- read_xlsx(paste0(direct.proj,"data/BoF/4/plot_data.xlsx"),sheet="HCR.2.dat")
+# Data for the surplus production calcs
+sp.4.dat <- readRDS(paste0(direct.proj,"data/BoF/4/dat.spa4.sp.rds"))
+#6
+pe.6.dat <- read_xlsx(paste0(direct.proj,"data/BoF/6/plot_data.xlsx"),sheet="pred.eval.dat")
+pes.6.dat <- read_xlsx(paste0(direct.proj,"data/BoF/6/plot_data.xlsx"),sheet="pred.eval.summary")
+pred.6.dat <- read_xlsx(paste0(direct.proj,"data/BoF/6/plot_data.xlsx"),sheet="scenario.pred")
+ev1.6.dat <- read_xlsx(paste0(direct.proj,"data/BoF/6/plot_data.xlsx"),sheet="eval.1.dat")
+ev2.6.dat <- read_xlsx(paste0(direct.proj,"data/BoF/6/plot_data.xlsx"),sheet="eval.2.dat")
+hcr1.6.dat <- read_xlsx(paste0(direct.proj,"data/BoF/6/plot_data.xlsx"),sheet="HCR.1.dat")
+#hcr2.6.dat <- read_xlsx(paste0(direct.proj,"data/BoF/6/plot_data.xlsx"),sheet="HCR.2.dat")
+# Data for the surplus production calcs
+sp.6.dat <- readRDS(paste0(direct.proj,"data/BoF/6/dat.spa6.sp.rds"))
+#29A
+pe.29A.dat <- read_xlsx(paste0(direct.proj,"data/29W/29A/plot_data.xlsx"),sheet="pred.eval.dat")
+pes.29A.dat <- read_xlsx(paste0(direct.proj,"data/29W/29A/plot_data.xlsx"),sheet="pred.eval.summary")
+pred.29A.dat <- read_xlsx(paste0(direct.proj,"data/29W/29A/plot_data.xlsx"),sheet="scenario.pred")
+ev1.29A.dat <- read_xlsx(paste0(direct.proj,"data/29W/29A/plot_data.xlsx"),sheet="eval.1.dat")
+ev2.29A.dat <- read_xlsx(paste0(direct.proj,"data/29W/29A/plot_data.xlsx"),sheet="eval.2.dat")
+hcr1.29A.dat <- read_xlsx(paste0(direct.proj,"data/29W/29A/plot_data.xlsx"),sheet="HCR.1.dat")
+#hcr2.6.dat <- read_xlsx(paste0(direct.proj,"data/29W/29A/plot_data.xlsx"),sheet="HCR.2.dat")
+# Data for the surplus production calcs
+sp.29A.dat <- readRDS(paste0(direct.proj,"data/29W/29A/dat.sfa29.a.sp.rds"))
+#29A
+pe.29B.dat <- read_xlsx(paste0(direct.proj,"data/29W/29B/plot_data.xlsx"),sheet="pred.eval.dat")
+pes.29B.dat <- read_xlsx(paste0(direct.proj,"data/29W/29B/plot_data.xlsx"),sheet="pred.eval.summary")
+pred.29B.dat <- read_xlsx(paste0(direct.proj,"data/29W/29B/plot_data.xlsx"),sheet="scenario.pred")
+ev1.29B.dat <- read_xlsx(paste0(direct.proj,"data/29W/29B/plot_data.xlsx"),sheet="eval.1.dat")
+ev2.29B.dat <- read_xlsx(paste0(direct.proj,"data/29W/29B/plot_data.xlsx"),sheet="eval.2.dat")
+hcr1.29B.dat <- read_xlsx(paste0(direct.proj,"data/29W/29B/plot_data.xlsx"),sheet="HCR.1.dat")
+#hcr2.6.dat <- read_xlsx(paste0(direct.proj,"data/29W/29B/plot_data.xlsx"),sheet="HCR.2.dat")
+# Data for the surplus production calcs
+sp.29B.dat <- readRDS(paste0(direct.proj,"data/29W/29B/dat.sfa29.b.sp.rds"))
+#29C
+pe.29C.dat <- read_xlsx(paste0(direct.proj,"data/29W/29C/plot_data.xlsx"),sheet="pred.eval.dat")
+pes.29C.dat <- read_xlsx(paste0(direct.proj,"data/29W/29C/plot_data.xlsx"),sheet="pred.eval.summary")
+pred.29C.dat <- read_xlsx(paste0(direct.proj,"data/29W/29C/plot_data.xlsx"),sheet="scenario.pred")
+ev1.29C.dat <- read_xlsx(paste0(direct.proj,"data/29W/29C/plot_data.xlsx"),sheet="eval.1.dat")
+ev2.29C.dat <- read_xlsx(paste0(direct.proj,"data/29W/29C/plot_data.xlsx"),sheet="eval.2.dat")
+hcr1.29C.dat <- read_xlsx(paste0(direct.proj,"data/29W/29C/plot_data.xlsx"),sheet="HCR.1.dat")
+#hcr2.6.dat <- read_xlsx(paste0(direct.proj,"data/29W/29C/plot_data.xlsx"),sheet="HCR.2.dat")
+# Data for the surplus production calcs
+sp.29C.dat <- readRDS(paste0(direct.proj,"data/29W/29C/dat.sfa29.c.sp.rds"))
+#29D
+pe.29D.dat <- read_xlsx(paste0(direct.proj,"data/29W/29D/plot_data.xlsx"),sheet="pred.eval.dat")
+pes.29D.dat <- read_xlsx(paste0(direct.proj,"data/29W/29D/plot_data.xlsx"),sheet="pred.eval.summary")
+pred.29D.dat <- read_xlsx(paste0(direct.proj,"data/29W/29D/plot_data.xlsx"),sheet="scenario.pred")
+ev1.29D.dat <- read_xlsx(paste0(direct.proj,"data/29W/29D/plot_data.xlsx"),sheet="eval.1.dat")
+ev2.29D.dat <- read_xlsx(paste0(direct.proj,"data/29W/29D/plot_data.xlsx"),sheet="eval.2.dat")
+hcr1.29D.dat <- read_xlsx(paste0(direct.proj,"data/29W/29D/plot_data.xlsx"),sheet="HCR.1.dat")
+#hcr2.6.dat <- read_xlsx(paste0(direct.proj,"data/29W/29D/plot_data.xlsx"),sheet="HCR.2.dat")
+# Data for the surplus production calcs
+sp.29D.dat <- readRDS(paste0(direct.proj,"data/29W/29D/dat.sfa29.d.sp.rds"))
+
+
+```
+
+
+
+
+<!-- Load in the tables  for the document and tidy up the format-->
+```{r load-tables,echo=F,warning=F}
+
+hcr.table <- read_xlsx(paste0(direct.proj,"documents/Offshore/HCR_table.xlsx"))
+
+cs.1A.s0 <- read_xlsx(paste0(direct.proj,"data/BoF/1A/decisiontables.xlsx"),sheet="2021_Surplus0")
+cs.1A.sm <- read_xlsx(paste0(direct.proj,"data/BoF/1A/decisiontables.xlsx"),sheet="2021_SurplusMedian")
+cs.1A.sp <- read_xlsx(paste0(direct.proj,"data/BoF/1A/decisiontables.xlsx"),sheet="2021_SurplusPrevious")
+# 1B
+cs.1B.s0 <- read_xlsx(paste0(direct.proj,"data/BoF/1B/decisiontables.xlsx"),sheet="2021_Surplus0")
+cs.1B.sm <- read_xlsx(paste0(direct.proj,"data/BoF/1B/decisiontables.xlsx"),sheet="2021_SurplusMedian")
+cs.1B.sp <- read_xlsx(paste0(direct.proj,"data/BoF/1B/decisiontables.xlsx"),sheet="2021_SurplusPrevious")
+# 3
+cs.3.s0 <- read_xlsx(paste0(direct.proj,"data/BoF/3/decisiontables.xlsx"),sheet="2021_Surplus0")
+cs.3.sm <- read_xlsx(paste0(direct.proj,"data/BoF/3/decisiontables.xlsx"),sheet="2021_SurplusMedian")
+cs.3.sp <- read_xlsx(paste0(direct.proj,"data/BoF/3/decisiontables.xlsx"),sheet="2021_SurplusPrevious")
+# 4
+cs.4.s0 <- read_xlsx(paste0(direct.proj,"data/BoF/4/decisiontables.xlsx"),sheet="2021_Surplus0")
+cs.4.sm <- read_xlsx(paste0(direct.proj,"data/BoF/4/decisiontables.xlsx"),sheet="2021_SurplusMedian")
+cs.4.sp <- read_xlsx(paste0(direct.proj,"data/BoF/4/decisiontables.xlsx"),sheet="2021_SurplusPrevious")
+# 6
+cs.6.s0 <- read_xlsx(paste0(direct.proj,"data/BoF/6/decisiontables.xlsx"),sheet="2021_Surplus0")
+cs.6.sm <- read_xlsx(paste0(direct.proj,"data/BoF/6/decisiontables.xlsx"),sheet="2021_SurplusMedian")
+cs.6.sp <- read_xlsx(paste0(direct.proj,"data/BoF/6/decisiontables.xlsx"),sheet="2021_SurplusPrevious")
+# Now for 29W A through D.
+cs.29A.s0 <- read_xlsx(paste0(direct.proj,"data/29W/29A/decisiontables.xlsx"),sheet="2021_Surplus0")
+cs.29A.sm <- read_xlsx(paste0(direct.proj,"data/29W/29A/decisiontables.xlsx"),sheet="2021_SurplusMedian")
+cs.29A.sp <- read_xlsx(paste0(direct.proj,"data/29W/29A/decisiontables.xlsx"),sheet="2021_SurplusPrevious")
+#B
+cs.29B.s0 <- read_xlsx(paste0(direct.proj,"data/29W/29B/decisiontables.xlsx"),sheet="2021_Surplus0")
+cs.29B.sm <- read_xlsx(paste0(direct.proj,"data/29W/29B/decisiontables.xlsx"),sheet="2021_SurplusMedian")
+cs.29B.sp <- read_xlsx(paste0(direct.proj,"data/29W/29B/decisiontables.xlsx"),sheet="2021_SurplusPrevious")
+#C
+cs.29C.s0 <- read_xlsx(paste0(direct.proj,"data/29W/29C/decisiontables.xlsx"),sheet="2021_Surplus0")
+cs.29C.sm <- read_xlsx(paste0(direct.proj,"data/29W/29C/decisiontables.xlsx"),sheet="2021_SurplusMedian")
+cs.29C.sp <- read_xlsx(paste0(direct.proj,"data/29W/29C/decisiontables.xlsx"),sheet="2021_SurplusPrevious")
+#D
+cs.29D.s0 <- read_xlsx(paste0(direct.proj,"data/29W/29D/decisiontables.xlsx"),sheet="2021_Surplus0")
+cs.29D.sm <- read_xlsx(paste0(direct.proj,"data/29W/29D/decisiontables.xlsx"),sheet="2021_SurplusMedian")
+cs.29D.sp <- read_xlsx(paste0(direct.proj,"data/29W/29D/decisiontables.xlsx"),sheet="2021_SurplusPrevious")
+
+head.name <- c("Catch (t)",
+               "Exploitation \n Rate", 
+               "Probability of \n Biomass \n Decline",
+               "Expected \n Change in \n Biomass (%)",  
+               "Probability \n biomass will \n exceed USR", 
+               "Probability \n biomass will \n exceed LRP")
+
+# GB 3 cases first surplus 0 scenario
+tab.1A.s0 <- cs.1A.s0 %>% dplyr::select(adj.catch, mu, pB0, B.change,  p.LRP,p.USR) %>% 
+                     dplyr::filter(mu >= 0.05 & mu <= 0.25) 
+tab.1A.s0$adj.catch <- round(tab.1A.s0$adj.catch,digits =-2)
+tab.1A.s0$mu <- round(tab.1A.s0$mu,digits =2)
+tab.1A.s0$pB0 <- round(tab.1A.s0$pB0,digits =2)
+tab.1A.s0$B.change <- round(tab.1A.s0$B.change,digits =1)
+tab.1A.s0$p.LRP<- round(tab.1A.s0$p.LRP,digits =2)
+tab.1A.s0$p.LRP[tab.1A.s0$p.LRP == 1] <- "> 0.99"
+tab.1A.s0$p.USR<- round(tab.1A.s0$p.USR,digits =2)
+tab.1A.s0$p.USR[tab.1A.s0$p.USR == 1] <- "> 0.99"
+names(tab.1A.s0) <- head.name
+# Next the Median scenario
+tab.1A.sm <- cs.1A.sm %>% dplyr::select(adj.catch, mu, pB0, B.change,  p.LRP,p.USR) %>% 
+                     dplyr::filter(mu >= 0.05 & mu <= 0.25) 
+tab.1A.sm$adj.catch <- round(tab.1A.sm$adj.catch,digits =-2)
+tab.1A.sm$mu <- round(tab.1A.sm$mu,digits =2)
+tab.1A.sm$pB0 <- round(tab.1A.sm$pB0,digits =2)
+tab.1A.sm$B.change <- round(tab.1A.sm$B.change,digits =1)
+tab.1A.sm$p.LRP<- round(tab.1A.sm$p.LRP,digits =2)
+tab.1A.sm$p.LRP[tab.1A.sm$p.LRP == 1] <- "> 0.99"
+tab.1A.sm$p.USR<- round(tab.1A.sm$p.USR,digits =2)
+tab.1A.sm$p.USR[tab.1A.sm$p.USR == 1] <- "> 0.99"
+names(tab.1A.sm) <- head.name
+#finally the previous year scenario
+tab.1A.sp <- cs.1A.sp %>% dplyr::select(adj.catch, mu, pB0, B.change,  p.LRP,p.USR) %>% 
+                     dplyr::filter(mu >= 0.05 & mu <= 0.25) 
+tab.1A.sp$adj.catch <- round(tab.1A.sp$adj.catch,digits =-2)
+tab.1A.sp$mu <- round(tab.1A.sp$mu,digits =2)
+tab.1A.sp$pB0 <- round(tab.1A.sp$pB0,digits =2)
+tab.1A.sp$B.change <- round(tab.1A.sp$B.change,digits =1)
+tab.1A.sp$p.LRP<- round(tab.1A.sp$p.LRP,digits =2)
+tab.1A.sp$p.LRP[tab.1A.sp$p.LRP == 1] <- "> 0.99"
+tab.1A.sp$p.USR<- round(tab.1A.sp$p.USR,digits =2)
+tab.1A.sp$p.USR[tab.1A.sp$p.USR == 1] <- "> 0.99"
+names(tab.1A.sp) <- head.name
+
+# Now the 3 BBn cases
+# first surplus 0 scenario
+# tab.BBn.s0 <- cs.BBn.s0 %>% dplyr::select(adj.catch, mu, pB0, B.change) %>% 
+#                      dplyr::filter(mu >= 0.08 & mu <= 0.25) 
+# tab.BBn.s0$adj.catch <- round(tab.BBn.s0$adj.catch,digits =-1)
+# tab.BBn.s0$mu <- round(tab.BBn.s0$mu,digits =2)
+# tab.BBn.s0$pB0 <- round(tab.BBn.s0$pB0,digits =2)
+# tab.BBn.s0$B.change <- round(tab.BBn.s0$B.change,digits =1)
+# #tab.BBn.s0$p.LRP<- round(tab.BBn.s0$p.LRP,digits =2)
+# #tab.BBn.s0$p.USR<- round(tab.BBn.s0$p.USR,digits =2)
+# names(tab.BBn.s0) <- head.name[1:4]
+# # Next the Median scenario
+# tab.BBn.sm <- cs.BBn.sm %>% dplyr::select(adj.catch, mu, pB0, B.change) %>% 
+#                      dplyr::filter(mu >= 0.08 & mu <= 0.25) 
+# tab.BBn.sm$adj.catch <- round(tab.BBn.sm$adj.catch,digits =-1)
+# tab.BBn.sm$mu <- round(tab.BBn.sm$mu,digits =2)
+# tab.BBn.sm$pB0 <- round(tab.BBn.sm$pB0,digits =2)
+# tab.BBn.sm$B.change <- round(tab.BBn.sm$B.change,digits =1)
+# #tab.BBn.sm$p.LRP<- round(tab.BBn.sm$p.LRP,digits =2)
+# #tab.BBn.sm$p.USR<- round(tab.BBn.sm$p.USR,digits =2)
+# names(tab.BBn.sm) <- head.name[1:4]
+# #finally the previous year scenario
+# tab.BBn.sp <- cs.BBn.sp %>% dplyr::select(adj.catch, mu, pB0, B.change) %>% 
+#                      dplyr::filter(mu >= 0.08 & mu <= 0.25) 
+# tab.BBn.sp$adj.catch <- round(tab.BBn.sp$adj.catch,digits =-1)
+# tab.BBn.sp$mu <- round(tab.BBn.sp$mu,digits =2)
+# tab.BBn.sp$pB0 <- round(tab.BBn.sp$pB0,digits =2)
+# tab.BBn.sp$B.change <- round(tab.BBn.sp$B.change,digits =1)
+# #tab.BBn.sp$p.LRP<- round(tab.BBn.sp$p.LRP,digits =2)
+# #tab.BBn.sp$p.USR<- round(tab.BBn.sp$p.USR,digits =2)
+names(tab.BBn.sp) <- head.name[1:4]
+```
+
+
+```{r dat-for-results,echo=F,warning=F}
+options(scipen=999)
+n.1A.scenarios <- pes.1A.dat %>% dplyr::filter(surplus == 'zero' & range_greater_than_1 %in% c(0,1)) %>% dplyr::count()
+# Range differences on gb
+range.zero.1A <- pes.1A.dat %>% dplyr::filter(surplus == 'zero' & range_greater_than_1 == 1) %>% dplyr::count()
+range.m.1A <- pes.1A.dat %>% dplyr::filter(surplus == 'median' & range_greater_than_1 == 1) %>% dplyr::count()
+range.p.1A <- pes.1A.dat %>% dplyr::filter(surplus == 'lastyear' & range_greater_than_1 == 1) %>% dplyr::count()
+
+# Scenarios that y2 is less than y1, this is complicated by the 'not different scenario which I haven't accounted for yet...
+pes.1A.dat <- pes.1A.dat %>% dplyr::mutate(pd = (med2-med1)/med2)
+y2.1A.lt.y1.0 <- pes.1A.dat %>% dplyr::filter(surplus == 'zero' & pd < -0.05) %>% dplyr::count()
+y2.1A.eq.y1.0 <- pes.1A.dat %>% dplyr::filter(surplus == 'zero' & pd <= 0.05 & pd>= -0.05) %>% dplyr::count()
+y2.1A.gt.y1.0 <- pes.1A.dat %>% dplyr::filter(surplus == 'zero' & pd > 0.05) %>% dplyr::count()
+
+
+y2.1A.lt.y1.m <- pes.1A.dat %>% dplyr::filter(surplus == 'median' & pd < -0.05) %>% dplyr::count()
+y2.1A.eq.y1.m <- pes.1A.dat %>% dplyr::filter(surplus == 'median' & pd <= 0.05 & pd>= -0.05) %>% dplyr::count()
+y2.1A.gt.y1.m <- pes.1A.dat %>% dplyr::filter(surplus == 'median' & pd > 0.05) %>% dplyr::count()
+
+
+y2.1A.lt.y1.p <- pes.1A.dat %>% dplyr::filter(surplus == 'lastyear' & pd < -0.05) %>% dplyr::count()
+y2.1A.eq.y1.p <- pes.1A.dat %>% dplyr::filter(surplus == 'lastyear' & pd <= 0.05 & pd>= -0.05) %>% dplyr::count()
+y2.1A.gt.y1.p <- pes.1A.dat %>% dplyr::filter(surplus == 'lastyear' & pd > 0.05) %>% dplyr::count()
+
+# Here is the min and max differences for each scenario
+per.1A.diff.0 <- ev2.1A.dat %>% dplyr::filter(surplus == 'zero') %>% dplyr::summarise(min = signif(100*min(ymin),digits=2), max = signif(100*max(ymax),digits=2)) 
+bm.1A.diff.0 <- ev1.1A.dat %>% dplyr::filter(surplus == 'zero') %>% dplyr::summarise(min = signif(min(ymin),digits=3), max = signif(max(ymax),digits=3)) 
+per.1A.diff.m <- ev2.1A.dat %>% dplyr::filter(surplus == 'median') %>% dplyr::summarise(min = signif(100*min(ymin),digits=2), max = signif(100*max(ymax),digits=2)) 
+bm.1A.diff.m <- ev1.1A.dat %>% dplyr::filter(surplus == 'median') %>% dplyr::summarise(min = signif(min(ymin),digits=3), max = signif(max(ymax),digits=3)) 
+per.1A.diff.p <- ev2.1A.dat %>% dplyr::filter(surplus == 'lastyear') %>% dplyr::summarise(min = signif(100*min(ymin),digits=2), max = signif(100*max(ymax),digits=2))
+bm.1A.diff.p <- ev1.1A.dat %>% dplyr::filter(surplus == 'lastyear') %>% dplyr::summarise(min = signif(min(ymin),digits=3), max = signif(max(ymax),digits=3)) 
+
+# Now for the impact numbers.
+hrc1.1A.lt.0 <- hrc1.1A.dat %>% dplyr::filter(surplus == 'zero' & missedout.p < -0.05) %>% dplyr::count()
+hrc1.1A.eq.0 <- hrc1.1A.dat %>% dplyr::filter(surplus == 'zero' & missedout.p <= 0.05 & missedout.p>= -0.05) %>% dplyr::count()
+hrc1.1A.gt.0 <- hrc1.1A.dat %>% dplyr::filter(surplus == 'zero' & missedout.p > 0.05) %>% dplyr::count()
+
+hrc1.1A.lt.m <- hrc1.1A.dat %>% dplyr::filter(surplus == 'median' & missedout.p < -0.05) %>% dplyr::count()
+hrc1.1A.eq.m <- hrc1.1A.dat %>% dplyr::filter(surplus == 'median' & missedout.p <= 0.05 & missedout.p>= -0.05) %>% dplyr::count()
+hrc1.1A.gt.m <- hrc1.1A.dat %>% dplyr::filter(surplus == 'median' & missedout.p > 0.05) %>% dplyr::count()
+
+hrc1.1A.lt.p <- hrc1.1A.dat %>% dplyr::filter(surplus == 'lastyear' & missedout.p < -0.05) %>% dplyr::count()
+hrc1.1A.eq.p <- hrc1.1A.dat %>% dplyr::filter(surplus == 'lastyear' & missedout.p <= 0.05 & missedout.p>= -0.05) %>% dplyr::count()
+hrc1.1A.gt.p <- hrc1.1A.dat %>% dplyr::filter(surplus == 'lastyear' & missedout.p > 0.05) %>% dplyr::count()
+
+# Here is the min and max differences for each scenario
+hrc1.1A.pd.0 <- hrc1.1A.dat %>% dplyr::filter(surplus == 'zero') %>% 
+                                 dplyr::summarise(min = signif(100*min(missedout.p,na.rm=T),digits=2), max = signif(100*max(missedout.p,na.rm=T),digits=2)) 
+hrc1.1A.bmd.0 <- hrc1.1A.dat %>% dplyr::filter(surplus == 'zero') %>% 
+                                 dplyr::summarise(min = signif(min(missedout,na.rm=T),digits=3), max = signif(max(missedout,na.rm=T),digits=3)) 
+hrc1.1A.pd.m <- hrc1.1A.dat %>% dplyr::filter(surplus == 'median') %>% 
+                                 dplyr::summarise(min = signif(100*min(missedout.p,na.rm=T),digits=2), max = signif(100*max(missedout.p,na.rm=T),digits=2)) 
+hrc1.1A.bmd.m <- hrc1.1A.dat %>% dplyr::filter(surplus == 'median') %>% 
+                                 dplyr::summarise(min = signif(min(missedout,na.rm=T),digits=3), max = signif(max(missedout,na.rm=T),digits=3)) 
+hrc1.1A.pd.p <- hrc1.1A.dat %>% dplyr::filter(surplus == 'lastyear') %>% 
+                                 dplyr::summarise(min = signif(100*min(missedout.p,na.rm=T),digits=2), max = signif(100*max(missedout.p,na.rm=T),digits=2)) 
+hrc1.1A.bmd.p <- hrc1.1A.dat %>% dplyr::filter(surplus == 'lastyear') %>% 
+                                 dplyr::summarise(min = signif(min(missedout,na.rm=T),digits=3), max = signif(max(missedout,na.rm=T),digits=3)) 
+
+p.1A.at.interim <- tab.1A.s0 %>% dplyr::filter(`Catch (t)` <4300 & `Catch (t)` > 3900) %>% dplyr::select(`Probability \n biomass will \n exceed USR`)
+
+# # Hag on to these for a minute
+# bbn.mu.at.interim.0 <- tab.BBn.s0 %>% dplyr::filter(`Catch (t)` <=320 & `Catch (t)` >= 280) %>% dplyr::select(`Exploitation \n Rate`)
+# bbn.mu.at.interim.m <- tab.BBn.sm %>% dplyr::filter(`Catch (t)` <=320 & `Catch (t)` >= 280) %>% dplyr::select(`Exploitation \n Rate`)
+# bbn.mu.at.interim.p <- tab.BBn.sp %>% dplyr::filter(`Catch (t)` <=320 & `Catch (t)` >= 280) %>% dplyr::select(`Exploitation \n Rate`)
+# 
+# bbn.pc.at.interim.0 <- tab.BBn.s0 %>% dplyr::filter(`Catch (t)` <=320 & `Catch (t)` >= 280) %>% 
+#                                       dplyr::select(`Expected \n Change in \n Biomass (%)`) %>% 
+#                                       dplyr::summarise(bc = round(`Expected \n Change in \n Biomass (%)`,0))
+# bbn.pc.at.interim.m <- tab.BBn.sm %>% dplyr::filter(`Catch (t)` <=320 & `Catch (t)` >= 280) %>% 
+#                                       dplyr::select(`Expected \n Change in \n Biomass (%)`) %>% 
+#                                       dplyr::summarise(bc = round(`Expected \n Change in \n Biomass (%)`,0))
+# bbn.pc.at.interim.p <- tab.BBn.sp %>% dplyr::filter(`Catch (t)` <=320 & `Catch (t)` >= 280) %>% 
+#                                       dplyr::select(`Expected \n Change in \n Biomass (%)`) %>% 
+#                                       dplyr::summarise(bc = round(`Expected \n Change in \n Biomass (%)`,0))
+
+
+```
+
+
+<!-- Load in the figures for the document if time make this more english/french happy-->
+```{r make-figs,echo=F,warning=F,results='hide'}
+# Future plots
+
+```
+
+
+<!-- Load in the figures for the document if time make this more english/french happy-->
+```{r load-figs,echo=F,warning=F}
+overview <- paste0(direct.proj,"figures/GB/Offshore_banks.png")
+bm.1A.ts <- paste0(direct.proj,"figures/GB/ComBiomass_timeseries_GBa.png")
+gb.rec.ts <- paste0(direct.proj,"figures/GB/Rec_timeseries_GBa.png")
+gb.m.ts<- paste0(direct.proj,"figures/GB/NatMprop_timeseries_GBa.png")
+gb.g.ts <- paste0(direct.proj,"figures/GB/Growth_timeseries_GBa.png")
+gb.sp.ts <- paste0(direct.proj,"figures/GB/SP.timeseries_mt_and_rate_2panel_GBa.png")
+gb.acf <- paste0(direct.proj,"figures/GB/GBa.acf.png")
+gb.sp.v.b <- paste0(direct.proj,"figures/GB/SP.ratevsBiomass_GBa.png")
+gb.phase <- paste0(direct.proj,"figures/GB/phase.plot_GBa.png")
+gb.db.v.mu <- paste0(direct.proj,"figures/GB/change.in.comm.biomass.vs.exploitation.GBa.png")
+gb.pe <- paste0(direct.proj,"figures/GB/pred_eval.png")
+gb.zpe <- paste0(direct.proj,"figures/GB/zoom_pred_eval.png")
+gb.bde <- paste0(direct.proj,"figures/GB/biomass_diff_eval.png")
+gb.cde.1 <- paste0(direct.proj,"figures/GB/catch_diff_eval_HCR1.png")
+gb.di.1 <- paste0(direct.proj,"figures/GB/decision_impact_HCR1.png")
+gb.cde.2 <- paste0(direct.proj,"figures/GB/catch_diff_eval_HCR2.png")
+gb.di.2 <- paste0(direct.proj,"figures/GB/decision_impact_HCR2.png")
+# Now load the browns figures...
+bb.bm.ts <- paste0(direct.proj,"figures/BB/ComBiomass_timeseries_BBn.png")
+bb.rec.ts <- paste0(direct.proj,"figures/BB/Rec_timeseries_BBn.png")
+bb.m.ts<- paste0(direct.proj,"figures/BB/NatMprop_timeseries_BBn.png")
+bb.g.ts <- paste0(direct.proj,"figures/BB/Growth_timeseries_BBn.png")
+bb.sp.ts <- paste0(direct.proj,"figures/BB/SP.timeseries_mt_and_rate_2panel_BBn.png")
+bb.acf <- paste0(direct.proj,"figures/BB/BBn.acf.png")
+bb.sp.v.b <- paste0(direct.proj,"figures/BB/SP.ratevsBiomass_BBn.png")
+bb.phase <- paste0(direct.proj,"figures/BB/phase.plot_BBn.png")
+bb.db.v.mu <- paste0(direct.proj,"figures/BB/change.in.comm.biomass.vs.exploitation.BBn.png")
+bb.pe <- paste0(direct.proj,"figures/BB/pred_eval.png")
+bb.zpe <- paste0(direct.proj,"figures/BB/zoom_pred_eval.png")
+bb.bde <- paste0(direct.proj,"figures/BB/biomass_diff_eval.png")
+bb.cde.1 <- paste0(direct.proj,"figures/BB/catch_diff_eval_HCR1.png")
+bb.di.1 <- paste0(direct.proj,"figures/BB/decision_impact_HCR1.png")
+
+  
+
+```
