@@ -1,0 +1,31 @@
+---
+title: "Untitled"
+output: word_document
+---
+
+```{r, echo=F, include=F}
+
+require(readxl)
+require(tidyverse)
+
+ex.table <- read_xlsx("Y:/Projects/CSAS/2y_Projection_RAP/data/GBa/decisiontables.xlsx")
+ex.table <- ex.table %>% select(catch, mu, pB0, B.change, p.LRP, p.USR)
+
+names(ex.table) <- c("Catch (t)", "Exploitation\nRate", "Probability of\nBiomass Decline", "Expected\nChange in\nBiomass (%)", 
+                    "Probability\nbiomass will\n exceed LRP",  "Probability\nbiomass will\n exceed USR")
+
+ex.table[,2] <- ifelse(as.character(ex.table[,2]) =="1.00" , ">0.99", ex.table[,2])
+ex.table[,3] <- ifelse(as.character(ex.table[,3]) == "1.00", ">0.99", ex.table[,3])
+ex.table[,5] <- ifelse(as.character(ex.table[,5]) == "1.00", ">0.99", ex.table[,5])
+ex.table[,6] <- ifelse(as.character(ex.table[,6]) =="1.00", ">0.99", ex.table[,6])
+ex.table[,4] <- ifelse(as.character(ex.table[,4]) =="-0", "0", ex.table[,4])
+
+require(pander)
+row.names(ex.table) <- NULL
+ex.table <- pander(ex.table, split.tables=Inf)
+```
+
+```{r, echo=F}
+ex.table
+```
+
