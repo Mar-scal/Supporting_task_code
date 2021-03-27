@@ -18,12 +18,12 @@ cs.BBn.s0 <- read_xlsx(paste0(direct.proj,"data/BBn/decisiontables.xlsx"),sheet=
 cs.BBn.sm <- read_xlsx(paste0(direct.proj,"data/BBn/decisiontables.xlsx"),sheet="2021_SurplusMedian")
 cs.BBn.sp <- read_xlsx(paste0(direct.proj,"data/BBn/decisiontables.xlsx"),sheet="2021_SurplusPrevious")
 
-head.name <- c("Catch (t)",
-               "Exploitation\nRate", 
-               "Probability of\nBiomass\nDecline",
-               "Expected\nChange in\nBiomass (%)",  
-               "Probability\nbiomass will\nexceed LRP", 
-               "Probability\nbiomass will\nexceed USR")
+head.name <- c("**Catch (t)**",
+               "**Exploitation\nRate**", 
+               "**Probability of\nBiomass\nDecline**",
+               "**Expected\nChange in\nBiomass (%)**",  
+               "**Probability\nbiomass will\nexceed LRP**", 
+               "**Probability\nbiomass will\nexceed USR**")
 
 # GB 3 cases first surplus 0 scenario
 tab.GBa.s0 <- cs.GBa.s0 %>% dplyr::select(adj.catch, mu, pB0, B.change,p.LRP, p.USR) %>% 
@@ -114,11 +114,25 @@ tab.BBn.sp <- pander(tab.BBn.sp, split.tables=Inf)
 
 ```{r, echo=F}
 tab.GBa.s0
-tab.GBa.sm
-tab.GBa.sp
+```
 
+```{r, echo=F}
+tab.GBa.sm
+```
+
+```{r, echo=F}
+tab.GBa.sp
+```
+
+```{r, echo=F}
 tab.BBn.s0
+```
+
+```{r, echo=F}
 tab.BBn.sm
+```
+
+```{r, echo=F}
 tab.BBn.sp
 ```
 
