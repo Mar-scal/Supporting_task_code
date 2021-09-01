@@ -10,6 +10,7 @@ require(sf)
 source(paste(direct_fns,"Maps/ScallopMap.r",sep=""))
 source(paste(direct_fns,"Fishery/logs_and_fishery_data.r",sep="")) #logs_and_fish is function call
 source(paste(direct_fns,"Maps/pectinid_projector_sf.R",sep="")) #logs_and_fish is function call
+source(paste(direct_fns,"Maps/combo_shp.R",sep="")) #logs_and_fish is function call
 fundian.aoi <- read.csv(paste0(direct,"2019/Supporting_tasks/Fundian_AOI/fundian_georgebasin_coords.csv"))
 
 # 2021 coords revised from Gary Pardy (bigger area)
@@ -22,6 +23,39 @@ fundian.aoi <- st_as_sf(data.frame(ID = 1:5,
 fundian.aoi <- rbind(fundian.aoi, fundian.aoi[1,])
 fundian.aoi <- st_as_sf(st_cast(st_union(fundian.aoi$geometry), "POLYGON"))
 plot(fundian.aoi)
+
+# this crosses the EEZ. Crop off EEZ. 
+temp <- tempfile()
+# Download this to the temp directory you created above
+download.file("https://raw.githubusercontent.com/Mar-scal/GIS_layers/master/EEZ/EEZ.zip", temp)
+# Figure out what this file was saved as
+temp2 <- tempfile()
+# Unzip it
+unzip(zipfile=temp, exdir=temp2)
+# Now read in the shapefile
+eez.all <- st_read(paste0(temp2, "/EEZ.shp"), quiet=T) %>%
+  st_transform(4326)
+eez <- st_polygonize(st_simplify(st_combine(eez.all)))
+
+#need to exclude points from 29. 
+temp <- tempfile()
+# Download this to the temp directory you created above
+download.file("https://raw.githubusercontent.com/Mar-scal/GIS_layers/master/offshore/offshore.zip", temp)
+# Figure out what this file was saved as
+temp2 <- tempfile()
+# Unzip it
+unzip(zipfile=temp, exdir=temp2)
+# Now read in the shapefile
+offshore.spa <- combo.shp(temp2,make.sf=T, quiet=T)
+# Now transform all the layers in the object to the correct coordinate system, need to loop through each layer
+# Because of issues with the polygons immediately needed to turn it into a multilinestring to avoid bad polygons, works a charm after that...
+if(any(st_is_empty(offshore.spa))) message(paste0("removed ", offshore.spa[st_is_empty(offshore.spa),]$ID, " because they were empty"))
+offshore.spa <- offshore.spa[!st_is_empty(offshore.spa),]
+offshore.spa  <- st_transform(offshore.spa,4326)
+offshore.spa <- st_make_valid(offshore.spa)
+offshore.spa <- st_union(offshore.spa)
+sf_use_s2(FALSE)
+offshore.spa <- st_crop(offshore.spa, fundian.aoi)
 
 # decided to just append 2019 onto previous years
 years <- 1980:2019
@@ -39,11 +73,18 @@ fish.locs <- fish.locs %>%
 
 plot(st_bbox(fish.locs), col="red")
 plot(fundian.aoi, add=T)
+plot(eez, add=T)
+plot(offshore.spa, add=T)
 
 # Now find all the data within these polygons
-fish.locs <- fish.locs[fundian.aoi,]
+# dim(fish.locs) 240652
+fish.locs <- fish.locs[fundian.aoi,] #210801
+fish.locs <- fish.locs[eez,] #207582
+dim(fish.locs[offshore.spa,])
 
 plot(fundian.aoi)
+plot(eez, add=T)
+plot(inshore.29, add=T)
 plot(fish.locs, col="blue", add=T)
 
 # And pull the data
@@ -59,16 +100,23 @@ table(aggregate(pro.repwt ~ year + vesid,inside.dat,length)$year)
 # need the vessel info since Dave provided it last year
 # In 2021, they asked for 1980-2019 for this new bbox
 inside.dat <- inside.dat %>%
-  select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum)
+  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum)
 
 fleet <- read.csv(paste0(direct, "Data/Offshore_Fleet.csv"))
 fleet <- fleet %>% rename(vrnum = ID)
 
 inside.dat <- left_join(inside.dat, fleet) %>%
-  select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, Vessel, Company)
+  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, Vessel, Company)
+
+rm(eez.all)
+rm(eez)
 
 offshore_map <- pecjector(area="offshore", add_layer=list(land="world",
                                                      sfa="offshore"))
+
+offshore_map + geom_sf(data=fundian.aoi, fill=NA, colour="red", lty="dashed") + 
+  geom_point(data=inside.dat, aes(lon, lat)) +
+  ggtitle("1980-2019")
 
 require(patchwork)
 maps <- NULL
@@ -81,10 +129,12 @@ for(i in 1:length(yr5)){
   if(i>1) maps <- maps + map1
 }
 
+png(file=paste0(direct,"2021/Supporting_tasks/Fundian_AOI/fishing_locations_1980-2019.png"), height=8.5, width=11, units="in", res=400)
+maps
+dev.off()
 
 
-
-write.csv(inside.dat,paste0(direct,"2021/Supporting_tasks/Fundian_AOI/FGB_fishery_locations_with_vessel_names_1980-2019.csv"))
+write.csv(inside.dat,paste0(direct,"2021/Supporting_tasks/Fundian_AOI/FGB_fishery_locations_with_vessel_names_1980-2019_broaderpoly.csv"))
 
 # then append to last year in excel
 
