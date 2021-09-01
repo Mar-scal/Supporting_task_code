@@ -36,6 +36,7 @@ unzip(zipfile=temp, exdir=temp2)
 eez.all <- st_read(paste0(temp2, "/EEZ.shp"), quiet=T) %>%
   st_transform(4326)
 eez <- st_polygonize(st_simplify(st_combine(eez.all)))
+plot(eez)
 
 #need to exclude points from 29. 
 temp <- tempfile()
@@ -53,8 +54,8 @@ if(any(st_is_empty(offshore.spa))) message(paste0("removed ", offshore.spa[st_is
 offshore.spa <- offshore.spa[!st_is_empty(offshore.spa),]
 offshore.spa  <- st_transform(offshore.spa,4326)
 offshore.spa <- st_make_valid(offshore.spa)
-offshore.spa <- st_union(offshore.spa)
 sf_use_s2(FALSE)
+offshore.spa <- st_union(offshore.spa[!offshore.spa$ID %in% c("NL", "SFA10", "SFA11", "SFA12"),])
 offshore.spa <- st_crop(offshore.spa, fundian.aoi)
 
 # decided to just append 2019 onto previous years
@@ -71,16 +72,18 @@ fish.locs <- fish.locs %>%
   st_as_sf(coords = c("X", "Y"),
            crs = 4326)
 
-plot(st_bbox(fish.locs), col="red")
-plot(fundian.aoi, add=T)
-plot(eez, add=T)
-plot(offshore.spa, add=T)
+# plot(st_bbox(fish.locs), col="red")
+# plot(fundian.aoi)
+# plot(eez, add=T)
+# plot(offshore.spa, add=T)
 
 # Now find all the data within these polygons
-# dim(fish.locs) 240652
-fish.locs <- fish.locs[fundian.aoi,] #210801
-fish.locs <- fish.locs[eez,] #207582
-dim(fish.locs[offshore.spa,])
+dim(fish.locs) #240652
+fish.locs <- fish.locs[fundian.aoi,] #210579
+dim(fish.locs)
+fish.locs <- fish.locs[eez,] #207605
+dim(fish.locs)
+fish.locs <- fish.locs[offshore.spa,] # 207592
 
 plot(fundian.aoi)
 plot(eez, add=T)
@@ -110,13 +113,19 @@ inside.dat <- left_join(inside.dat, fleet) %>%
 
 rm(eez.all)
 rm(eez)
+rm(offshore.spa)
 
 offshore_map <- pecjector(area="offshore", add_layer=list(land="world",
                                                      sfa="offshore"))
 
-offshore_map + geom_sf(data=fundian.aoi, fill=NA, colour="red", lty="dashed") + 
+map <- offshore_map + geom_sf(data=fundian.aoi, fill=NA, colour="red", lty="dashed") + 
   geom_point(data=inside.dat, aes(lon, lat)) +
   ggtitle("1980-2019")
+
+png(file=paste0(direct,"2021/Supporting_tasks/Fundian_AOI/fishing_locations_1980-2019.png"), height=8.5, width=11, units="in", res=400)
+map
+dev.off()
+
 
 require(patchwork)
 maps <- NULL
@@ -129,7 +138,7 @@ for(i in 1:length(yr5)){
   if(i>1) maps <- maps + map1
 }
 
-png(file=paste0(direct,"2021/Supporting_tasks/Fundian_AOI/fishing_locations_1980-2019.png"), height=8.5, width=11, units="in", res=400)
+png(file=paste0(direct,"2021/Supporting_tasks/Fundian_AOI/fishing_locations_1980-2019_5y.png"), height=8.5, width=11, units="in", res=400)
 maps
 dev.off()
 
