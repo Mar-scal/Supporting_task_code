@@ -2,7 +2,8 @@
 
 # Set the working directory and bring in functions/data as necessary.
 direct <- "Y:/Offshore/Assessment/"
-direct_fns <- "C:/Users/keyserf/Documents/Github/FK/Assessment_fns/"
+#direct_fns <- "C:/Users/keyserf/Documents/Github/FK/Assessment_fns/"
+direct_fns <- "C:/Documents/Assessment_fns/"
 library(PBSmapping)
 library(lubridate)
 require(tidyverse)
@@ -11,7 +12,7 @@ source(paste(direct_fns,"Maps/ScallopMap.r",sep=""))
 source(paste(direct_fns,"Fishery/logs_and_fishery_data.r",sep="")) #logs_and_fish is function call
 source(paste(direct_fns,"Maps/pectinid_projector_sf.R",sep="")) #logs_and_fish is function call
 source(paste(direct_fns,"Maps/combo_shp.R",sep="")) #logs_and_fish is function call
-fundian.aoi <- read.csv(paste0(direct,"2019/Supporting_tasks/Fundian_AOI/fundian_georgebasin_coords.csv"))
+#fundian.aoi <- read.csv(paste0(direct,"2019/Supporting_tasks/Fundian_AOI/fundian_georgebasin_coords.csv"))
 
 # 2021 coords revised from Gary Pardy (bigger area)
 fundian.aoi <- st_as_sf(data.frame(ID = 1:5, 
@@ -20,8 +21,7 @@ fundian.aoi <- st_as_sf(data.frame(ID = 1:5,
                         coords=c("lon", "lat"),
                         crs=4326)
 
-fundian.aoi <- rbind(fundian.aoi, fundian.aoi[1,])
-fundian.aoi <- st_as_sf(st_cast(st_union(fundian.aoi$geometry), "POLYGON"))
+fundian.aoi <- st_as_sf(st_cast(st_combine(fundian.aoi), "POLYGON")) %>% st_transform(32620)
 plot(fundian.aoi)
 
 # this crosses the EEZ. Crop off EEZ. 
@@ -35,7 +35,10 @@ unzip(zipfile=temp, exdir=temp2)
 # Now read in the shapefile
 eez.all <- st_read(paste0(temp2, "/EEZ.shp"), quiet=T) %>%
   st_transform(4326)
-eez <- st_polygonize(st_simplify(st_combine(eez.all)))
+eez <- st_polygonize(st_combine(eez.all))
+eez <- st_transform(eez,32620)
+eez <- st_crop(eez, fundian.aoi)
+ggplot() + geom_sf(data=fundian.aoi) + geom_sf(data=eez)
 plot(eez)
 
 #need to exclude points from 29. 
@@ -56,7 +59,11 @@ offshore.spa  <- st_transform(offshore.spa,4326)
 offshore.spa <- st_make_valid(offshore.spa)
 sf_use_s2(FALSE)
 offshore.spa <- st_union(offshore.spa[!offshore.spa$ID %in% c("NL", "SFA10", "SFA11", "SFA12"),])
-offshore.spa <- st_crop(offshore.spa, fundian.aoi)
+offshore.spa <- st_transform(offshore.spa,32620)
+offshore.spa <- st_crop(offshore.spa, fundian.aoi) 
+
+ggplot() + geom_sf(data=offshore.spa) +
+  geom_sf(data=fundian.aoi, fill=NA)
 
 # decided to just append 2019 onto previous years
 years <- 1980:2019
@@ -70,25 +77,28 @@ fish.locs <- na.omit(fish.locs)
 fish.locs <- fish.locs[!(fish.locs$X==0 | fish.locs$Y==0),]
 fish.locs <- fish.locs %>%
   st_as_sf(coords = c("X", "Y"),
-           crs = 4326)
+           crs = 4326) %>%
+  st_transform(32620)
 
-# plot(st_bbox(fish.locs), col="red")
-# plot(fundian.aoi)
-# plot(eez, add=T)
-# plot(offshore.spa, add=T)
+
+ggplot() + geom_sf(data=fundian.aoi) + 
+  geom_sf(data=eez) +
+  geom_sf(data=offshore.spa)
+  #geom_sf(data=fish.locs)
 
 # Now find all the data within these polygons
 dim(fish.locs) #240652
-fish.locs <- fish.locs[fundian.aoi,] #210579
+fish.locs <- fish.locs[fundian.aoi,] #210801
 dim(fish.locs)
-fish.locs <- fish.locs[eez,] #207605
+fish.locs <- fish.locs[eez,] #207536
 dim(fish.locs)
-fish.locs <- fish.locs[offshore.spa,] # 207592
+fish.locs <- fish.locs[offshore.spa,] # 207523
+dim(fish.locs)
 
-plot(fundian.aoi)
-plot(eez, add=T)
-plot(inshore.29, add=T)
-plot(fish.locs, col="blue", add=T)
+ggplot() + geom_sf(data=fundian.aoi) + 
+  geom_sf(data=eez) +
+  geom_sf(data=offshore.spa) + 
+  geom_sf(data=fish.locs)
 
 # And pull the data
 inside.dat <- fish.dat[1:nrow(fish.dat) %in% fish.locs$EID,c("lon","lat","pro.repwt","year","depth.m","depth","vesid","vrnum","kg.hm","hm",'date')]
@@ -118,7 +128,7 @@ rm(offshore.spa)
 offshore_map <- pecjector(area="offshore", add_layer=list(land="world",
                                                      sfa="offshore"))
 
-map <- offshore_map + geom_sf(data=fundian.aoi, fill=NA, colour="red", lty="dashed") + 
+map <- offshore_map + geom_sf(data=st_transform(fundian.aoi, 4326), fill=NA, colour="red", lty="dashed") + 
   geom_point(data=inside.dat, aes(lon, lat)) +
   ggtitle("1980-2019")
 
