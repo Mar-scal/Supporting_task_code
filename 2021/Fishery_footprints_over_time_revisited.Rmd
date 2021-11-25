@@ -5,12 +5,14 @@ output:
     theme: bootstrap
 orientation: columns
 vertical_layout: fill
+runtime: shiny
 ---
 
-This script is used to get the fishery footprint over time and to see how it changes.
-Started by DK in Sept 2017, modified by FK in Nov 2021
 
 ```{r, include=F}
+# This script is used to get the fishery footprint over time and to see how it changes.
+# Started by DK in Sept 2017, modified by FK in Nov 2021
+
 yr <- 2021
 years.t <- 2015:2021 # The years of interest make temporary as this could be overwritten when I bring in the survey results...
 ```
@@ -26,230 +28,679 @@ library(lubridate)
 library(plotly)
 library(sf)
 library(data.table)
+require(maptools)
+require(PBSmapping)
 
-direct <- "Y:/Offshore/Assessment/"
+direct <- "//142.2.93.33/skyscallop/Offshore/Assessment/"
 direct_fns <- "C:/Users/keyserf/Documents/Github/Assessment_fns/"
 
 source(paste(direct_fns,"/Survey_and_OSAC/OSAC_fishery_figures.r",sep="")) #Source1
 source(paste(direct_fns,"/Fishery/logs_and_fishery_data.r",sep=""))
 source(paste(direct_fns,"/Fishery/fishery_footprint_history.r",sep=""))
+source(paste(direct_fns,"Maps/github_spatial_import.R",sep=""))
 
-# Read1 The fishery regulations are located here.
-#fish.regs <- read.csv(paste(direct,"data/Fishery_regulations_by_bank.csv",sep=""))
-#fish.regs <- subset(fish.regs,year==yr)
+survey <- github_spatial_import(subfolder = "survey_boundaries", zipname = "survey_boundaries.zip", quiet = T, direct_fns=direct_fns)# Figure out where your tempfiles are stored
+other <- github_spatial_import(subfolder = "other_boundaries", zipname = "other_boundaries.zip", quiet = T, direct_fns=direct_fns)# Figure out where your tempfiles are stored
+other <- other[grep(other$ID, pattern="GBa-"),] 
+other_poly <-NULL
+for(i in 1:length(other$ID)){
+  other_poly2 <- st_cast(other[other$ID==other$ID[i],], "POLYGON")
+  other_poly <- rbind(other_poly, other_poly2)
+}
 
-# There are various sources of data you may need to pull here.
-# This will load the data from the year/directory combo above if you've run the survey
-
-# Datasource #1:  If you have run all of survey summary (which is necessary to run the scripts in part 2 related to Survey summary)
-#load(paste(direct,"Data/Survey_data/",yr,"/Survey_summary_output/Survey_all_results.Rdata",sep=""))  
-# So we update the fishery data with the lastest for this analysis in case the above is out of date.
-# This queries the offshore so gets the most up to date fishery information which we should be sure we are using!
 years <- years.t
-# logs_and_fish(loc="offshore",year = years,direct=direct)
-# fish.dat<-new.log.dat
-fish.dat <- read.csv("C:/Users/keyserf/Desktop/newlogdat.csv")
+logs_and_fish(loc="offshore",year = years,direct=direct)
+fish.dat<-new.log.dat
+#fish.dat <- read.csv("C:/Users/keyserf/Desktop/newlogdat.csv")
 fish.dat$ID<-1:nrow(fish.dat)
 
+out2 <- fishery_footprint_history(years=2015:2021, bnk="GBa", high=0, highcpue=0, subarea=NULL,
+                                survey=survey, other=other, fish.dat=fish.dat, direct_fns = direct_fns)
+```
+
+GBa overview (no threshold)
+===========================================================================================================================
+
+Column {data-width=300}
+------------------------------------------
+
+### Summary statistics
+
+```{r, fig.height=4, fig.width=5}
+#print("hi")
+print(out2$cell_stats)
+```
+
+###
+
+```{r, fig.height=4, fig.width=5}
+print(out2$perc_catch_stats)
+```
+
+Column {data-width=700}
+------------------------------------------
+
+### Reference map
+
+```{r, fig.height=8}
+require(ggrepel)
+survey$bank <- survey$ID
+ggplotly(ggplot() + geom_sf(data=survey[survey$bank=="GBa", c("geometry", "bank")]) + theme_bw() +
+           geom_sf(data=other_poly, fill=NA) +
+           facet_wrap(~ID))
+
 ```
 
 
+Interactive scenarios
+=================================================================================================
 
-GBa, 10t high threshold
-==================================================
 
-```{r, warning=F, message=F, include=F}
-bank <- "GBa"
-high <- 10
-title <- paste0("Bank = ", bank, ", high threshold = ", high, "t")
+Inputs {.sidebar}
+-----------------------------------------------------------------------
 
-out <- fishery_footprint_history(years=years, bnk=bank, high=high)
+```{r}
+selectInput(label="Subarea", inputId = "subarea",
+            choices = c("none", other_poly$ID),
+            selected = "none")
+
+numericInput(label="Threshold value (catch)", inputId = "high",
+             value = NULL)
+
+numericInput(label="Threshold value (CPUE)", inputId = "highcpue",
+              value = NULL)
+
+numericInput(label="Start year", inputId = "startyear",
+              value = NULL)
+
+selectInput(label="Months", inputId = "months",
+            choices = 1:12,
+            selected = NULL , multiple = T)
+
+actionButton("go_out",label="",icon =icon("redo"))
+
 ```
 
 Column {data-width=200}
 ------------------------------------------
 
-```{r, fig.height=9, fig.width=3.6}
-print(out$footprint_stats)
+### Summary statistics
+
+```{r, fig.height=8, fig.width=3}
+sub <- reactive(input$subarea)
+threshigh <- reactive(input$high)
+threshighcpue <- reactive(input$highcpue)
+startyear <- reactive(input$startyear)
+months <- reactive(input$months)
+
+out <- eventReactive(input$go_out, {
+  fishery_footprint_history(years=input$startyear:2021, bnk="GBa",
+                            high=input$high,
+                            highcpue=input$highcpue,
+                            subarea=input$subarea,
+                            months=input$months,
+                            survey=survey, other=other, fish.dat=fish.dat, direct_fns = direct_fns)
+  
+})
+
+renderPlot({out()$threshold_stats}) 
 ```
 
-Column {data-width=800}
+Column {.tabset}
 ------------------------------------------
 
-```{r, fig.height=9, fig.width=13}
-print(out$footprint_crosscor)
+### Spatial - high catch
+
+```{r, fig.height=8}
+renderPlot({out()$map_catch}) 
 ```
 
+### Spatial - high CPUE
 
-GBa, 25t high threshold
-==================================================
-
-```{r, warning=F, message=F, include=F}
-bank <- "GBa"
-high <- 25
-title <- paste0("Bank = ", bank, ", high threshold = ", high, "t")
-
-out <- fishery_footprint_history(years=years, bnk=bank, high=high)
+```{r, fig.height=8}
+renderPlot({out()$map_cpue}) 
 ```
 
-Column {data-width=200}
-------------------------------------------
-
-```{r, fig.height=9, fig.width=3.6}
-print(out$footprint_stats)
-```
-
-Column {data-width=800}
-------------------------------------------
-
-```{r, fig.height=9, fig.width=13}
-print(out$footprint_crosscor)
-```
-
-
-GBa, 50t high threshold
-==================================================
-
-```{r, warning=F, message=F, include=F}
-bank <- "GBa"
-high <- 50
-title <- paste0("Bank = ", bank, ", high threshold = ", high, "t")
-
-out <- fishery_footprint_history(years=years, bnk=bank, high=high)
-```
-
-Column {data-width=200}
-------------------------------------------
-
-```{r, fig.height=9, fig.width=3.6}
-print(out$footprint_stats)
-```
-
-Column {data-width=800}
-------------------------------------------
-
-```{r, fig.height=9, fig.width=13}
-print(out$footprint_crosscor)
-```
-
-
-<!-- GBa-North, 10t high threshold -->
-<!-- ================================================== -->
+<!-- GBa, 10 t & 10 kg/hm thresholds -->
+<!-- ================================================================================================= -->
 
 <!-- ```{r, warning=F, message=F, include=F} -->
-<!-- bank <- "GBa-North" -->
-<!-- high <- 10 -->
-<!-- title <- paste0("Bank = ", bank, ", high threshold = ", high, "t") -->
-
-<!-- out <- fishery_footprint_history(years=years, bnk=bank, high=high) -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=10, highcpue=10, subarea=NULL,  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
 <!-- ``` -->
 
 <!-- Column {data-width=200} -->
 <!-- ------------------------------------------ -->
 
-<!-- ```{r, fig.height=9, fig.width=3.6} -->
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
 <!-- print(out$footprint_stats) -->
 <!-- ``` -->
 
-<!-- Column {data-width=800} -->
+<!-- Column {.tabset} -->
 <!-- ------------------------------------------ -->
 
-<!-- ```{r, fig.height=9, fig.width=13} -->
-<!-- print(out$footprint_crosscor) -->
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
+<!-- ``` -->
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
 <!-- ``` -->
 
 
-<!-- GBa-North, 25t high threshold -->
-<!-- ================================================== -->
+<!-- GBa, 25 t & 25 kg/hm thresholds -->
+<!-- ===================================================================================================== -->
 
 <!-- ```{r, warning=F, message=F, include=F} -->
-<!-- bank <- "GBa-North" -->
-<!-- high <- 25 -->
-<!-- title <- paste0("Bank = ", bank, ", high threshold = ", high, "t") -->
-
-<!-- out <- fishery_footprint_history(years=years, bnk=bank, high=high) -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=25, highcpue=25, subarea=NULL,  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
 <!-- ``` -->
 
 <!-- Column {data-width=200} -->
 <!-- ------------------------------------------ -->
 
-<!-- ```{r, fig.height=9, fig.width=3.6} -->
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
 <!-- print(out$footprint_stats) -->
 <!-- ``` -->
 
-<!-- Column {data-width=800} -->
+<!-- Column {.tabset} -->
 <!-- ------------------------------------------ -->
 
-<!-- ```{r, fig.height=9, fig.width=13} -->
-<!-- print(out$footprint_crosscor) -->
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
 <!-- ``` -->
 
 
-<!-- GBa-North, 50t high threshold -->
-<!-- ================================================== -->
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
+<!-- ``` -->
+
+
+<!-- GBa, 50 t & 50 kg/hm thresholds -->
+<!-- ================================================================================================ -->
 
 <!-- ```{r, warning=F, message=F, include=F} -->
-<!-- bank <- "GBa-North" -->
-<!-- high <- 50 -->
-<!-- title <- paste0("Bank = ", bank, ", high threshold = ", high, "t") -->
-
-<!-- out <- fishery_footprint_history(years=years, bnk=bank, high=high) -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=50, highcpue=50, subarea=NULL,  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
 <!-- ``` -->
 
 <!-- Column {data-width=200} -->
 <!-- ------------------------------------------ -->
 
-<!-- ```{r, fig.height=9, fig.width=3.6} -->
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
 <!-- print(out$footprint_stats) -->
 <!-- ``` -->
 
-<!-- Column {data-width=800} -->
+<!-- Column {.tabset} -->
 <!-- ------------------------------------------ -->
 
-<!-- ```{r, fig.height=9, fig.width=13} -->
-<!-- print(out$footprint_crosscor) -->
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
+<!-- ``` -->
+
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
+<!-- ``` -->
+
+
+<!-- GBa-North, 10 t & 10 kg/hm thresholds -->
+<!-- ===================================================================================================== -->
+
+<!-- ```{r, warning=F, message=F, include=F} -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=10, highcpue=10, subarea="GBa-North",  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
+<!-- ``` -->
+
+<!-- Column {data-width=200} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
+<!-- print(out$footprint_stats) -->
+<!-- ``` -->
+
+<!-- Column {.tabset} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
+<!-- ``` -->
+
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
+<!-- ``` -->
+
+
+<!-- GBa-North, 25 t & 25 kg/hm thresholds -->
+<!-- ======================================================================================================= -->
+
+<!-- ```{r, warning=F, message=F, include=F} -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=25, highcpue=25, subarea="GBa-North",  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
+<!-- ``` -->
+
+<!-- Column {data-width=200} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
+<!-- print(out$footprint_stats) -->
+<!-- ``` -->
+
+<!-- Column {.tabset} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
+<!-- ``` -->
+
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
+<!-- ``` -->
+
+
+<!-- GBa-North, 50 t & 50 kg/hm thresholds -->
+<!-- ======================================================================================================= -->
+
+<!-- ```{r, warning=F, message=F, include=F} -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=50, highcpue=50, subarea="GBa-North",  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
+<!-- ``` -->
+
+<!-- Column {data-width=200} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
+<!-- print(out$footprint_stats) -->
+<!-- ``` -->
+
+<!-- Column {.tabset} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
+<!-- ``` -->
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
+<!-- ``` -->
+
+
+<!-- GBa-East, 10 t & 10 kg/hm thresholds -->
+<!-- ===================================================================================================== -->
+
+<!-- ```{r, warning=F, message=F, include=F} -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=10, highcpue=10, subarea="GBa-East",  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
+<!-- ``` -->
+
+<!-- Column {data-width=200} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
+<!-- print(out$footprint_stats) -->
+<!-- ``` -->
+
+<!-- Column {.tabset} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
+<!-- ``` -->
+
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
+<!-- ``` -->
+
+
+<!-- GBa-East, 25 t & 25 kg/hm thresholds -->
+<!-- ======================================================================================================= -->
+
+<!-- ```{r, warning=F, message=F, include=F} -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=25, highcpue=25, subarea="GBa-East",  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
+<!-- ``` -->
+
+<!-- Column {data-width=200} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
+<!-- print(out$footprint_stats) -->
+<!-- ``` -->
+
+<!-- Column {.tabset} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
+<!-- ``` -->
+
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
+<!-- ``` -->
+
+
+<!-- GBa-East, 50 t & 50 kg/hm thresholds -->
+<!-- ======================================================================================================= -->
+
+<!-- ```{r, warning=F, message=F, include=F} -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=50, highcpue=50, subarea="GBa-East",  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
+<!-- ``` -->
+
+<!-- Column {data-width=200} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
+<!-- print(out$footprint_stats) -->
+<!-- ``` -->
+
+<!-- Column {.tabset} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
+<!-- ``` -->
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
 <!-- ``` -->
 
 
 
+<!-- GBa-Central, 10 t & 10 kg/hm thresholds -->
+<!-- ===================================================================================================== -->
 
-<!-- ## GBa with catch cut-off of 25. -->
+<!-- ```{r, warning=F, message=F, include=F} -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=10, highcpue=10, subarea="GBa-Central",  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
+<!-- ``` -->
 
-<!-- ```{r} -->
-<!-- years <- years.t -->
-<!-- spatial_history(years=2011:2021, bnk="GBa", high=25) -->
+<!-- Column {data-width=200} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
+<!-- print(out$footprint_stats) -->
+<!-- ``` -->
+
+<!-- Column {.tabset} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
 <!-- ``` -->
 
 
-<!-- ## GBa with catch cut-off of 50. -->
+<!-- ### Spatial - high CPUE -->
 
-<!-- ```{r} -->
-<!-- years <- years.t -->
-<!-- spatial_history(years=2011:2021, bnk="GBa", high=50) -->
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
 <!-- ``` -->
 
 
-<!-- ## GBa-North with catch cut-off of 50. -->
+<!-- GBa-Central, 25 t & 25 kg/hm thresholds -->
+<!-- ======================================================================================================= -->
 
-<!-- ```{r} -->
-<!-- years <- years.t -->
-<!-- spatial_history(years=2011:2021, bnk="GBa", high=10, subarea="GBa-North") -->
+<!-- ```{r, warning=F, message=F, include=F} -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=25, highcpue=25, subarea="GBa-Central",  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
 <!-- ``` -->
 
-<!-- ## GBa-North with catch cut-off of 25. -->
+<!-- Column {data-width=200} -->
+<!-- ------------------------------------------ -->
 
-<!-- ```{r} -->
-<!-- years <- years.t -->
-<!-- spatial_history(years=2011:2021, bnk="GBa", high=25, subarea="GBa-North") -->
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
+<!-- print(out$footprint_stats) -->
 <!-- ``` -->
 
-<!-- ## GBa-North with catch cut-off of 50. -->
+<!-- Column {.tabset} -->
+<!-- ------------------------------------------ -->
 
-<!-- ```{r} -->
-<!-- years <- years.t -->
-<!-- spatial_history(years=2011:2021, bnk="GBa", high=50, subarea="GBa-North") -->
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
 <!-- ``` -->
 
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
+<!-- ``` -->
+
+
+<!-- GBa-Central, 50 t & 50 kg/hm thresholds -->
+<!-- ======================================================================================================= -->
+
+<!-- ```{r, warning=F, message=F, include=F} -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=50, highcpue=50, subarea="GBa-Central",  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
+<!-- ``` -->
+
+<!-- Column {data-width=200} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
+<!-- print(out$footprint_stats) -->
+<!-- ``` -->
+
+<!-- Column {.tabset} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
+<!-- ``` -->
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
+<!-- ``` -->
+
+
+<!-- GBa-West, 10 t & 10 kg/hm thresholds -->
+<!-- ===================================================================================================== -->
+
+<!-- ```{r, warning=F, message=F, include=F} -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=10, highcpue=10, subarea="GBa-West",  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
+<!-- ``` -->
+
+<!-- Column {data-width=200} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
+<!-- print(out$footprint_stats) -->
+<!-- ``` -->
+
+<!-- Column {.tabset} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
+<!-- ``` -->
+
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
+<!-- ``` -->
+
+
+<!-- GBa-West, 25 t & 25 kg/hm thresholds -->
+<!-- ======================================================================================================= -->
+
+<!-- ```{r, warning=F, message=F, include=F} -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=25, highcpue=25, subarea="GBa-West",  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
+<!-- ``` -->
+
+<!-- Column {data-width=200} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
+<!-- print(out$footprint_stats) -->
+<!-- ``` -->
+
+<!-- Column {.tabset} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
+<!-- ``` -->
+
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
+<!-- ``` -->
+
+
+<!-- GBa-West, 50 t & 50 kg/hm thresholds -->
+<!-- ======================================================================================================= -->
+
+<!-- ```{r, warning=F, message=F, include=F} -->
+<!-- out <- fishery_footprint_history(years=years, bnk="GBa", high=50, highcpue=50, subarea="GBa-West",  -->
+<!--                                  survey=survey, other=other, fish.dat=fish.dat) -->
+<!-- ``` -->
+
+<!-- Column {data-width=200} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Summary statistics -->
+
+<!-- ```{r, fig.height=8, fig.width=3} -->
+<!-- print(out$footprint_stats) -->
+<!-- ``` -->
+
+<!-- Column {.tabset} -->
+<!-- ------------------------------------------ -->
+
+<!-- ### Spatial - high catch -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_catch) -->
+<!-- ``` -->
+
+<!-- ### Spatial - high CPUE -->
+
+<!-- ```{r, fig.height=8} -->
+<!-- #print(out$footprint_crosscor) -->
+<!-- ggplotly(out$map_cpue) -->
+<!-- ``` -->
+
+
+<!-- ======================================================================================================================================== -->
+<!-- ======================================================================================================================================== -->
+<!-- ======================================================================================================================================== -->
+<!-- ======================================================================================================================================== -->
 <!-- # # Look at each bank in more detail... -->
 <!-- # sum.stat <- as.data.frame(matrix(NA,ncol=3,nrow=length(unique(spatial.fishery.history$bank)))) -->
 <!-- # colnames(sum.stat) <- c("bank","prop.spatial","prop.of.total") -->
