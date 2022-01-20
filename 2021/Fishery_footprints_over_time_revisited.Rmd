@@ -161,6 +161,10 @@ renderPlot({out()$map_catch})
 renderPlot({out()$map_cpue}) 
 ```
 
+### Data table
+```{r0}
+renderTable({out()$annual_summary})
+```
 <!-- GBa, 10 t & 10 kg/hm thresholds -->
 <!-- ================================================================================================= -->
 
