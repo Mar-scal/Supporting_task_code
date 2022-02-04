@@ -57,6 +57,7 @@ require(ggplot2)
 require(tidyverse)
 require(dplyr)
 require(plotly)
+require(sf)
 table(exported$random)
 
 towids <- all.surv.dat %>%
@@ -66,6 +67,10 @@ towids <- all.surv.dat %>%
 towids$text <- paste0(towids$mintow, " - ", towids$maxtow)
 towids$year <- as.numeric(as.character(towids$year))
 
+write <- towids
+write <- dplyr::select(write, year, bank, random, mintow, maxtow)
+names(write) <- c("year", "bank", "tow_type_id", "min_tow_num", "max_tow_num")
+write.csv(write, "Y:/Offshore/Assessment/Data/Survey_data/2022/tow type and number summary.csv")
 
 pdf(file="Y:/Offshore/Assessment/Data/Survey_data/2022/checking database tow IDs and types_db.pdf", onefile=T, height=6, width=8)
 for(i in 1:length(unique(towids$bank))){
@@ -140,9 +145,6 @@ for(i in banks){
     ylim(1980, 2022))
 }
 dev.off()
-
-require(sf)
-require(plotly)
 
 table(all.surv.dat[all.surv.dat$random==5,]$bank)
 gba5 <- all.surv.dat[all.surv.dat$random==5 & all.surv.dat$bank=="GBa",]
@@ -250,7 +252,7 @@ for(j in banks){
     year2 <- year2 %>% group_by(tow) %>% summarize() %>% 
       st_cast("MULTILINESTRING")
     
-    year1 <- all.surv.dat[all.surv.dat$bank==j & all.surv.dat$year==(i-1),c("tow", "slon", "slat", "elon", "elat", "random")]
+    year1 <- all.surv.dat[all.surv.dat$bank==j & all.surv.dat$year==(i-3),c("tow", "slon", "slat", "elon", "elat", "random")]
     if(dim(year1)[1] > 0){
       year1$station <- "original"
       year1_start <- st_as_sf(year1[,c("tow", "slon", "slat", "random", "station")], coords=c("slon", "slat"), crs=4326)
