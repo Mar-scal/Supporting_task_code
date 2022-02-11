@@ -1,0 +1,191 @@
+---
+title: "Offshore tables"
+output: word_document
+always_allow_html: true
+---
+
+
+```{r, echo=F, include=F}
+require(readr)
+require(readxl)
+require(tidyverse)
+require(kableExtra)
+require(pander)
+
+
+cs.GBa.s0 <- read_xlsx(paste0("data/Offshore/GBa/decisiontables.xlsx"),sheet="2021_Surplus0")
+cs.GBa.sm <- read_xlsx(paste0("data/Offshore/GBa/decisiontables.xlsx"),sheet="2021_SurplusMedian")
+cs.GBa.sp <- read_xlsx(paste0("data/Offshore/GBa/decisiontables.xlsx"),sheet="2021_SurplusPrevious")
+cs.BBn.s0 <- read_xlsx(paste0("data/Offshore/BBn/decisiontables.xlsx"),sheet="2021_Surplus0")
+cs.BBn.sm <- read_xlsx(paste0("data/Offshore/BBn/decisiontables.xlsx"),sheet="2021_SurplusMedian")
+cs.BBn.sp <- read_xlsx(paste0("data/Offshore/BBn/decisiontables.xlsx"),sheet="2021_SurplusPrevious")
+
+head.name <- c("Catch (t)",
+               "Exploitation \n Rate", 
+               "Probability of \n Biomass \n Decline",
+               "Expected \n Change in \n Biomass (%)",  
+               "Probability \n biomass will \n exceed LRP", 
+               "Probability \n biomass will \n exceed USR")
+
+# GB 3 cases first surplus 0 scenario
+tab.GBa.s0 <- cs.GBa.s0 %>% dplyr::select(adj.catch, mu, pB0, B.change,p.LRP, p.USR) %>% 
+                     dplyr::filter(mu >= 0.05 & mu <= 0.25) 
+tab.GBa.s0$adj.catch <- round(tab.GBa.s0$adj.catch,digits =-2)
+tab.GBa.s0$mu <- round(tab.GBa.s0$mu,digits =2)
+tab.GBa.s0$pB0 <- round(tab.GBa.s0$pB0,digits =2)
+tab.GBa.s0$B.change <- round(tab.GBa.s0$B.change,digits =1)
+tab.GBa.s0$p.LRP<- round(tab.GBa.s0$p.LRP,digits =2)
+tab.GBa.s0$p.LRP[tab.GBa.s0$p.LRP == 1] <- "> 0.99"
+tab.GBa.s0$p.USR<- round(tab.GBa.s0$p.USR,digits =2)
+tab.GBa.s0$p.USR[tab.GBa.s0$p.USR == 1] <- "> 0.99"
+names(tab.GBa.s0) <- head.name
+# Next the Median scenario
+tab.GBa.sm <- cs.GBa.sm %>% dplyr::select(adj.catch, mu, pB0, B.change, p.LRP ,p.USR) %>% 
+                     dplyr::filter(mu >= 0.05 & mu <= 0.25) 
+tab.GBa.sm$adj.catch <- round(tab.GBa.sm$adj.catch,digits =-2)
+tab.GBa.sm$mu <- round(tab.GBa.sm$mu,digits =2)
+tab.GBa.sm$pB0 <- round(tab.GBa.sm$pB0,digits =2)
+tab.GBa.sm$B.change <- round(tab.GBa.sm$B.change,digits =1)
+tab.GBa.sm$p.LRP<- round(tab.GBa.sm$p.LRP,digits =2)
+tab.GBa.sm$p.LRP[tab.GBa.sm$p.LRP == 1] <- "> 0.99"
+tab.GBa.sm$p.USR<- round(tab.GBa.sm$p.USR,digits =2)
+tab.GBa.sm$p.USR[tab.GBa.sm$p.USR == 1] <- "> 0.99"
+names(tab.GBa.sm) <- head.name
+#finally the previous year scenario
+tab.GBa.sp <- cs.GBa.sp %>% dplyr::select(adj.catch, mu, pB0, B.change, p.LRP ,p.USR) %>% 
+                     dplyr::filter(mu >= 0.05 & mu <= 0.25) 
+tab.GBa.sp$adj.catch <- round(tab.GBa.sp$adj.catch,digits =-2)
+tab.GBa.sp$mu <- round(tab.GBa.sp$mu,digits =2)
+tab.GBa.sp$pB0 <- round(tab.GBa.sp$pB0,digits =2)
+tab.GBa.sp$B.change <- round(tab.GBa.sp$B.change,digits =1)
+tab.GBa.sp$p.LRP<- round(tab.GBa.sp$p.LRP,digits =2)
+tab.GBa.sp$p.LRP[tab.GBa.sp$p.LRP == 1] <- "> 0.99"
+tab.GBa.sp$p.USR<- round(tab.GBa.sp$p.USR,digits =2)
+tab.GBa.sp$p.USR[tab.GBa.sp$p.USR == 1] <- "> 0.99"
+names(tab.GBa.sp) <- head.name
+
+# Now the 3 BBn cases
+# first surplus 0 scenario
+tab.BBn.s0 <- cs.BBn.s0 %>% dplyr::select(adj.catch, mu, pB0, B.change) %>% 
+                     dplyr::filter(mu >= 0.08 & mu <= 0.25) 
+tab.BBn.s0$adj.catch <- round(tab.BBn.s0$adj.catch,digits =-1)
+tab.BBn.s0$mu <- round(tab.BBn.s0$mu,digits =2)
+tab.BBn.s0$pB0 <- round(tab.BBn.s0$pB0,digits =2)
+tab.BBn.s0$B.change <- round(tab.BBn.s0$B.change,digits =1)
+#tab.BBn.s0$p.LRP<- round(tab.BBn.s0$p.LRP,digits =2)
+#tab.BBn.s0$p.USR<- round(tab.BBn.s0$p.USR,digits =2)
+names(tab.BBn.s0) <- head.name[1:4]
+# Next the Median scenario
+tab.BBn.sm <- cs.BBn.sm %>% dplyr::select(adj.catch, mu, pB0, B.change) %>% 
+                     dplyr::filter(mu >= 0.08 & mu <= 0.25) 
+tab.BBn.sm$adj.catch <- round(tab.BBn.sm$adj.catch,digits =-1)
+tab.BBn.sm$mu <- round(tab.BBn.sm$mu,digits =2)
+tab.BBn.sm$pB0 <- round(tab.BBn.sm$pB0,digits =2)
+tab.BBn.sm$B.change <- round(tab.BBn.sm$B.change,digits =1)
+#tab.BBn.sm$p.LRP<- round(tab.BBn.sm$p.LRP,digits =2)
+#tab.BBn.sm$p.USR<- round(tab.BBn.sm$p.USR,digits =2)
+names(tab.BBn.sm) <- head.name[1:4]
+#finally the previous year scenario
+tab.BBn.sp <- cs.BBn.sp %>% dplyr::select(adj.catch, mu, pB0, B.change) %>% 
+                     dplyr::filter(mu >= 0.08 & mu <= 0.25) 
+tab.BBn.sp$adj.catch <- round(tab.BBn.sp$adj.catch,digits =-1)
+tab.BBn.sp$mu <- round(tab.BBn.sp$mu,digits =2)
+tab.BBn.sp$pB0 <- round(tab.BBn.sp$pB0,digits =2)
+tab.BBn.sp$B.change <- round(tab.BBn.sp$B.change,digits =1)
+#tab.BBn.sp$p.LRP<- round(tab.BBn.sp$p.LRP,digits =2)
+#tab.BBn.sp$p.USR<- round(tab.BBn.sp$p.USR,digits =2)
+names(tab.BBn.sp) <- head.name[1:4]
+
+```
+
+
+```{r gba-s0-table, echo=F,warning=F}
+
+# NEED TO SORT THE meta call out in the index using bookdown instead of csasdown to mimic the behaviour to make table work automaticlaly in word an d pdf.
+
+#
+pander(tab.GBa.s0, check.names = FALSE)
+pander(tab.GBa.sm, check.names = FALSE)
+pander(tab.GBa.sp, check.names = FALSE)
+pander(tab.BBn.s0, check.names = FALSE)
+pander(tab.BBn.sm, check.names = FALSE)
+pander(tab.BBn.sp, check.names = FALSE)
+
+
+# 
+# kableExtra::kbl(tab.GBa.s0, booktabs = TRUE, escape =F, col.names = NULL,align = 'c') %>%
+#   kable_styling(latex_options = "striped",full_width = F,position = 'center') %>% 
+#     #row_spec(0, bold = T) %>%
+#     add_header_above(head.name,bold=T)
+  #footnote(number  = ft.note) #%>% landscape
+```
+
+
+
+<!-- ```{r gba-sm-table, echo=F,warning=F} -->
+<!-- cap = 'Catch scenarios for Georges Bank ‘a’ in 2021 in terms of exploitation and expected changes in fully recruited biomass. Potential catches in 2021 are evaluated in terms of the probability of a decline in biomass and exceeding the Upper Stock Reference (USR) and Lower Reference Point (LRP). These probabilities account for uncertainty in the biomass forecasts and are presented assuming the time series median surplus production (0.27) from 2020 to 2021. ' -->
+
+<!-- # -->
+
+<!-- kableExtra::kbl(tab.GBa.sm, booktabs = TRUE, escape =F, col.names=NULL,align = 'c') %>% -->
+<!--   kable_styling(latex_options = "striped",full_width = F,position = 'center') %>%  -->
+<!--     #row_spec(0, bold = T) %>% -->
+<!--     add_header_above(head.name,bold=T)# %>% -->
+<!--   #kable_styling(full_width = F) %>% row_spec(c(1), italic = T) %>% -->
+<!--   #footnote(number  = ft.note) #%>% landscape -->
+
+<!-- ``` -->
+
+
+
+<!-- ```{r gba-sp-table, echo=F,warning=F} -->
+<!-- cap = 'Catch scenarios for Georges Bank ‘a’ in 2021 in terms of exploitation and expected changes in fully recruited biomass. Potential catches in 2021 are evaluated in terms of the probability of a decline in biomass and exceeding the Upper Stock Reference (USR) and Lower Reference Point (LRP). These probabilities account for uncertainty in the biomass forecasts and are presented assuming the status quo assumption (same recruitment, mortality, and growth as for the 2020 projection).' -->
+
+<!-- kableExtra::kbl(tab.GBa.sp, booktabs = TRUE, escape =F, col.names=NULL,align = 'c') %>% -->
+<!--   kable_styling(latex_options = "striped",full_width = F,position = 'center') %>%  -->
+<!--     #row_spec(0, bold = T) %>% -->
+<!--     add_header_above(head.name,bold=T)# %>% -->
+<!--   #kable_styling(full_width = F) %>% row_spec(c(1), italic = T) %>% -->
+<!--   #footnote(number  = ft.note) #%>% landscape -->
+<!-- ``` -->
+
+
+<!-- ```{r bbn-s0-table, echo=F,warning=F} -->
+<!-- kableExtra::kbl(tab.BBn.s0, booktabs = TRUE, escape =F,col.names=NULL,align = 'c') %>% -->
+<!--   kable_styling(latex_options = "striped",full_width = F,position = 'center') %>%  -->
+<!--     #row_spec(0, bold = T) %>% -->
+<!--     add_header_above(head.name[1:4],bold=T)# %>% -->
+<!--   #kable_styling(full_width = F) %>% row_spec(c(1), italic = T) %>% -->
+<!--   #footnote(number  = ft.note) #%>% landscape -->
+
+<!-- ``` -->
+
+
+<!-- ```{r bbn-sm-table, echo=F,warning=F} -->
+
+<!-- kableExtra::kbl(tab.BBn.sm, booktabs = TRUE, escape =F,col.names=NULL,align = 'c') %>% -->
+<!--   kable_styling(latex_options = "striped",full_width = F,position = 'center') %>%  -->
+<!--     #row_spec(0, bold = T) %>% -->
+<!--     add_header_above(head.name[1:4],bold=T)# %>% -->
+<!--   #kable_styling(full_width = F) %>% row_spec(c(1), italic = T) %>% -->
+<!--   #footnote(number  = ft.note) #%>% landscape -->
+
+<!-- ``` -->
+
+
+
+<!-- ```{r bbn-sp-table, echo=F,warning=F} -->
+
+<!-- kableExtra::kbl(tab.BBn.sp, booktabs = TRUE, escape =F, col.names=NULL,align = 'c') %>% -->
+<!--   kable_styling(latex_options = "striped",full_width = F,position = 'center') %>%  -->
+<!--     #row_spec(0, bold = T) %>% -->
+<!--     add_header_above(head.name[1:4],bold=T)# %>% -->
+<!--   #kable_styling(full_width = F) %>% row_spec(c(1), italic = T) %>% -->
+<!--   #footnote(number  = ft.note) #%>% landscape -->
+
+<!-- ``` -->
+
+
+<!-- <!-- \elandscape --> -->
+
+<!-- \newpage -->
