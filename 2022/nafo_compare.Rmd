@@ -1,0 +1,16 @@
+
+```{r, echo=F, include=F}
+source("C:/Users/keyserf/Documents/GitHub/Assessment_fns/Maps/github_spatial_import.R")
+source("C:/Users/keyserf/Documents/GitHub/Assessment_fns/Maps/combo_shp.R")
+nafo <- github_spatial_import(subfolder="NAFO", "Subareas.zip", quiet=T)
+
+newnafo <- st_read("//ent.dfo-mpo.ca/ATLShares/Science/Population Ecology Division/Shared/!PED_Unit08_FisheryAnalysis/NAFO/NAFO_Divisions_SHP/NAFO_Divisions_2021_poly_clipped.shp")
+
+require(plotly)
+require(ggplot2)
+```
+
+```{r}
+ggplotly(ggplot() + geom_sf(data=nafo) +
+  geom_sf(data=newnafo, colour="red", alpha=0.5))
+```

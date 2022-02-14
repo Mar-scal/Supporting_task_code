@@ -37,14 +37,16 @@ HCRs <- data.frame(area = c("BBn", "GBa",
                                     0.05, 0.06, 0.06, 0.09))
 
 
-areas <- c(#"1A", "1B", "3", "4", "6", 
-  # "GBa", "BBn")#, 
+areas <- c("1A", "1B", "3", "4", "6", 
+   "GBa", "BBn", 
   "29A", 
   "29B", 
   "29C", 
   "29D"
 )
+```
 
+```{r}
 time1 <- Sys.time()
 for(area in areas){
   
@@ -118,7 +120,7 @@ for (area in areas){
   # pred.eval
   
   # Using the realized catch for all projections (except 2021), we get biomass posterior distributions which we can compare between projection timings. 
-  png(paste0("./figures/", folder, "/", area, "/pred_eval.png"), height=6, width=22, res=400, units="in")
+  png(paste0("./figures/", folder, "/", area, "/pred_eval.png"), height=6, width=22, res=300, units="in")
   print(plot_grid(out[[1]]$realized$pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ggtitle(NULL, subtitle=NULL),  
                   out[[2]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ggtitle(NULL, subtitle=NULL),  
                   out[[3]]$realized$pred.eval + ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ggtitle(NULL, subtitle=NULL), 
@@ -129,7 +131,7 @@ for (area in areas){
   
   if(grepl(x=area, "29")){
     # This simply shows the biomass projections for the most recent year. 
-    png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
+    png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=300, units="in")
     print(plot_grid(out[[1]]$realized$zoom.pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ylab("Commercial biomass density\n(metric tonnes/square kilometre)") + ggtitle(NULL, subtitle=NULL),  
                     out[[2]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ggtitle(NULL, subtitle=NULL),  
                     out[[3]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ggtitle(NULL, subtitle=NULL), 
@@ -138,7 +140,7 @@ for (area in areas){
   }
   if(!grepl(x=area, "29")){
     # This simply shows the biomass projections for the most recent year. 
-    png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
+    png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=300, units="in")
     print(plot_grid(out[[1]]$realized$zoom.pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ggtitle(NULL, subtitle=NULL),  
                     out[[2]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ggtitle(NULL, subtitle=NULL),  
                     out[[3]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ggtitle(NULL, subtitle=NULL), 
@@ -149,7 +151,7 @@ for (area in areas){
   
   # the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
   if(area=="GBa")  {
-    png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+    png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=300, units="in")
     print(plot_grid(out[[1]]$realized$evaluation1 + ggtitle(NULL, subtitle=NULL), 
                     out[[2]]$realized$evaluation1+ ylab(NULL)  + ggtitle(NULL, subtitle=NULL), 
                     out[[3]]$realized$evaluation1+ ylab(NULL) + ggtitle(NULL, subtitle=NULL) ,
@@ -160,7 +162,7 @@ for (area in areas){
     dev.off()
   }
   if(!area=="GBa")  {
-    png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+    png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=300, units="in")
     print(plot_grid(out[[1]]$realized$evaluation1 + ggtitle(NULL, subtitle=NULL), 
                     out[[2]]$realized$evaluation1+ ylab(NULL) + ggtitle(NULL, subtitle=NULL), 
                     out[[3]]$realized$evaluation1+ ylab(NULL) + ggtitle(NULL, subtitle=NULL),
@@ -171,16 +173,16 @@ for (area in areas){
     dev.off()
   }
   # GBa 20000 and 1.2
-  # BBn 4000 and 0.8
+  # BBn 3000 and 0.8
   
   # A HCR is used to select catch for year 1 and year 2. 
-  png(paste0("./figures/", folder, "/", area, "/catch_diff_eval_HCR1.png"), height=6, width=22, res=400, units="in")
+  png(paste0("./figures/", folder, "/", area, "/catch_diff_eval_HCR1.png"), height=6, width=22, res=300, units="in")
   print(plot_grid(out[[1]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab("Catch potential (mt)") + ggtitle(NULL, subtitle=NULL), 
                   out[[2]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL) + ggtitle(NULL, subtitle=NULL), 
                   out[[3]]$impact_HCR1$evaluation_catch + theme(legend.position = "topright") + ylab(NULL) + ggtitle(NULL, subtitle=NULL), ncol=3, align="v"))
   dev.off()
   
-  png(paste0("./figures/", folder, "/", area, "/decision_impact_HCR1.png"), height=12, width=22, res=400, units="in")
+  png(paste0("./figures/", folder, "/", area, "/decision_impact_HCR1.png"), height=12, width=22, res=300, units="in")
   print(plot_grid(out[[1]]$impact_HCR1$evaluation3 + ggtitle(NULL, subtitle=NULL), 
                   out[[2]]$impact_HCR1$evaluation3 + ylab(NULL) + ggtitle(NULL, subtitle=NULL), 
                   out[[3]]$impact_HCR1$evaluation3 + ylab(NULL) + ggtitle(NULL, subtitle=NULL),
@@ -192,14 +194,14 @@ for (area in areas){
   # BBn 1000 and 4
   
   if(!area %in% c("BBn", "6")){
-    png(paste0("./figures/", folder, "/", area, "/catch_diff_eval_HCR2.png"), height=6, width=22, res=400, units="in")
+    png(paste0("./figures/", folder, "/", area, "/catch_diff_eval_HCR2.png"), height=6, width=22, res=300, units="in")
     print(plot_grid(out[[1]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright")+ ylab("Catch potential (mt)") + ggtitle(NULL, subtitle=NULL),  
                     out[[2]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL) + ggtitle(NULL, subtitle=NULL), 
                     out[[3]]$impact_HCR2$evaluation_catch + theme(legend.position = "topright") + ylab(NULL) + ggtitle(NULL, subtitle=NULL), ncol=3, align="v"))
     dev.off()
     
     
-    png(paste0("./figures/", folder, "/", area, "/decision_impact_HCR2.png"), height=12, width=22, res=400, units="in")
+    png(paste0("./figures/", folder, "/", area, "/decision_impact_HCR2.png"), height=12, width=22, res=300, units="in")
     print(plot_grid(out[[1]]$impact_HCR2$evaluation3 + ggtitle(NULL, subtitle=NULL), 
                     out[[2]]$impact_HCR2$evaluation3 + ylab(NULL) + ggtitle(NULL, subtitle=NULL), 
                     out[[3]]$impact_HCR2$evaluation3 + ylab(NULL) + ggtitle(NULL, subtitle=NULL),
@@ -210,7 +212,7 @@ for (area in areas){
   }
   # GBa 10000 and 3
   # BBn NA
-  
+} 
   if(folder=="BoF"){
     out[[1]]$checktable$pB0 <- 1-out[[1]]$checktable$pB0
     out[[1]]$decision.2$pB0 <- 1-out[[1]]$decision.2$pB0

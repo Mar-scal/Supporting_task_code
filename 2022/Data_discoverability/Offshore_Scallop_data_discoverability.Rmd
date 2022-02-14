@@ -1,0 +1,101 @@
+---
+title: "Offshore Scallop Data Discoverability Report"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# bounding box
+```{r, include=FALSE}
+require(sf)
+require(dplyr)
+require(ggrepel)
+require(rnaturalearth) || stop("Install rnaturalearth package, this replaces maps and mapdata packages")
+require(rnaturalearthdata)|| stop("Install rnaturalearthdata package, this replaces maps and mapdata packages")
+require(rnaturalearthhires) || stop("You need rnaturalearthhires run this to install devtools::install_github('ropensci/rnaturalearthhires') ")
+
+land.all <- ne_countries(scale = "large", returnclass = "sf",continent = "North America")
+plot(land.all)
+
+bbox <- data.frame(X=c(-68, -68, -60, -60), Y=c(41,44, 44, 41)) %>%
+  st_as_sf(coords=c("X", "Y"), remove=F, crs=4326) %>%
+  group_by() %>%
+  summarize(geometry=st_combine(geometry)) %>%
+  st_cast("POLYGON") %>%
+  st_transform(32620)
+
+```
+
+
+# get FULL data to simplify to tow locations for public storage
+-	User provides bounding box
+-	Intersect bounding box with survey data
+-	Provide number of tows per year and bank in bounding box
+-	Map of tows in bounding box
+
+```{r}
+# load("Y:/Offshore/Assessment/Data/Survey_data/2021/Survey_summary_output/Survey_all_results.Rdata")
+# 
+# data <- all.surv.dat
+# 
+# data2 <- data %>%
+#   filter(state=="live") %>%
+#   select(year, month, bank, tow, lon, lat, species) %>%
+#   distinct() %>%
+#   st_as_sf(coords=c("lon", "lat"), crs=4326) 
+# 
+# save(data2, file = "C:/Users/keyserf/Documents/GitHub/Supporting_task_code/2022/Data_discoverability/tow_metadata.RData")
+
+xdist <- st_bbox(bbox)$xmax-st_bbox(bbox)$xmin
+ydist <- st_bbox(bbox)$ymax-st_bbox(bbox)$ymin
+if(xdist<ydist) dist<-ydist
+if(xdist>=ydist) dist<-xdist
+bufferbox <- st_bbox(st_buffer(bbox, dist*0.1)) %>% st_as_sfc()
+
+land <- land.all %>%
+  st_transform(4326) %>%
+  st_transform(32620) %>%
+  st_intersection(bufferbox) 
+
+load("C:/Users/keyserf/Documents/GitHub/Supporting_task_code/2022/Data_discoverability/tow_metadata.RData")
+
+data3 <- data2 %>% 
+  st_transform(32620) %>%
+  st_intersection(bbox) 
+
+labels <- data3 %>% group_by(bank) %>%
+  summarize() %>% 
+  st_centroid() %>%
+  cbind(st_coordinates(.))
+
+ggplot() + 
+  geom_sf(data=land) +
+  geom_sf(data=bufferbox, fill=NA)+
+  geom_sf(data=data3, alpha=0.5) + 
+  geom_sf(data=bbox, colour="red", lty="dashed", fill=NA)+
+  geom_label_repel(data=labels,
+                   aes(X, Y, label=bank),
+                       fill = alpha(c("white"),0.75))+ 
+  coord_sf(expand=F) + 
+  theme_bw() +
+  xlab("Longitude") + ylab("Latitude")
+
+st_geometry(data3) <- NULL
+
+banknames <- data.frame(bank = c("BBn", "BBs", "Ger", "Ban", "Mid", "Sab", "GB", "GBa", "GBb"), 
+                        name = c("Browns North", "Browns South", "German", "Banquereau", "Middle", "Sable", "Georges Bank Monitoring", "Georges 'a'", "Georges 'b'"))
+
+banknames$name <- factor(banknames$name, levels=c("Browns North", "Browns South", "German", "Banquereau", "Middle", "Sable", "Georges Bank Monitoring", "Georges 'a'", "Georges 'b'"))
+
+data4 <- data3 %>%
+  filter(species=="seascallop") %>%
+  left_join(banknames) %>%
+  select(year, month, name, tow) %>%
+  group_by(year, month, name) %>%
+  summarize(number_of_tows=n()) %>%
+  ungroup()%>%
+  pivot_wider(names_from=name, values_from = number_of_tows, names_sort = T)
+
+data4
+
+```
