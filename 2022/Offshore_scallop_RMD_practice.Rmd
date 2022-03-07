@@ -1,0 +1,100 @@
+---
+title: "Offshore scallop RMarkdown practice"
+author: Freya Keyser
+output: 
+  html_document: # you could add stuff here if you wanted
+  pdf_document: # you could add stuff here if you wanted 
+  word_document: # you could add stuff here if you wanted
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# First-level header
+
+## Second-level header
+
+### Third-level header
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r echo=FALSE}
+plot(pressure)
+
+require(ggplot2)
+ggplot() + geom_point(data=pressure, aes(temperature, pressure))
+```
+
+
+## Important chunk options
+
+* echo=FALSE prevents the code from getting printed to the document  
+* include=FALSE prevents any code or output from getting printed to the document, but the code is still run behind the scenes   
+* eval=FALSE skips over the code chunk entirely  
+
+#### echo=F (output appears, code is hidden)
+```{r echo=FALSE}
+print("hi")
+```
+
+#### include=F (nothing appears!)
+```{r include=FALSE}
+hi <- "hi with include=F"
+print(hi)
+```
+
+```{r echo=FALSE}
+rm(hi) # remove earlier object
+```
+
+#### eval=F (still prints the code, but doesn't run it!)
+```{r eval=FALSE}
+hi <- "hi with eval=F"
+```
+
+```{r}
+# hi should not exist!
+print(exists("hi"))
+```
+
+## Tables!
+
+You can make tables a few different ways using packages. Some packages/functions let you make a very simple table really easily, but with limited formatting options. Other packages/functions are a bit more complicated to use, but have endless options for formatting. Here are two examples...
+
+_You can hide the messages/warnings using message=F and warning=F in the chunk header. This will hide the package info!_
+
+### kable
+```{r, echo=FALSE, message=F, warning=F}
+require(kableExtra) #or kable?
+kable(pressure)
+```
+
+### pander
+```{r, echo=FALSE, message=F, warning=F}
+require(pander)
+pander(pressure)
+```
+
+## Reproducible writing
+
+You can stick values from from an analysis in a paragraph of writing using code, so that you don't have to copy/paste in the new values for a reproducible analysis. For example...
+
+The minimum temperature in the dataset is `r min(pressure$temperature)` degrees. The maximum pressure level is `r max(pressure$pressure)`. 
+
+
+## Those are the basics, but now for the DFO-spin...
+
+* Templates and knitting to Word documents
+* Figure and table captions
+* Bibliographies and citations
