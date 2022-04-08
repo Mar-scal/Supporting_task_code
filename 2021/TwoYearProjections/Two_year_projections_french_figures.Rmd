@@ -1,6 +1,8 @@
 ---
 title: "Two_year_projections_french"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r}
