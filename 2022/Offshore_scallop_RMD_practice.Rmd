@@ -2,9 +2,10 @@
 title: "Offshore scallop RMarkdown practice"
 author: Freya Keyser
 output: 
-  html_document: # you could add stuff here if you wanted
-  pdf_document: # you could add stuff here if you wanted 
   word_document: # you could add stuff here if you wanted
+      reference_docx: SRR-RS2022-eng.docx
+  pdf_document: # you could add stuff here if you wanted 
+  html_document: # you could add stuff here if you wanted
 ---
 
 ```{r setup, include=FALSE}
@@ -93,8 +94,53 @@ You can stick values from from an analysis in a paragraph of writing using code,
 The minimum temperature in the dataset is `r min(pressure$temperature)` degrees. The maximum pressure level is `r max(pressure$pressure)`. 
 
 
-## Those are the basics, but now for the DFO-spin...
+### Those are the basics, but now for the DFO-spin...
 
 * Templates and knitting to Word documents
 * Figure and table captions
 * Bibliographies and citations
+
+### Templates
+
+For a CSAS doc, you can use csasdown or a DIY approach. I found the DIY approach helped familiarize me with some of the RMarkdown skills that could become handy later with csasdown.  
+
+- Save the latest CSAS template for your document from this website, and save it in the same folder as the RMD file : http://intra.dfo-mpo.gc.ca/csas-sccs/GuidePol/Templates-Gabarits/Templates-Gabarits-eng.html
+- Add the following to the "YAML" header under the word_document line. The spacing needs to be precise and look just like this:
+```{r eval=FALSE}
+  word_document:
+    reference_docx: SRR-RS2022-eng.docx
+```
+
+
+Try knitting your document and see if the template is applied! 
+
+
+### Figure captions
+
+```{r fig.cap="Figure 2. Temperature and pressure relationship."}
+require(ggplot2)
+ggplot() + geom_point(data=pressure, aes(temperature, pressure))
+```
+
+Or the manual approach:
+
+_Figure 2. Temperature and pressure relationship._
+```{r}
+require(ggplot2)
+ggplot() + geom_point(data=pressure, aes(temperature, pressure))
+```
+
+### Table captions
+
+Package-dependent, or you can do it manually. 
+
+```{r, message=F, warning=F}
+require(pander)
+pander(pressure, caption = "Table 2. Pressure data.")
+```
+
+_Table 2. Pressure data._
+```{r, message=F, warning=F}
+require(pander)
+pander(pressure)
+```
