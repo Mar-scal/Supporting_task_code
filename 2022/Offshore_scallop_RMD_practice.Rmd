@@ -6,6 +6,9 @@ output:
       reference_docx: SRR-RS2022-eng.docx
   pdf_document: # you could add stuff here if you wanted 
   html_document: # you could add stuff here if you wanted
+bibliography: MAR_SABHU.bib
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -115,32 +118,61 @@ For a CSAS doc, you can use csasdown or a DIY approach. I found the DIY approach
 Try knitting your document and see if the template is applied! 
 
 
+
 ### Figure captions
 
-```{r fig.cap="Figure 2. Temperature and pressure relationship."}
+```{r echo=F, fig.cap="Figure 2. Temperature and pressure relationship."}
 require(ggplot2)
 ggplot() + geom_point(data=pressure, aes(temperature, pressure))
 ```
+
 
 Or the manual approach:
 
+
 _Figure 2. Temperature and pressure relationship._
-```{r}
+```{r echo=F}
 require(ggplot2)
 ggplot() + geom_point(data=pressure, aes(temperature, pressure))
 ```
+
+
 
 ### Table captions
 
 Package-dependent, or you can do it manually. 
+
 
 ```{r, message=F, warning=F}
 require(pander)
 pander(pressure, caption = "Table 2. Pressure data.")
 ```
 
+
 _Table 2. Pressure data._
 ```{r, message=F, warning=F}
 require(pander)
 pander(pressure)
 ```
+
+
+
+
+### Bibliographies
+
+This gets tricky, but is wonderful once it works! Zotero reference manager software is required. The instructions for installing are here:
+Y:/Zotero/ZOTERO SET UP.docx
+
+Once you have created a bibliography, save it in the same folder as your RMD script. Add it to your YAML header. Then install the citr package, and then restart RStudio.
+
+```{r eval=F}
+devtools::install_github("crsh/citr")
+require(citr)
+```
+
+Follow the steps here to add citations to your document: https://github.com/crsh/citr
+
+
+Example: Scallops are super cool [@dfo_stock_2020; @dfo_stock_2020-4].
+
+
