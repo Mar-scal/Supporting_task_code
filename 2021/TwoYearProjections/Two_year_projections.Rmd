@@ -5,10 +5,11 @@ title: "2 year projections"
 #     # theme: bootstrap
 # orientation: columns
 # vertical_layout: fill
-
 # storyboard: true
 #runtime: shiny
 #runtime: shiny_prerendered #  This is supposed to render all the plots right off the bat, so slower first time, but makes moving between pages really quick...
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -37,12 +38,13 @@ HCRs <- data.frame(area = c("BBn", "GBa",
                                     0.05, 0.06, 0.06, 0.09))
 
 
-areas <- c("1A", "1B", "3", "4", "6", 
-   "GBa", "BBn", 
-  "29A", 
-  "29B", 
-  "29C", 
-  "29D"
+areas <- c(#"1A", "1B", "3", "4", "6", 
+   #"GBa", 
+  "BBn"#, 
+  # "29A", 
+  # "29B", 
+  # "29C", 
+  # "29D"
 )
 ```
 
@@ -56,7 +58,7 @@ for(area in areas){
   if(area %in% c("1A", "1B", "3", "4", "6")) folder <- "BoF"
   if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"
   
-  SPscenario <- list(0, SP$med[SP$Subarea==area])
+  SPscenario <- list(0, SP$med[SP$Subarea==area], NULL) # 0 SP, median SP, previous year assumptions
   source(paste0("./", folder, "/two_year_projections.R"))
   
   out <- map(SPscenario, function(x) two_year_projections(area=area,
@@ -67,8 +69,7 @@ for(area in areas){
                                                           sample=100,
                                                           path="Repo working directory (fast)", 
                                                           save=F,
-                                                          pred.eval=T,
-                                                          load=F))
+                                                          pred.eval=T))
   
   
   save(out, file = paste0("./", folder, "/", area, "/twoyearprojections.RData"))

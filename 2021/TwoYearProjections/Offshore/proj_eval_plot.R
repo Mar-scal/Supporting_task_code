@@ -58,11 +58,10 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
   }
   if(area=="BBn") {
     break1 <- seq(0,30000, 5000)
-    break2 <- seq(0,10000, 2000)
+    break2 <- seq(0,14000, 2000)
     break3 <- seq(-5000,5000, 1000)
     break4 <- seq(-0.8, 0.8, 0.4)
   }
-  
   
   # boxplot code here
   pred.eval <- ggplot() +

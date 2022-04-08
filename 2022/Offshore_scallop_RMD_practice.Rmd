@@ -1,0 +1,178 @@
+---
+title: "Offshore scallop RMarkdown practice"
+author: Freya Keyser
+output: 
+  word_document: # you could add stuff here if you wanted
+      reference_docx: SRR-RS2022-eng.docx
+  pdf_document: # you could add stuff here if you wanted 
+  html_document: # you could add stuff here if you wanted
+bibliography: MAR_SABHU.bib
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# First-level header
+
+## Second-level header
+
+### Third-level header
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r echo=FALSE}
+plot(pressure)
+
+require(ggplot2)
+ggplot() + geom_point(data=pressure, aes(temperature, pressure))
+```
+
+
+## Important chunk options
+
+* echo=FALSE prevents the code from getting printed to the document  
+* include=FALSE prevents any code or output from getting printed to the document, but the code is still run behind the scenes   
+* eval=FALSE skips over the code chunk entirely  
+
+#### echo=F (output appears, code is hidden)
+```{r echo=FALSE}
+print("hi")
+```
+
+#### include=F (nothing appears!)
+```{r include=FALSE}
+hi <- "hi with include=F"
+print(hi)
+```
+
+```{r echo=FALSE}
+rm(hi) # remove earlier object
+```
+
+#### eval=F (still prints the code, but doesn't run it!)
+```{r eval=FALSE}
+hi <- "hi with eval=F"
+```
+
+```{r}
+# hi should not exist!
+print(exists("hi"))
+```
+
+## Tables!
+
+You can make tables a few different ways using packages. Some packages/functions let you make a very simple table really easily, but with limited formatting options. Other packages/functions are a bit more complicated to use, but have endless options for formatting. Here are two examples...
+
+_You can hide the messages/warnings using message=F and warning=F in the chunk header. This will hide the package info!_
+
+### kable
+```{r, echo=FALSE, message=F, warning=F}
+require(kableExtra) #or kable?
+kable(pressure)
+```
+
+### pander
+```{r, echo=FALSE, message=F, warning=F}
+require(pander)
+pander(pressure)
+```
+
+## Reproducible writing
+
+You can stick values from from an analysis in a paragraph of writing using code, so that you don't have to copy/paste in the new values for a reproducible analysis. For example...
+
+The minimum temperature in the dataset is `r min(pressure$temperature)` degrees. The maximum pressure level is `r max(pressure$pressure)`. 
+
+
+### Those are the basics, but now for the DFO-spin...
+
+* Templates and knitting to Word documents
+* Figure and table captions
+* Bibliographies and citations
+
+### Templates
+
+For a CSAS doc, you can use csasdown or a DIY approach. I found the DIY approach helped familiarize me with some of the RMarkdown skills that could become handy later with csasdown.  
+
+- Save the latest CSAS template for your document from this website, and save it in the same folder as the RMD file : http://intra.dfo-mpo.gc.ca/csas-sccs/GuidePol/Templates-Gabarits/Templates-Gabarits-eng.html
+- Add the following to the "YAML" header under the word_document line. The spacing needs to be precise and look just like this:
+```{r eval=FALSE}
+  word_document:
+    reference_docx: SRR-RS2022-eng.docx
+```
+
+
+Try knitting your document and see if the template is applied! 
+
+
+
+### Figure captions
+
+```{r echo=F, fig.cap="Figure 2. Temperature and pressure relationship."}
+require(ggplot2)
+ggplot() + geom_point(data=pressure, aes(temperature, pressure))
+```
+
+
+Or the manual approach:
+
+
+_Figure 2. Temperature and pressure relationship._
+```{r echo=F}
+require(ggplot2)
+ggplot() + geom_point(data=pressure, aes(temperature, pressure))
+```
+
+
+
+### Table captions
+
+Package-dependent, or you can do it manually. 
+
+
+```{r, message=F, warning=F}
+require(pander)
+pander(pressure, caption = "Table 2. Pressure data.")
+```
+
+
+_Table 2. Pressure data._
+```{r, message=F, warning=F}
+require(pander)
+pander(pressure)
+```
+
+
+
+
+### Bibliographies
+
+This gets tricky, but is wonderful once it works! Zotero reference manager software is required. The instructions for installing are here:
+Y:/Zotero/ZOTERO SET UP.docx
+
+Once you have created a bibliography, save it in the same folder as your RMD script. Add it to your YAML header. Then install the citr package, and then restart RStudio.
+
+```{r eval=F}
+devtools::install_github("crsh/citr")
+require(citr)
+```
+
+Follow the steps here to add citations to your document: https://github.com/crsh/citr
+
+
+Example: Scallops are super cool [@dfo_stock_2020; @dfo_stock_2020-4].
+
+
