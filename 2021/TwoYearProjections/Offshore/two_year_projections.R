@@ -20,11 +20,11 @@ two_year_projections <- function(
   direct_off <- "//142.2.93.33/Offshore/Assessment/Data/Model"
   
   if(path == "Network (slow)") {
-    if(area %in% c("GBa", "BBn")) mod.res <- get(load(file = paste0(direct_off,"/2020/", area, "/Results/Final_model_results.RData")))
+    if(area %in% c("GBa", "BBn")) mod.res <- get(load(file = paste0(direct_off,"/2020/", area, "/Results/Final_model_results.RData"))[1])
   }
   
   if(path == "Repo working directory (fast)"){
-    if(area %in% c("GBa", "BBn")) mod.res <- get(load(file = paste0("./Offshore/Final_model_results_", area, ".RData")))
+    if(area %in% c("GBa", "BBn")) mod.res <- get(load(file = paste0("./Offshore/Final_model_results_", area, ".RData"))[1])
   } 
   
   if(area %in% c("GBa", "BBn")) mod.res <- list(data=mod.res[[area]], summary = DD.out[[area]]$summary, sims.matrix=DD.out[[area]]$sims.list)
