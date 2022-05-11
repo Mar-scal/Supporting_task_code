@@ -1,5 +1,7 @@
 english,french
 "[low, high]","[inférieure,  supérieure]"
+'a',« a »
+'b',« b »
 A27,Z27
 A2W,Z2O
 AAV,VAM
@@ -60,6 +62,7 @@ Bounds,Limites
 British Columbia,Colombie-Britannique
 Broad Skate,raie large
 Brown Cat Shark,holbiche brune
+Browns Bank,Banc de Brown
 BT,CF
 Buffalo Sculpin,chabot-bison
 Butter Sole,plie à écailles régulières
@@ -182,6 +185,8 @@ Fully recruited biomass estimate (metric tonnes),Biomasse pleinement recrutée (
 Gear,Engin
 Geometric mean of hook and line CPUE (fish/set),Moyenne géométrique des CPUE à l’hameçon et à la ligne (poisson/ensemble)
 Geometric mean of trawl CPUE (kg/hr),Moyenne géométrique des CPUE du chalut (kg/h)
+Georges\nBank,Banc de\nGeorges
+German Bank,Banc German
 Geostatistical,Géostatique
 Giant Blobsculpin,chabot maculé
 Giant Grenadier,grenadier géant
@@ -214,6 +219,7 @@ In press,Sous presse
 Instantaneous natural mortality,Mortalité naturelle instantanée
 Integrated Fishery Management Plan,Plan de gestion intégrée des pêches
 Interactions,Interactions
+International Court of Justice (Hague) Line,Ligne de la cour internationale de justice (Hague)
 IPHC Report of Assessment and Research Activities,Rapport de la CIFP sur les activités d'évaluation et de recherche
 IPHC survey catch rate,Taux de capture du relevé IPHC
 Jan,jan
@@ -284,6 +290,7 @@ No,Non
 No Status,Sans statut
 None,Aucun
 Normal,Normale
+North, Nord
 North Pacific Spiny Dogfish,aiguillat commun du Pacifique Nord
 Northing,Ordonnée
 Not at Risk,Non en péril
@@ -418,6 +425,7 @@ Snake Prickleback,lompénie-serpent
 SoG,DG
 Source,Source
 Sources of information,Sources de renseignements
+South,Sud
 Southern Rock Sole,fausse limande du Pacifique sud
 Spatial random effects,Effets aléatoires spatiaux
 Spatial random effects only,Effets aléatoires spatiaux seulement

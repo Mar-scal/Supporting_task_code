@@ -10,7 +10,7 @@ direct <- "Y:/Offshore/Assessment/"
 direct_fns <- "C:/Users/keyserf/Documents/Github/"
 # Grab the years of port sampling data.  Note that Ginette says the Port Sampling data goes all the way back to 1996
 # I haven't a clue where that data is, but would certainly be interesting to compare the last 20 years of data!!
-years <- 2011:2021
+years <- 2006:2021
 options(stringsAsFactors = F) # Don't make anything a Factor as it screws up random crap.
 
 # Load in librarys we may need...
@@ -35,6 +35,7 @@ off.fleet <- read.csv(paste0(direct,"Data/Offshore_fleet.csv"))
 ################  Section 1, processing the port sampling meat weight information  --  Section 1 ############################################################
 # Here we pull in all the port sampling data (right now 2006-2017) and tidy it up for later analysis, once happy with the results
 # you can skip this Section
+require(tidyverse)
 
 # Get ready for the loop...
 index <- 0
@@ -44,12 +45,54 @@ for(i in 1:length(years))
 {
   # This identifies all the files that for each year of Port Sampling, this should include the vast majority of trips each year, probably would be useful
   # to have someone check if these are exhaustive lists or not...
-  files <- list.files(path = paste0(direct,"Data/PortSampling/PS",years[i],"/JoansOriginals/"),pattern = "\\.xls", recursive = T, ignore.case = T)
-  filenames <- list.files(path = paste0(direct,"Data/PortSampling/PS",years[i],"/JoansOriginals/"),pattern = "\\.xls", recursive = T, ignore.case = T, include.dirs = F)
-  if(!length(unique(filenames))==length(files)) stop("you have duplicate files!")
+  if(years[i]==2006) {
+    files <- list.files(path = paste0(direct,"Data/PortSampling/PS", years[i], "/origportsamplesfiles"),pattern = "\\.xls", recursive = T, ignore.case = T)
+  }
+  if(years[i]==2007) {
+    files <- list.files(path = paste0(direct,"Data/PortSampling/PS", years[i], "/OriginalPortSamples2007"),pattern = "\\.xls", recursive = T, ignore.case = T)
+  }
+  if(years[i]==2008) {
+    files <- list.files(path = paste0(direct,"Data/PortSampling/PS", years[i], "/OrigianlPortSamples2008"),pattern = "\\.xls", recursive = T, ignore.case = T)
+  }
+  if(years[i]==2009) {
+    files <- list.files(path = paste0(direct,"Data/PortSampling/PS", years[i], "/originals"),pattern = "\\.xls", recursive = T, ignore.case = T)
+  }
+  if(years[i]==2010) {
+    files <- list.files(path = paste0(direct,"Data/PortSampling/PS", years[i], "/Originals2010"),pattern = "\\.xls", recursive = T, ignore.case = T)
+  }
+  if(years[i]>2010 & years[i]<2018) {
+    files <- list.files(path = paste0(direct,"Data/PortSampling/PS", years[i], "/JoansOriginals"),pattern = "\\.xls", recursive = T, ignore.case = T)
+  }
+  if(years[i]>2017) {
+    files <- list.files(path = paste0(direct,"Data/PortSampling/PS", years[i], "/JoansOriginals"),pattern = "\\.csv", recursive = T, ignore.case = T)
+  }
+  if(years[i] < 2018) files2 <- list.files(path = paste0(direct,"Data/PortSampling/PS_data_reorg_4_analysis/", years[i], "/"),pattern = "\\.xls", ignore.case = T)
+  if(years[i] > 2017) files2 <- list.files(path = paste0(direct,"Data/PortSampling/PS_data_reorg_4_analysis/", years[i], "/"),pattern = "\\.csv", ignore.case = T)
+  print(years[i])
+  # 
+  if(years[i] < 2018) {
+    files <- gsub(x = tolower(files), pattern=".xlsx", replacement="", fixed=T)
+    files <- gsub(x = tolower(files), pattern=".xls", replacement="", fixed=T)
+    files2 <- gsub(x = tolower(files2), pattern=".xlsx", replacement="", fixed=T)
+    files2 <- gsub(x = tolower(files2), pattern=".xls", replacement="", fixed=T)
+  }
+  if(years[i] > 2017) {
+    files <- gsub(x = tolower(files), pattern=".csv", replacement="", fixed=T)
+    files2 <- gsub(x = tolower(files2), pattern=".csv", replacement="", fixed=T)
+  }
+
+  if(any(nchar(files)>8)) files <- str_sub(string = files,-8)
+
+  # names that are in files2 but not in files
+  files2[which(!files2 %in% files)]
+
+  # names that are in files but not in files2
+  files[which(!files %in% files2)]
   
-  wrong <- c(grep(pattern="\\.frz", x=files), grep(pattern="\\.fsh", x=files))
-  files <- files[-wrong]
+# 2013, COME0613 # this trip doesn't exist?
+
+  if(years[i] < 2018) files <- list.files(path = paste0(direct,"Data/PortSampling/PS_data_reorg_4_analysis/", years[i], "/"),pattern = "\\.xls", ignore.case = T)
+  if(years[i] > 2017) files <- list.files(path = paste0(direct,"Data/PortSampling/PS_data_reorg_4_analysis/", years[i], "/"),pattern = "\\.csv", ignore.case = T)
   num.files <- length(files)
   
   for(j in 1:num.files)
@@ -57,7 +100,8 @@ for(i in 1:length(years))
     print(index)
     index <- index + 1
     #This will pull the data from the Port Sampling file.
-    dat[[index]] <- read_excel(path=paste0(direct,"Data/PortSampling/PS",years[i],"/JoansOriginals/", files[j]), sheet = 1)
+    if(years[i] < 2018) dat[[index]] <- read_excel(path=paste0(direct,"Data/PortSampling/PS_data_reorg_4_analysis/",years[i],"/", files[j]), sheet = 1)
+    if(years[i] > 2017) dat[[index]] <- read.csv(paste0(direct,"Data/PortSampling/PS_data_reorg_4_analysis/",years[i],"/", files[j]))
     # # Make all the variable names lower case as the rest of this works...
     names(dat[[index]]) <- tolower(names(dat[[index]]))
     # Remove the black columns
@@ -93,6 +137,8 @@ port.dat$ps.date <- ymd(port.dat$date)
 port.dat$date <- ymd(port.dat$date) # This will get overwritten later with the fishery log date...
 port.dat$ps.fished <- ymd(port.dat$fished)
 
+#check dates that failed to parse. 
+
 ### Now we can work on merging the data to fishery log information....
 port.dat$year <- year(port.dat$ps.date)
 port.dat$month <- month(port.dat$ps.fished)
@@ -100,12 +146,12 @@ port.dat$day <- day(port.dat$ps.fished)
 # There are some types in the fished entries for the year, so this is simple fix for those key punch mistakes...
 port.dat$ps.fished <- ymd(paste(port.dat$year,port.dat$month,port.dat$day))
 
-save.image(paste0(direct,"Data/Framework/2018/Port_sampling/Port_sampling_raw_data.rData"))
-#load(paste0(direct,"Data/Framework/2018/Port_sampling/Port_sampling_raw_data.rData"))
+save.image(paste0(direct,"Data/PortSampling/PS_data_reorg_4_analysis/Port_sampling_raw_data.RData"))
+#load(paste0(direct,"Data/PortSampling/PS_data_reorg_4_analysis/Port_sampling_raw_data.RData"))
 
 ############  Section 2 - Add in teh fishery data to the port sampling...
 # Now bring in the latest fishery data
-logs_and_fish(loc="offshore",year = years,un=un.ID,pw=pwd.ID,db.con=db.con,direct.off=direct)
+logs_and_fish(loc="offshore",year = years,get.marfis = F, direct = direct, direct_fns=direct_fns)
 # If you get any NA's related warnings it may be something is being treated as a Factor in one of the two files.  
 # This should combine without any warnings so don't ignore warnings here.
 fish.dat<-merge(new.log.dat,old.log.dat,all=T)
@@ -127,6 +173,7 @@ ves.port.dat <- NULL
 
 for(k in 1:num.vessels)
 {
+  print(paste0("k=",k))
   # Get the vessel of interest
   vessel <- na.omit(off.fleet[off.fleet$ID_alt_Port_Sampling == vessel_ids[k], c("Pre_2008_ID","VMS_old_ID","ID")])
   # Get all the fishery data for that vessel.
@@ -140,6 +187,7 @@ for(k in 1:num.vessels)
   #merged.dat <- NULL
   for(m in 1:length(dates.ps))
   {
+    print(paste0("m=",m))
     # Now get the fishery data for this vessel and these dates.
     fishery.data.ps <- ves.fish.dat[ves.fish.dat$date %in% dates.ps[m],names(fish.df.to.add)]
     # Now we need to take care of fishery data for when we have multiple entries for a vessel day combination
@@ -188,30 +236,31 @@ port.sampling <- port.sampling[-which(is.na(port.sampling$bank)),]
 ASMs <- off.fleet[!is.na(off.fleet$ASM_date),]
 for(i in 1:nrow(ASMs)) port.sampling$fleet[port.sampling$boat == ASMs$ID_alt_Port_Sampling[i] & port.sampling$date >= ASMs$ASM_date[i]] <- "ASM"
 
-save.image(paste0(direct,"Data/Framework/2018/Port_sampling/Port_sampling_processed_data.rData"))
+save.image(paste0(direct,"Data/PortSampling/PS_data_reorg_4_analysis/Port_sampling_processed_data.RData"))
+
 
 ################  End Section 1, processing the port sampling meat weight information  --  End Section 1 ##############################################
 ################  End Section 1, processing the port sampling meat weight information  --  End Section 1 ##############################################
 
 
 ############### Section 2 - Port sampling analysis
-load(paste0(direct,"Data/Framework/2018/Port_sampling/Port_sampling_processed_data.rData"))
+load(paste0(direct,"Data/PortSampling/PS_data_reorg_4_analysis/Port_sampling_processed_data.rData"))
 
 # For the models to come let's center on the day we believe the ASM's arrive on the scence (May 24, 2010 according to Ginette)
 # The day here respresents 100 days.
 port.sampling$mod.day <- as.numeric(port.sampling$ps.date - as.Date("2010-05-24"))/100
 # And let's just look at GBa
-gba.dat <- port.sampling[port.sampling$bank == "GBa",]
+gba.dat <- port.sampling[port.sampling$bank == "GBa" & port.sampling$year>2016,]
 
 # Plot a time series of the port sampling data by fleet
-windows(11,11)
-ggplot(port.sampling,aes(fished,meat_weight,colour=fleet)) + geom_point(size=0.2) + geom_smooth()
+#windows(11,11)
+ggplot(gba.dat,aes(fished,meat_weight,colour=fleet)) + geom_point(size=0.2) + geom_smooth()
 
 # Again by fleet, but lump the years together
-windows(11,11)
-ggplot(port.sampling,aes(year,meat_weight,colour=fleet)) + geom_point(size=0.02) + geom_smooth() + facet_wrap(~ bank)
+#windows(11,11)
+ggplot(gba.dat,aes(year,meat_weight,colour=fleet)) + geom_point(size=0.02) + geom_smooth() + facet_wrap(~ bank)
 
-windows(11,11)
+#windows(11,11)
 ggplot(gba.dat,aes(ps.fished,mc,colour=fleet)) + geom_point(size=0.02) + geom_smooth() 
 theme_bw() + theme(panel.grid=element_blank()) + scale_color_manual(values=c(alpha("blue",0.5),alpha("grey",0.5),alpha("red",0.5))) 
 
@@ -222,9 +271,9 @@ mc.by.month.fleet <- aggregate(mc~month+fleet,gba.dat,median)
 mc.by.month.fleet
 
 # Is there a clear seasonal trend in here
-windows(11,11)
-ggplot(gba.dat,aes(mc,colour=fleet)) + geom_histogram() + facet_wrap(~month,scales = "free") +
-  theme_bw() + theme(panel.grid=element_blank()) + scale_color_manual(values=c(alpha("blue",0.5),alpha("grey",0.5),alpha("red",0.5)))
+#windows(11,11)
+ggplot(gba.dat,aes(mc,fill=fleet)) + geom_histogram() + facet_wrap(~month)+#,scales = "free") +
+  theme_bw() + theme(panel.grid=element_blank()) + scale_fill_manual(values=c(alpha("blue",0.5),alpha("grey",0.5),alpha("red",0.5)))
 
 
 
@@ -236,12 +285,12 @@ summary(mod.1) # SO on May 24 2010 this says the mc was 28.82 and that is has de
 
 # The right skew of the data is somewhat evident in the Normal Q-Q plot, given these are strictly positive 
 # it might make sense to go glm with a gamma, poisson, or quasipoisson.
-windows(11,11)
+#windows(11,11)
 par(mfrow=c(2,2))
-autoplot(mod.1)
+plot(mod.1)
 
 # Here's the lm fit to the data, a small deline over time...
-windows(11,11)
+#windows(11,11)
 ggplot(gba.dat,aes(ps.fished,mc)) + geom_point(size=0.02)+geom_smooth(method="lm")
 
 # Next we make a slighly more sensible model, still linear but looking for a different in trends between fleets...

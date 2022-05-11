@@ -115,7 +115,7 @@ for (area in areas){
     
     # the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
     if(area=="GBa")  {
-      png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+      png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12/1.5, width=22/1.5, res=400, units="in")
       print(plot_grid(out[[1]]$realized$evaluation1 + 
                         ggtitle(NULL, subtitle=NULL) +ylab(en2fr("Difference in biomass (mt)",french,custom=rosetta_terms,case = 'sentence'))+ 
                         xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),  
@@ -126,16 +126,16 @@ for (area in areas){
                         ylab(NULL) + 
                         ggtitle(NULL, subtitle=NULL) + xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),
                       out[[1]]$realized$evaluation2 + 
-                        ylim(-1.4,1.4) + 
+                        ylim(-1,1.4) + 
                         ggtitle(NULL, subtitle=NULL) + xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence'))+ 
                         ylab(en2fr("Proportional difference in biomass",french,custom=rosetta_terms,case = 'sentence')), 
                       out[[2]]$realized$evaluation2+ 
                         ylab(NULL) + 
-                        ylim(-1.4,1.4) + 
+                        ylim(-1,1.4) + 
                         ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
                       out[[3]]$realized$evaluation2+ 
                         ylab(NULL) + 
-                        ylim(-1.4,1.4)  + 
+                        ylim(-1,1.4)  + 
                         ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
                       ncol=3, align="v"))
       dev.off()
@@ -215,7 +215,7 @@ for (area in areas){
     
     # the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
      if(area=="GBa")  {
-      png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+      png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12/1.5, width=22/1.5, res=300, units="in")
       print(plot_grid(out[[1]]$realized$evaluation1 + 
                         ggtitle(NULL, subtitle=NULL) +
                         ylab(en2fr("Difference in biomass (mt)",french,custom=rosetta_terms,case = 'sentence'))+
@@ -227,16 +227,16 @@ for (area in areas){
                         ylab(NULL) + 
                         ggtitle(NULL, subtitle=NULL) + xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),
                       out[[1]]$realized$evaluation2 + 
-                        ylim(-1.4,1.4) + 
+                        ylim(-1,1.4) + 
                         ggtitle(NULL, subtitle=NULL) + xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence'))+ 
                         ylab(en2fr("Proportional difference in biomass",french,custom=rosetta_terms,case = 'sentence')), 
                       out[[2]]$realized$evaluation2+ 
                         ylab(NULL) + 
-                        ylim(-1.4,1.4) + 
+                        ylim(-1,1.4) + 
                         ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
                       out[[3]]$realized$evaluation2+ 
                         ylab(NULL) + 
-                        ylim(-1.4,1.4)  + 
+                        ylim(-1,1.4)  + 
                         ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
                       ncol=3, align="v"))
       dev.off()
