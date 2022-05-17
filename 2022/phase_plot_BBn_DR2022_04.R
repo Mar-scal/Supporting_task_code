@@ -1,7 +1,7 @@
 # DR2022_4 for Ginette to work on BBn RPs for MSC purposes
 
 
-load("./Offshore/Final_model_results_BBn.RData")
+load("C:/Users/keyserf/Documents/Github/Supporting_task_code/2021/TwoYearProjections/Offshore/Final_model_results_BBn.RData")
 
 # model output 
 model.dat <- mod.out$BBn$BUGSoutput$median  #note will use the medians for population parameters 
@@ -114,5 +114,5 @@ dev.off()
 phase <- data.frame(Year = dat$YearSurvey, Exploitation=dat$mu, Biomass=dat$B)
 
 require(openxlsx)
-write.xlsx(x=phase, file = "phase_plot_BBn.xlsx")
+write.xlsx(x=phase, file = "Y:/Offshore/Data requests/2022/phase_plot_BBn.xlsx")
 
