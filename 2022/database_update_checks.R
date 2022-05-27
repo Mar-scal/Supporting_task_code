@@ -48,10 +48,10 @@ survey.obj.db$BBn$model.dat$I
 pdf(file = "Y:/Offshore/Assessment/2022/Presentations/Survey_summary/Database_pull_compare.pdf", onefile=T)
 for(i in names(survey.obj.2021)[which(names(survey.obj.2021) %in% names(survey.obj.2019))]){
   if(!i=="Ger") {
-    print(ggplot() + #geom_line(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+    print(ggplot() + geom_line(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
             geom_line(data=survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
             geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
-            #geom_point(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+            geom_point(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
             geom_point(data=survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
             geom_point(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
             scale_color_manual(name='Survey summary run',
@@ -187,7 +187,7 @@ cf.db <- NULL
 cf <- NULL
 for(i in names(cf.data.db)[which(names(cf.data.db) %in% names(cf.data.2021))]){
   cf.db.1 <- cf.data.db[[i]]$CF.data
-  cf.1 <- cf.data[[i]]$CF.data
+  cf.1 <- cf.data.2021[[i]]$CF.data
   
   cf.db.1$bank <- i
   cf.1$bank <- i
@@ -255,38 +255,3 @@ BBs2001 <- all.surv.dat.2021[all.surv.dat.2021$bank=="BBs" & all.surv.dat.2021$y
 head(BBs2001)[,5:10]
 head(BBs2001db)[,5:10]
 
-require(compareDF)
-create_output_table(compare_df(tows, tows2), output_type = 'xlsx', file_name = "test_file.xlsx")
-dim(tows)
-dim(tows2)
-
-
-dim(all.surv.dat.db)
-dim(all.surv.dat)
-
-dim(bank.dat.db$BBn)
-dim(bank.dat$BBn)
-
-dim(surv.Live.db$BBn)
-dim(surv.Live$BBn)
-
-# dim(survey.obj.db$BBn$bankpertow)
-# dim(survey.obj$BBn$bankpertow)
-
-dim(surv.dat.db$BBn)
-dim(surv.dat$BBn)
-
-dim(mw.dat.all.db$BBn)
-dim(mw.dat.all$BBn)
-
-dim(cf.data.db$BBn$CF.data)
-dim(cf.data$BBn$CF.data)
-
-dim(CF.current.db$BBn)
-dim(CF.current$BBn)
-
-
-survey.obj.2021 <- survey.obj
-
-load("Y:/Offshore/Assessment/Data/Survey_data/2019/Survey_summary_output/Survey_all_results.Rdata")
-survey.obj.2019 <- survey.obj
