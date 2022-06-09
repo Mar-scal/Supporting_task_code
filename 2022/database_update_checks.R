@@ -93,6 +93,7 @@ print(ggplot() +
         theme_bw())
 dev.off()
 
+
 i="Mid"
 ggplot() + geom_line(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
   geom_line(data=survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
@@ -159,7 +160,7 @@ samples <- samples %>%
   summarize(old=n())
 
 samples.2 <- dplyr::left_join(samples, samples.db)
-samples.2[!(samples.2$old==samples.2$new),]
+View(samples.2[!(samples.2$old==samples.2$new),])
 
 samples.2[samples.2$year==2006 & samples.2$bank=="GBa",]
 mw.dat.all$GBa[mw.dat.all$GBa$year==2006,]
@@ -180,6 +181,101 @@ table(mw.dat.all$Sab[mw.dat.all$Sab$year==2000,]$tow)
 dim(unique(mw.dat.all$Sab[mw.dat.all$Sab$year==2000,]))
 head(mw.dat.all$Sab[mw.dat.all$Sab$year==2000,])
 head(mw.dat.all.db$Sab[mw.dat.all.db$Sab$year==2000,])
+
+
+for (i in 1:length(unique(mw.dat.all.db$Ger$year))) {
+  message(unique(mw.dat.all.db$Ger$year)[i])
+  print(dim(mw.dat.all.db$Ger[mw.dat.all.db$Ger$year==unique(mw.dat.all.db$Ger$year)[i],]) ==
+          dim(mw.dat.all.2021$Ger[mw.dat.all.2021$Ger$year==unique(mw.dat.all.db$Ger$year)[i],]))
+}
+
+#1983, 1984 have samples in new db
+all.surv.dat.2021 %>% group_by(bank) %>%
+  summarize(start=min(year))
+
+for (i in names(mw.dat.all.2021)){
+  print(i)
+  print(min(unique(mw.dat.all.2021[[i]]$year)))
+}
+
+for (i in names(mw.dat.all.db)){
+  print(i)
+  print(min(unique(mw.dat.all.db[[i]]$year)))
+}
+
+MW.dat.new.2021 %>% group_by(bank) %>%
+  summarize(start=min(year))
+
+MW.dat.new.db %>% group_by(bank) %>%
+  summarize(start=min(year))
+
+test <- MW.dat.new.db %>%
+  filter((year>1983 & !bank %in% c("GBa", "GBb", "GB")) | (year>1980 & bank %in% c("GBa", "GBb", "GB")))
+
+test %>% group_by(bank) %>%
+  summarize(start=min(year))
+
+# commercial + historical
+MW.dat.2021 %>% group_by(bank) %>% summarize(start=min(year)) 
+MW.dat.db <- MW.dat.2021 %>% filter(tow==0)
+#commercial
+MW.dat.db %>% group_by(bank) %>% summarize(start=min(year))
+#survey
+MW.dat.new.db %>% group_by(bank) %>% summarize(start=min(year))
+
+
+MW.dat.2021$tow <- as.numeric(MW.dat.2021$tow)
+MW.dat.2021$year <- as.character(MW.dat.2021$year)
+test <- full_join(MW.dat.2021, MW.dat.new.2021) %>%
+  select(cruise, bank, year, scalnum) %>%
+  group_by(cruise, bank, year) %>%
+  summarize(count=length(unique(scalnum)))
+write.csv(test, "C:/Users/keyserf/Desktop/oldmw.csv")
+
+MW.dat.db$tow <- as.numeric(MW.dat.db$tow)
+MW.dat.db$year <- as.character(MW.dat.db$year)
+test <- full_join(MW.dat.db, MW.dat.new.db) %>%
+  select(cruise, bank, year, scalnum) %>%
+  group_by(cruise, bank, year) %>%
+  summarize(count=length(unique(scalnum)))
+write.csv(test, "C:/Users/keyserf/Desktop/newmw.csv")
+
+MW.dat.new.db[MW.dat.new.db$cruise=="P472",]
+
+unique(mw.dat.all.db$GBa[mw.dat.all.db$GBa$year==1982,]$ID)
+
+> #commercial
+MW.dat.db %>% group_by(bank) %>% summarize(start=min(year))
+# A tibble: 9 x 2
+bank  start
+<chr> <int>
+  1 Ban    2000
+2 BBn    1989
+3 BBs    1998
+4 GB     1983
+5 GBa    1983
+6 GBb    1983
+7 Ger    1993
+8 Mid    1983
+9 Sab    1983
+> #survey
+MW.dat.new.db %>% group_by(bank) %>% summarize(start=min(year))
+# A tibble: 12 x 2
+bank    start
+<chr>   <chr>
+  1 Ban     1985 
+2 BanIce  2019 
+3 BBn     1983 
+4 BBs     1983 
+5 GBa     1982 
+6 GBb     1982 
+7 GBUSA   1984 
+8 Ger     1983 
+9 LURCHER 1983 
+10 Mid     1983 
+11 Sab     1984 
+12 SPB     2004 
+
 
 
 
@@ -219,6 +315,25 @@ cf <- cf %>%
 
 cf.2 <- dplyr::left_join(cf, cf.db)
 cf.2[!cf.2$new == cf.2$old,]
+year  bank    old   new
+<chr> <chr> <int> <int>
+1 1984  GBa      28    26 # possibly due to GBUSA
+2 1984  GBb      10     9 # possibly due to GBUSA
+3 1985  GBa      29    20 #?
+4 1985  GBb       4     3 #?
+5 1987  GBa      32    30 #?
+6 1987  GBb       8     4 #?
+7 1988  GBa      13    11 #?
+8 NA    NA       NA    NA
+9 1989  GB       13     1 # AG flagged missing data?
+10 1989  GBa      26    25 #?
+11 1995  GB       17    10 #?
+12 1995  GBa      19    12 #?
+13 1996  GB       14    10 #?
+14 1996  GBa      24    20 #?
+15 2000  Ger       8     1 # corrected
+16 2006  GBa      18    20 #?
+
 cf.2[is.na(cf.2$new) & !is.na(cf.2$old),]
 cf.2[!is.na(cf.2$new) & is.na(cf.2$old),]
 
