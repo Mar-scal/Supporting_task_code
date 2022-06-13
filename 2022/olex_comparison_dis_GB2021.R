@@ -7,23 +7,64 @@ source(paste0(direct_fns, "Survey_and_OSAC/getdis.R"))
 source(paste0(direct_fns, "Survey_and_OSAC/convert.dd.dddd.R"))
 
 ## looking at how old code works
+ovd <- dist.coef(stringr::str_pad(1:200, width = 3, side = "left", pad = "0"), path="Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14/GBalog/",w=c(1:10,9:1),rule=8,smooth=T,plt=F)
 
-# ovd <- dist.coef(301:324,path="Y:/People/Alan/LE09/LE09GBMonlogs/",w=c(1:10,9:1),rule=8,smooth=T,plt=F)
-# 
-sf_use_s2(FALSE)
-l301 <- read.table("Y:/People/Alan/LE09/LE09GBMonlogs/301.log", skip=5)
-l301$lon <- as.numeric(gsub(x=l301$V2, pattern=",", replacement=""))
-l301$lat <- as.numeric(gsub(x=l301$V3, pattern=",", replacement=""))
-l301$mave_lon <- mave(l301$lon,w=c(1:10,9:1))
-l301$mave_lat <- mave(l301$lat,w=c(1:10,9:1))
+# for each tow from 001-200,
+mave_d <- NULL
+mave1 <- NULL
+for(i in stringr::str_pad(1:200, width = 3, side = "left", pad = "0")){
+  sf_use_s2(FALSE)
+  l001 <- read.table(paste0("Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14/GBalog/", i, ".log"), skip=5)
+  l001$lon <- as.numeric(gsub(x=l001$V2, pattern=",", replacement=""))
+  l001$lat <- as.numeric(gsub(x=l001$V3, pattern=",", replacement=""))
+  l001$mave_lon <- mave(l001$lon,w=c(1:10,9:1))
+  l001$mave_lat <- mave(l001$lat,w=c(1:10,9:1))
+  l001 <- l001[seq(1, nrow(l001), 2),]
+  mave1 <- l001[, c("mave_lon", "mave_lat")] %>%
+    st_as_sf(coords=c("mave_lon", "mave_lat"), crs=4326) %>%
+    st_transform(32620) %>%
+    group_by() %>%
+    summarize(do_union=FALSE) %>%
+    st_cast("LINESTRING") %>%
+    st_transform(4326)
+  
+  mave1$tow <- i
+  mave1$length <- st_length(st_transform(mave1, 32620))
+  mave1$dis <- 800/mave1$length
+  
+  mave_d <- rbind(mave_d, mave1)
+}
 
-ggplot() + geom_point(data=l301[c(1, nrow(l301)),], aes(lon, lat)) +
-  geom_point(data=l301[c(1, nrow(l301)),], aes(mave_lon, mave_lat), shape=3)
+names(mave_d) <- c("geometry", "tow", "mavelength", "mavedis")
+dis_comp <- left_join(mave_d, ovd[[1]])
+
+dis_comp$chk <- dis_comp$mavelength/(dis_comp$length*1000)
+summary(dis_comp$chk)
+oddballs <- dis_comp[which(as.numeric(dis_comp$chk) > 1.2),]
+# no oddballs!
+
+plotly::ggplotly(ggplot() + geom_sf(data=oddballs) + 
+  geom_sf_text(data=oddballs, aes(label=tow)))#+
+  #geom_sf(data=oddballs_pbs, colour="red"))
+
+ggplot() + geom_point(data=dis_comp, aes(as.numeric(mavelength), length*1000)) +
+  geom_abline(aes(slope=1, intercept=0))
+summary(dis_comp$chk)
+
+pbs <- as.PolySet(data.frame(PID=1, POS=1:nrow(l001), X=l001$mave_lon, Y=l001$mave_lat))
+attr(pbs,"projection")<-"LL"
+pbs <- as.PolySet(pbs)
+# this shows that PBSmapping::calcLength and sf::st_length are handling the distance calculations slightly differently
+
+
+require(ggplot2)
+ggplot() + geom_point(data=l001[c(1, nrow(l001)),], aes(lon, lat)) +
+  geom_point(data=l001[c(1, nrow(l001)),], aes(mave_lon, mave_lat), shape=3)
 # the more values you include in the moving average, the shorter the tow becomes
 
 
 # trying new code
-olex <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14GBtesttracks.gz", ntows=109, type="load", length="sf", every_n=2, w=c(1:15,14:1))
+olex <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14GBtesttracks.gz", ntows=109, type="load", length="sf", every_n=2, w=c(1:10,9:1))
 #olex_pbs <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14GBtesttracks.gz", ntows=109, type="load", length="PBSmapping")
 
 tracks <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14GBtesttracks.gz", ntows=109, type="track")
@@ -37,6 +78,8 @@ tracks <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2021/Dat
 # and o.cruise like 'LE14'
 dis <- read.csv("C:/Users/keyserf/Documents/LE14_dis.csv")
 
+require(tidyverse)
+require(sf)
 dis_gb <- dis %>%
   filter(MGT_AREA_CD %in% c("GBa", "GBb"))
 
@@ -112,7 +155,7 @@ ggplot() +
 ggplot() + geom_boxplot(data=olex_j, aes(as.numeric(dis_coef)), alpha=0.5, fill="yellow") +
   geom_boxplot(data=olex_j, aes(as.numeric(DIS_COEF)), alpha=0.25, fill="blue") + theme_bw()
 
-#olex distance coefs are consistently higher than ovd distance coefs
+#ovd distance coefficients are regularly higher than the olex ones at c(1:10, 9:1)
 
 ov2021[166,]
 track[track$ID==166,]

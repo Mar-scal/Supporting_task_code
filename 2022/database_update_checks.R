@@ -1,5 +1,5 @@
 # survey summary run pulling all survey data from SCALOFF
-load("Y:/Offshore/Assessment/Data/Survey_data/2021/Survey_summary_output/testing_results_historical_db.Rdata")
+load("C:/Users/keyserf/Documents/temp_data/testing_results_historical_db.Rdata")
 
 all.surv.dat.db <- all.surv.dat
 bank.dat.db <- bank.dat
@@ -12,9 +12,11 @@ mw.dat.all.db <- mw.dat.all
 cf.data.db <- cf.data
 CF.current.db <- CF.current
 MW.dat.new.db <- MW.dat.new
+mw.db <- mw
+MW.dat.db <- MW.dat
 
 # survey summary run from 2021 (before historical data were loaded)
-load("Y:/Offshore/Assessment/Data/Survey_data/2021/Survey_summary_output/Survey_all_results - 2021FINAL.Rdata")
+load("C:/Users/keyserf/Documents/temp_data/Survey_all_results - 2021FINAL.Rdata")
 survey.obj.2021 <- survey.obj
 all.surv.dat.2021 <- all.surv.dat
 bank.dat.2021 <- bank.dat
@@ -26,6 +28,8 @@ mw.dat.all.2021 <- mw.dat.all
 cf.data.2021 <- cf.data
 CF.current.2021 <- CF.current
 MW.dat.new.2021 <- MW.dat.new
+mw.2021 <- mw
+MW.dat.2021 <- MW.dat
 
 # survey summary run from 2019
 load("Y:/Offshore/Assessment/Data/Survey_data/2019/Survey_summary_output/Survey_all_results.Rdata")
@@ -62,18 +66,18 @@ for(i in names(survey.obj.2021)[which(names(survey.obj.2021) %in% names(survey.o
   }
   if(i=="Ger") {
     print(ggplot() + 
-            geom_line(data=merged.survey.obj.2019, aes(year, I, colour="2019")) +
+            #geom_line(data=merged.survey.obj.2019, aes(year, I, colour="2019")) +
             geom_line(data=merged.survey.obj.2021, aes(year, I, colour="2021")) +
-            geom_line(data=merged.survey.obj.db, aes(year, I, colour="database")) +
-            geom_point(data=merged.survey.obj.2019, aes(year, I, colour="2019")) +
+            geom_line(data=merged.survey.obj, aes(year, I, colour="database")) +
+            #geom_point(data=merged.survey.obj.2019, aes(year, I, colour="2019")) +
             geom_point(data=merged.survey.obj.2021, aes(year, I, colour="2021")) +
-            geom_point(data=merged.survey.obj.db, aes(year, I, colour="database")) +
-            geom_line(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+            geom_point(data=merged.survey.obj, aes(year, I, colour="database")) +
+            #geom_line(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
             geom_line(data=survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
-            geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
-            geom_point(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+            geom_line(data=survey.obj[[i]]$model.dat, aes(year, I, colour="database")) +
+            #geom_point(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
             geom_point(data=survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
-            geom_point(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
+            geom_point(data=survey.obj[[i]]$model.dat, aes(year, I, colour="database")) +
             scale_color_manual(name='Survey summary run',
                                breaks=c('2019', '2021', 'database'),
                                values=c('2019'="black", '2021'='blue', 'database'='red'))+
@@ -245,7 +249,7 @@ MW.dat.new.db[MW.dat.new.db$cruise=="P472",]
 unique(mw.dat.all.db$GBa[mw.dat.all.db$GBa$year==1982,]$ID)
 
 > #commercial
-MW.dat.db %>% group_by(bank) %>% summarize(start=min(year))
+  MW.dat.db %>% group_by(bank) %>% summarize(start=min(year))
 # A tibble: 9 x 2
 bank  start
 <chr> <int>
@@ -259,7 +263,7 @@ bank  start
 8 Mid    1983
 9 Sab    1983
 > #survey
-MW.dat.new.db %>% group_by(bank) %>% summarize(start=min(year))
+  MW.dat.new.db %>% group_by(bank) %>% summarize(start=min(year))
 # A tibble: 12 x 2
 bank    start
 <chr>   <chr>
@@ -317,7 +321,7 @@ cf.2 <- dplyr::left_join(cf, cf.db)
 cf.2[!cf.2$new == cf.2$old,]
 year  bank    old   new
 <chr> <chr> <int> <int>
-1 1984  GBa      28    26 # possibly due to GBUSA
+  1 1984  GBa      28    26 # possibly due to GBUSA
 2 1984  GBb      10     9 # possibly due to GBUSA
 3 1985  GBa      29    20 #?
 4 1985  GBb       4     3 #?
@@ -369,4 +373,196 @@ BBs2001 <- all.surv.dat.2021[all.surv.dat.2021$bank=="BBs" & all.surv.dat.2021$y
 
 head(BBs2001)[,5:10]
 head(BBs2001db)[,5:10]
+
+
+# German 1999 discrepancy
+all.surv.dat.db %>% 
+  filter(bank=="Ger" & year==1999) %>%
+  nrow()
+
+all.surv.dat.2021 %>% 
+  filter(bank=="Ger" & year==1999) %>%
+  nrow()
+
+mw.dat.all.db$Ger %>% 
+  filter(year==1999) %>%
+  nrow()
+
+mw.dat.all.2021$Ger %>% 
+  filter(year==1999) %>%
+  nrow()
+
+MW.dat.new.db %>% 
+  filter(bank=="Ger" & year==1999) %>%
+  nrow()
+
+MW.dat.new.2021 %>% 
+  filter(bank=="Ger" & year==1999) %>%
+  nrow()
+
+cf.data.db$Ger$CFyrs %>% filter(year==1999)
+cf.data.2021$Ger$CFyrs %>% filter(year==1999)
+
+cf.data.db$Ger$CF.data %>% filter(year==1999)
+cf.data.2021$Ger$CF.data %>% filter(year==1999)
+
+cf.data.db$Ger$HtWt.fit$data %>% filter(year==1999)
+cf.data.2021$Ger$HtWt.fit$data %>% filter(year==1999)
+
+cf.data.db$Ger$HtWt.fit$data %>%
+  group_by(year) %>%
+  summarize(n())
+unique(cf.data.db$Ger$HtWt.fit$data$year)
+unique(cf.data.db$GBa$HtWt.fit$data$year)
+cf.data.2021$Ger$HtWt.fit$data %>%
+  group_by(year) %>%
+  summarize(n())
+unique(cf.data.2021$Ger$HtWt.fit$data$year)
+
+load("Y:/Offshore/Assessment/Data/Survey_data/2021/Survey_summary_output/testing_results_historical_db_ger.Rdata")
+unique(cf.data$Ger$HtWt.fit$data$year)
+
+# cruise P322 added
+# check for other new cruises?
+
+newcruise <- unique(MW.dat.new.db$cruise)[which(!unique(MW.dat.new.db$cruise) %in% unique(MW.dat.new.2021$cruise))]
+
+table(MW.dat.new.db[MW.dat.new.db$cruise %in% newcruise,]$bank,
+      MW.dat.new.db[MW.dat.new.db$cruise %in% newcruise,]$year)
+
+table(MW.dat.new.db[MW.dat.new.db$cruise %in% newcruise,]$bank,
+      MW.dat.new.db[MW.dat.new.db$cruise %in% newcruise,]$year)
+
+unique(mw.db$Ger$cruise)[which(!unique(mw.db$Ger$cruise) %in% unique(mw.2021$Ger$cruise))]
+
+unique(mw.db$Ger$cruise)==unique(MW.dat.new.db$cruise[MW.dat.new.db$bank=="Ger"])
+unique(mw.2021$Ger$cruise)==unique(MW.dat.new.2021$cruise[MW.dat.new.2021$bank=="Ger"])
+
+unique(MW.dat.db[MW.dat.db$bank=="Ger",]$cruise)
+
+unique(c(unique(mw.2021$Ger$cruise), unique(MW.dat.2021[MW.dat.2021$bank=="Ger",]$cruise)))
+# CK15 included twice?
+dim(mw.2021$Ger[mw.2021$Ger$cruise=="CK15",])
+dim(MW.dat.2021[MW.dat.2021$bank=="Ger" & MW.dat.2021$cruise=="CK15",])
+mw.dat.all.db$Ger$ID[which(!mw.dat.all.db$Ger$ID %in% mw.dat.all.2021$Ger$ID)]
+mw.dat.all.2021$Ger$ID[which(!mw.dat.all.2021$Ger$ID %in% mw.dat.all.db$Ger$ID)]
+
+missing_21 <- NULL
+missing_db <- NULL
+cruise.mw.db <- NULL
+cruise.mw.21 <-  NULL
+for(i in c("BBn","Ger","Sab","BBs","GB")){
+  print(i)
+  testdb <- merge(
+    subset(MW.dat.db[MW.dat.db$bank==i,], 
+           month %in% 5:6 & year %in% 1985:2021,
+           c("cruise", "ID","year",
+             "lon","lat","depth",
+             "sh","wmw","tow", "month")),
+    subset(mw.db[[i]], (month %in% 5:6 & !year == 2015) | year==2015 | year==2000, 
+           select=c("cruise", "ID","year",
+                    "lon","lat","depth",
+                    "sh","wmw","tow", "month")),
+    all=T)
+  
+  test21 <- merge(
+    subset(MW.dat.2021[MW.dat.2021$bank==i,], 
+           month %in% 5:6 & year %in% 1985:2021,
+           c("cruise", "year",
+             "lon","lat","depth",
+             "sh","wmw","tow", "month")),
+    subset(mw.2021[[i]], (month %in% 5:6 & !year == 2015) | year==2015 | year==2000, 
+           select=c("cruise", "ID","year",
+                    "lon","lat","depth",
+                    "sh","wmw","tow", "month")),
+    all=T)
+  test21$ID <- paste0(test21$cruise, ".", test21$tow)
+  
+  testdb$tow <- as.character(testdb$tow)
+  
+  testdb <- unique(dplyr::select(testdb, cruise, ID, year, tow, month))
+  test21 <- unique(dplyr::select(test21, cruise, ID, year, tow, month))
+  
+  testdb$bank <- i
+  test21$bank <- i
+  
+  not_in_21 <- anti_join(testdb, test21)
+  not_in_db <- anti_join(test21, testdb)
+  
+  if(nrow(not_in_21)>0) not_in_21 <- cbind(not_in_21, bank=i)
+  if(nrow(not_in_db)>0) not_in_db <- cbind(not_in_db, bank=i)
+  
+  missing_21 <- rbind(missing_21, not_in_21)
+  missing_db <- rbind(missing_db, not_in_db)
+  
+  cruise.mw.db <- rbind(cruise.mw.db, testdb)
+  cruise.mw.21 <- rbind(cruise.mw.21, test21)
+  
+}
+
+for (i in 1983:2000){
+  table1 <- table(cruise.mw.db[cruise.mw.db$year==i,]$bank,cruise.mw.db[cruise.mw.db$year==i,]$month)
+  table2 <- table(cruise.mw.21[cruise.mw.21$year==i,]$bank,cruise.mw.21[cruise.mw.21$year==i,]$month)
+  
+  print(i)
+  print(table1)
+  print(table2)
+  
+}
+
+
+
+
+unique(MW.dat.new.db[MW.dat.new.db$cruise=="CK04" & MW.dat.new.db$bank=="BBn" & MW.dat.new.db$tow==251,]$lon)
+unique(MW.dat.2021[MW.dat.2021$cruise=="CK04" & MW.dat.2021$bank=="BBn" & MW.dat.2021$tow==251,]$lon)
+
+
+tail(testdb[testdb$cruise=="CK04",])
+dim(testdb[testdb$cruise=="CK04",])
+dim(unique(testdb[testdb$cruise=="CK04",]))
+
+tail(test21[test21$cruise=="CK04",])
+dim(test21[test21$cruise=="CK04",])
+dim(unique(test21[test21$cruise=="CK04",]))
+test21[test21$cruise=="CK04",]$tow
+
+
+unique(missing_21[missing_21$bank=="BBs",]$tow)
+unique(missing_db[missing_db$bank=="BBs",]$tow)
+table(missing_db[missing_db$bank=="BBn",]$cruise,missing_db[missing_db$bank=="BBn",]$tow)
+table(missing_21[missing_21$bank=="BBn",]$cruise,missing_21[missing_21$bank=="BBn",]$tow)
+
+unique(MW.dat.new.2021[MW.dat.new.2021$year==1999,]$bank)
+unique(MW.dat.new.2021[MW.dat.new.2021$year==1999,]$cruise)
+all.surv.dat.2021[all.surv.dat.2021$cruise=="CK12",]
+
+table(MW.dat.new.db[MW.dat.new.db$year==1999,]$bank,MW.dat.new.db[MW.dat.new.db$year==1999,]$month)
+table(MW.dat.new.2021[MW.dat.new.2021$year==1999,]$bank,MW.dat.new.2021[MW.dat.new.2021$year==1999,]$month)
+table(MW.dat.2021[MW.dat.2021$year==1999,]$bank,MW.dat.2021[MW.dat.2021$year==1999,]$month)
+
+head(missing_21)
+head(missing_db)
+cruises_added <- missing_21 %>%
+  dplyr::select(bank, cruise, year) %>%
+  distinct()
+
+write.csv(file="C:/Users/keyserf/Documents/temp_data/cruises_added.csv", cruises_added)
+
+cruises_removed <- missing_db %>%
+  dplyr::select(bank, cruise, year) %>%
+  distinct()
+
+write.csv(file="C:/Users/keyserf/Documents/temp_data/cruises_removed.csv", cruises_removed)
+
+
+dim(unique(testdb))
+dim(unique(test21))
+
+unique(testdb$cruise)[which(!unique(testdb$cruise) %in% unique(test21$cruise))]
+
+testdb[testdb$cruise=="P290",]$year
+testdb[testdb$cruise=="P306",]$year
+dim(testdb[testdb$cruise %in% c("P290", "P306"),])
+
+
 
