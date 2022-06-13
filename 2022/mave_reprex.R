@@ -11,6 +11,11 @@ for(fun in funs)
   file.remove(paste0(getwd(),"/",basename(fun)))
 } 
 
+require(sf)
+require(dplyr)
+require(tidyverse)
+require(plotly)
+
 ## looking at how old code works
 ovd <- dist.coef(stringr::str_pad(1:200, width = 3, side = "left", pad = "0"), path="Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14/GBalog/",w=c(1:10,9:1),rule=8,smooth=T,plt=F)
 
