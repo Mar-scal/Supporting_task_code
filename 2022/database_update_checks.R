@@ -489,9 +489,6 @@ for(i in c("BBn","Ger","Sab","BBs","GB")){
   not_in_21 <- anti_join(testdb, test21)
   not_in_db <- anti_join(test21, testdb)
   
-  if(nrow(not_in_21)>0) not_in_21 <- cbind(not_in_21, bank=i)
-  if(nrow(not_in_db)>0) not_in_db <- cbind(not_in_db, bank=i)
-  
   missing_21 <- rbind(missing_21, not_in_21)
   missing_db <- rbind(missing_db, not_in_db)
   
@@ -544,7 +541,8 @@ head(missing_21)
 head(missing_db)
 cruises_added <- missing_21 %>%
   dplyr::select(bank, cruise, year) %>%
-  distinct()
+  distinct() %>%
+  arrange(year, bank, cruise)
 
 write.csv(file="C:/Users/keyserf/Documents/temp_data/cruises_added.csv", cruises_added)
 
@@ -564,5 +562,22 @@ testdb[testdb$cruise=="P290",]$year
 testdb[testdb$cruise=="P306",]$year
 dim(testdb[testdb$cruise %in% c("P290", "P306"),])
 
+mw.rows <- NULL
+for(i in 1:nrow(cruises_added)){
+  cruisei <- cruises_added$cruise[i]
+  banki <- cruises_added$bank[i]
+  yeari <- cruises_added$year[i]
+  
+  rows <- data.frame(cruise=cruisei,
+                     bank=banki, 
+                     year=yeari,
+                     MW.dat.new.2021 = dim(MW.dat.new.2021[MW.dat.new.2021$bank==banki & MW.dat.new.2021$cruise==cruisei & !is.na(MW.dat.new.2021$bank),])[1],
+                     MW.dat.2021 = dim(MW.dat.2021[MW.dat.2021$cruise==cruisei & cruise.mw.21$bank==banki,])[1], 
+                     mw.2021 = dim(mw.2021[[bank]][mw.2021[[bank]]$cruise==cruisei,])[1],
+                     cruise.mw.21 = dim(cruise.mw.21[cruise.mw.21$cruise==cruisei & cruise.mw.21$bank==banki,])[1], 
+                     cf.data.2021 = dim(cf.data.2021[[banki]]$CF.data[cf.data.2021[[banki]]$CF.data$year==yeari,])[1]
+                     )
+  mw.rows <- rbind(mw.rows, rows)
+}
 
-
+#import.hyd.data(yrs=1982:2000, export=F,dirt=direct)

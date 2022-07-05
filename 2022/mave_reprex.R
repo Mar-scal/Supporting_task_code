@@ -16,40 +16,76 @@ require(dplyr)
 require(tidyverse)
 require(plotly)
 
-## looking at how old code works
-ovd <- dist.coef(#stringr::str_pad(1:200, width = 3, side = "left", pad = "0"), 
-                tows=c(201:300), path="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/LE15BBNlog/",w=c(1:10,9:1),rule=8,smooth=T,plt=F)
+folders <- c("LE15BBNlog", "LE15BBNextralog", "LE15GBMonlog", "LE15GERlog", 
+  "Middlelogs")
 
-# using sf and mave function manually on OVD data
+ovd_track <- NULL
+ovd_se <- NULL
 ovd_mave <- NULL
 mave1 <- NULL
-for(i in c(201:300)){
-  sf_use_s2(FALSE)
-  towlog <- read.table(paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/LE15BBNlog/", i, ".log"), skip=5)
-  towlog$lon <- as.numeric(gsub(x=towlog$V2, pattern=",", replacement=""))
-  towlog$lat <- as.numeric(gsub(x=towlog$V3, pattern=",", replacement=""))
-  towlog$mave_lon <- mave(towlog$lon,w=c(1:10,9:1))
-  towlog$mave_lat <- mave(towlog$lat,w=c(1:10,9:1))
-  towlog <- towlog[seq(1, nrow(towlog), 2),]
-  mave1 <- towlog[, c("mave_lon", "mave_lat")] %>%
-    st_as_sf(coords=c("mave_lon", "mave_lat"), crs=4326) %>%
-    st_transform(32620) %>%
-    group_by() %>%
-    summarize(do_union=FALSE) %>%
-    st_cast("LINESTRING") %>%
-    st_transform(4326)
+for(i in folders){
+  print(i)
   
-  mave1$tow <- i
-  mave1$length <- st_length(st_transform(mave1, 32620))
-  mave1$dis <- 800/mave1$length
+  ## OLD WAY
+  townums <- gsub(x=list.files(paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/", i, "/")), pattern=".log", replacement="")
+  #if(any(townums=="440")) townums <- townums[!townums %in% c("440", "450")]
+  ovd_sub <- dist.coef(tows=townums, 
+                       path=paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/", i, "/"),
+                       w=c(1:10,9:1),rule=8,smooth=T,plt=F)
+  ovd_sub[[2]]$folder <- i
+  ovd_sub[[1]]$PID <- 1:nrow(ovd_sub[[1]])
+  ovd_sub[[2]] <- left_join(ovd_sub[[2]], ovd_sub[[1]][, c("PID", "tow")])
   
-  ovd_mave <- rbind(ovd_mave, mave1)
+  ovd_track <- rbind(ovd_track, ovd_sub[[2]])
+  ovd_se <- rbind(ovd_se, ovd_sub[[1]])
+  
+  # using sf and mave function manually on OVD data
+  for(j in townums){
+    print(j)
+    sf_use_s2(FALSE)
+    towlog <- read.table(paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/", i, "/", j, ".log"), skip=5)
+    
+    towlog$lon <- as.numeric(gsub(x=towlog$V2, pattern=",", replacement=""))
+    towlog$lat <- as.numeric(gsub(x=towlog$V3, pattern=",", replacement=""))
+    towlog$datetime <- paste0(towlog$V5, towlog$V4)
+    towlog$datetime <- gsub(towlog$datetime, pattern=",", replacement ="")
+    # OV is in UTC-3
+    towlog$datetime <- dmy_hms(towlog$datetime)
+    towlog$datetime <- towlog$datetime + hours(3)
+    starttime <- towlog$datetime[1]
+    endtime <- towlog$datetime[length(towlog$datetime)]
+    towlog$mave_lon <- mave(towlog$lon,w=c(1:10,9:1))
+    towlog$mave_lat <- mave(towlog$lat,w=c(1:10,9:1))
+    towlog <- towlog[seq(1, nrow(towlog), 2),]
+    mave1 <- towlog[, c("mave_lon", "mave_lat", "datetime")] %>%
+      st_as_sf(coords=c("mave_lon", "mave_lat"), crs=4326) %>%
+      st_transform(32620) %>%
+      group_by() %>%
+      summarize(do_union=FALSE) %>%
+      st_cast("LINESTRING") %>%
+      st_transform(4326)
+    
+    mave1$tow <- j
+    mave1$start <- starttime
+    mave1$end <- endtime
+    mave1$townum <- which(townums==j)
+    mave1$length <- st_length(st_transform(mave1, 32620))
+    mave1$dis <- 800/mave1$length
+    
+    ovd_mave <- rbind(ovd_mave, mave1)
+    print(dim(ovd_mave))
+  }
 }
+
+## looking at how old code works
+# ovd <- dist.coef(#stringr::str_pad(1:200, width = 3, side = "left", pad = "0"), 
+#                 tows=c(201:300), path="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/LE15BBNlog/",w=c(1:10,9:1),rule=8,smooth=T,plt=F)
 
 
 # Using sf and mave on OLEX data
 olex_mave <- NULL
 mave1 <- NULL
+# this actually contains all middle and sable tracks too
 tracks <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/GBBBNGERLE15.gz", ntows=212, type="track")
 tracks_df <- as.data.frame(st_coordinates(tracks))
 for(i in 1:nrow(tracks)){
@@ -85,24 +121,28 @@ olex_mave <- left_join(olex_mave, joiner)
 names(tracks)[1] <- "ID"
 tracks <- left_join(tracks, joiner)
 
-ovd_raw <- ovd[[2]] %>%
+ovd_raw <- ovd_track %>%
   st_as_sf(coords=c("X", "Y"), crs=4326) %>%
-  group_by(PID) %>%
+  group_by(PID, tow) %>%
   summarize(do_union=FALSE) %>%
   st_cast("LINESTRING")
 
-
-ovd_pts <- ovd[[2]] %>%
+ovd_pts <- ovd_track %>%
   st_as_sf(coords=c("X", "Y"), crs=4326)
+
+tracks$L1 <- 1:nrow(tracks)
 
 olex_pts <- as.data.frame(st_coordinates(tracks)) %>%
   group_by(L1) %>%
   mutate(POS = 1:n(),
-         ID=L1) %>%
+         L1=L1) %>%
+  left_join(tracks) %>%
+  ungroup() %>%
+  dplyr::select(-geometry) %>%
   left_join(olex_mave) %>%
   ungroup() %>%
   dplyr::select(-geometry) %>%
-  group_by(L1) %>%
+  group_by(tow) %>%
   st_as_sf(coords=c("X", "Y"), crs=4326) %>%
   filter(!is.na(tow))
 
@@ -118,30 +158,25 @@ tracks <- tracks[!is.na(tracks$tow),]
 plotly::ggplotly(
   ggplot() + 
     geom_sf(data=tracks[tracks$tow==201,], lwd=4, colour="yellow") + 
-    geom_sf(data=ovd_raw[ovd_raw$PID==201,], lwd=3, colour="black") + 
+    geom_sf(data=ovd_raw[ovd_raw$tow==201,], lwd=3, colour="black") + 
     geom_sf(data=ovd_mave[ovd_mave$tow==201,], lwd=2, colour="blue") +
     geom_sf(data=olex_mave[olex_mave$tow==201,], colour="red") +
     geom_sf_text(data=olex_pts[olex_pts$tow==201,], aes(label=POS)) +
-    geom_sf_text(data=ovd_pts[ovd_pts$PID==201,], aes(label=POS), colour="white")
-)
-
-plotly::ggplotly(
-  ggplot() + 
-     geom_sf(data=tracks[tracks$tow==201,], lwd=4, colour="yellow") + 
-     geom_sf(data=ovd_raw[ovd_raw$PID==201,], lwd=3, colour="black") + 
-    # geom_sf(data=ovd_mave[ovd_mave$tow==29,], lwd=2, colour="blue") +
-    # geom_sf(data=olex_mave[olex_mave$tow==29,], colour="red") +
-    geom_sf_text(data=olex_pts[olex_pts$tow==201,], aes(label=POS)) +
-    geom_sf_text(data=ovd_pts[ovd_pts$PID==201,], aes(label=POS), colour="blue")
+    geom_sf_text(data=ovd_pts[ovd_pts$tow==201,], aes(label=POS), colour="white")
 )
 
 lengthcomp <- as.data.frame(olex_mave) %>%
   dplyr::select(tow, length) %>%
   dplyr::mutate(length_olex=length) %>%
   dplyr::select(-length) %>%
-  left_join(dplyr::select(as.data.frame(ovd_mave), tow, length))
+  left_join(dplyr::select(as.data.frame(ovd_mave), tow, length)) %>%
+  mutate(length_ovd = length) %>%
+  select(-length)
 
-summary(lengthcomp$length_olex-lengthcomp$length)
+summary(lengthcomp$length_olex-lengthcomp$length_ovd)
+summary(lengthcomp$length_olex/lengthcomp$length_ovd)
+
+ggplot() + geom_point(data=lengthcomp, aes(as.numeric(length_olex), as.numeric(length_ovd)))
 
 tracks <- tracks %>%
   st_transform(32620) %>%
@@ -150,9 +185,10 @@ tracks <- tracks %>%
 
 ovd_raw <- ovd_raw %>%
   st_transform(32620) %>%
+  select(-PID) %>%
+  ungroup() %>%
   mutate(length=st_length(.)) %>%
-  st_transform(4326) %>%
-  mutate(tow=PID)
+  st_transform(4326)
 
 rawlengthcomp <- as.data.frame(tracks) %>%
   dplyr::select(tow, length) %>%
@@ -162,14 +198,69 @@ rawlengthcomp <- as.data.frame(tracks) %>%
 
 summary(rawlengthcomp$length_olex-rawlengthcomp$length)
 
+# time comparison
+
+ovd_times <- select(ovd_mave, tow, start, end) %>%
+  mutate(start_ov = start,
+         end_ov = end) %>%
+  select(-start, -end)
+
+olex_times <- select(tracks, tow, start, end) %>%
+  mutate(start_olex = start,
+         end_olex = end) %>%
+  select(-start, -end)
+
+st_geometry(ovd_times) <- NULL
+st_geometry(olex_times) <- NULL
+
+times <- full_join(ovd_times, olex_times)
+
+ggplot() + geom_point(data=times, aes(start_olex, start_ov)) + geom_abline(aes(slope=1, intercept=0))
+ggplot() + geom_point(data=times, aes(end_olex, end_ov)) + geom_abline(aes(slope=1, intercept=0))
+
+times$diff <- times$start_olex-times$start_ov
+
+times[as.numeric(times$tow) %in% 5:15,]$start_ov <- times[as.numeric(times$tow) %in% 5:15,]$start_ov + days(1)
+times[as.numeric(times$tow) %in% 5:15,]$end_ov <- times[as.numeric(times$tow) %in% 5:15,]$end_ov + days(1)
+
+ggplot() + geom_text(data=times[times$start_ov<"2022-05-23",], aes(start_olex, start_ov, label=tow)) +
+  geom_abline(aes(slope=1, intercept=0))
+
+ggplot() + geom_text(data=times[times$start_ov<"2022-05-23",], aes(tow, start_olex), label="olex") + 
+  geom_text(data=times[times$start_ov<"2022-05-23",], aes(tow, start_ov), label="ov")
+
+ggplot() + geom_text(data=times, aes(tow, y=start_ov-start_olex, label=tow))
+
+summary(as.numeric(times$start_ov) - as.numeric(times$start_olex))
+# Olex was started 5 seconds EARLIER (median)
+summary(as.numeric(times$end_ov) - as.numeric(times$end_olex))
+# Olex was ended 2 seconds EARLIER (median)
+
+times$duration_ov <- times$end_ov-times$start_ov
+times$duration_olex <- times$end_olex-times$start_olex
+
+ggplot() + geom_text(data=times, aes(as.numeric(duration_olex), as.numeric(duration_ov), label=tow)) +
+  geom_abline(aes(slope=1, intercept=0)) + theme_bw() + theme(panel.grid=element_blank()) +
+  xlab("Duration of Olex tow (minutes)") + 
+  ylab("Duration of OV tow (minutes)")
+
+ggplot() + geom_line(data=times, aes(x=tow, y=as.numeric(duration_olex), group=1), colour="red") + 
+  geom_line(data=times, aes(x=tow, y=as.numeric(duration_ov), group=1), colour="blue")
+
+ggplot() + geom_point(data=times, aes(x=tow, y=as.numeric(duration_olex)), colour="red") + 
+  geom_point(data=times, aes(x=tow, y=as.numeric(duration_ov), group=1), colour="blue") 
+
+summary(as.numeric(times$duration_olex))
+summary(as.numeric(times$duration_ov))
+
+
 pt_sum <- olex_pts %>%
   group_by(ID,tow) %>%
   summarize(npoints_olex = max(POS))
 
 pt_sum <- as.data.frame(ovd_pts) %>%
-  group_by(PID) %>%
+  group_by(tow) %>%
   summarize(npoints_ov = max(POS)) %>%
-  mutate(tow=PID) %>%
   left_join(as.data.frame(pt_sum))
 # Olex is polling more frequently, and ov often has 189 records? Huh? Why...
 
@@ -226,3 +317,6 @@ ggplot() + geom_point(data=dis_hist_means, aes(year, mean_dis_coef))
 
 # GBMon olex stations are on average 15m longer than OVD stations
 # Polling frequency is different because we log
+
+# check dis_coef_id
+ggplot() + geom_point(data=dis_hist, aes(ymd_hms(TOW_DATE), DIS_COEF_ID))
