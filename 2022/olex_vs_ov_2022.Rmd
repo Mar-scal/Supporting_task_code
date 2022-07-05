@@ -240,11 +240,35 @@ g <- ggplot() +
 ggplotly(g, tooltip="tow")
 
 ```
-Raw OV matches smoothed OV very closely.     
-Smoothed Olex is much shorter than raw Olex. Raw Olex is longer than raw OV.    
+Smoothed tows are shorter than raw tows. 
+
 
 ### Tow lengths (in distance and time)     
 Distance first    
+Using raw values      
+```{r, echo=F}
+tracks <- tracks %>%
+  st_transform(32620) %>%
+  mutate(length=st_length(.)) %>%
+  st_transform(4326) 
+
+rawlengthcomp <- as.data.frame(tracks) %>%
+  dplyr::select(tow, length) %>%
+  dplyr::mutate(length_olex=length) %>%
+  dplyr::select(-length) %>%
+  left_join(dplyr::select(as.data.frame(ovd_raw), tow, length), by="tow")
+
+print("Raw olex length - raw OV length")
+summary(rawlengthcomp$length_olex-rawlengthcomp$length)
+
+ggplot() + geom_text(data=rawlengthcomp, aes(as.numeric(length_olex), as.numeric(length), label=tow)) +
+  theme_bw() + theme(panel.grid=element_blank()) + xlab("olex length (m)") + ylab("OV length (m)") +
+  geom_abline(aes(slope=1, intercept=0)) + ggtitle("Raw (before smoothing)")
+```  
+
+Raw OV tows are longer in distance than raw Olex tows.     
+
+What happens when we smooth them though?     
 Use the table to figure out the best moving average window for Olex (aim for prop=1 and diff=0)    
 ```{r, echo=F}
 lengthcomp <- as.data.frame(olex_mave) %>%
@@ -286,31 +310,8 @@ summary(lengthcomp$length_olex[lengthcomp$window==14]/lengthcomp$length_ovd)
 
 Check outlier tows in plotly above.      
 Tows differ in length by up to 69m when Olex uses a smoothing parameter of 14.      
-Tows differ in length by up to 8% when Olex uses a smoothing parameter of 14.      
-
-Look at the distances using raw values too. Summary is raw Olex length - raw OV length.     
-```{r, echo=F}
-tracks <- tracks %>%
-  st_transform(32620) %>%
-  mutate(length=st_length(.)) %>%
-  st_transform(4326) 
-
-rawlengthcomp <- as.data.frame(tracks) %>%
-  dplyr::select(tow, length) %>%
-  dplyr::mutate(length_olex=length) %>%
-  dplyr::select(-length) %>%
-  left_join(dplyr::select(as.data.frame(ovd_raw), tow, length), by="tow")
-
-summary(rawlengthcomp$length_olex-rawlengthcomp$length)
-
-ggplot() + geom_point(data=rawlengthcomp, aes(as.numeric(length_olex), as.numeric(length))) +
-  theme_bw() + theme(panel.grid=element_blank()) + xlab("olex length (m)") + ylab("OV length (m)") +
-  geom_abline(aes(slope=1, intercept=0)) + ggtitle("Raw (before smoothing)")
-```  
-
-Raw Olex tows are longer in distance than raw OV tows.     
-The difference is mitigated by smoothing, but not completely.    
-Using a smoothing (moving average) window of 14 seems to mitigate bias.    
+Tows differ in length by up to 8% when Olex uses a smoothing parameter of 14.    
+Olex tows are generally shorter than OV tows.
 
 
 
