@@ -1,6 +1,6 @@
 # looking at log files over time. Were they accidentally cropped? Why are olex tows consistently longer? 
 
-folders <- c(
+folders1 <- c(
   "Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/",
   "Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/",
   "Y:/Offshore/Assessment/Data/Survey_data/2020/Database loading/",
@@ -23,7 +23,7 @@ folders <- c(
 )
 
 rows <- NULL
-for(f in rev(folders)){
+for(f in rev(folders1)){
   logs <- list.files(f, recursive = T)
   logs <- logs[sort(c(grep(x=logs, ".log"), grep(x=logs, ".LOG")))]
   if(any(grepl(x=logs, ".FRK"))) logs <- logs[-sort(c(grep(x=logs, ".FRK")))]
@@ -49,7 +49,7 @@ for(f in rev(folders)){
 }
 
 rows$folder <- as.factor(rows$folder)
-rows$folder <- factor(rows$folder, levels=c(folders))
+rows$folder <- factor(rows$folder, levels=c(folders1))
 
 rows_sum <- rows %>%
   group_by(folder) %>%

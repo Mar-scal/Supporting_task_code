@@ -6,6 +6,7 @@ bank.dat.db <- bank.dat
 surv.Live.db <- surv.Live
 surv.Rand.db <- surv.Rand
 survey.obj.db <- survey.obj
+clap.survey.obj.db <- clap.survey.obj
 merged.survey.obj.db <- merged.survey.obj
 surv.dat.db <- surv.dat
 mw.dat.all.db <- mw.dat.all
@@ -18,6 +19,7 @@ MW.dat.db <- MW.dat
 # survey summary run from 2021 (before historical data were loaded)
 load("C:/Users/keyserf/Documents/temp_data/Survey_all_results - 2021FINAL.Rdata")
 survey.obj.2021 <- survey.obj
+clap.survey.obj.2021 <- clap.survey.obj
 all.surv.dat.2021 <- all.surv.dat
 bank.dat.2021 <- bank.dat
 surv.Live.2021 <- surv.Live
@@ -34,6 +36,7 @@ MW.dat.2021 <- MW.dat
 # survey summary run from 2019
 load("Y:/Offshore/Assessment/Data/Survey_data/2019/Survey_summary_output/Survey_all_results.Rdata")
 survey.obj.2019 <- survey.obj
+clap.survey.obj.2019 <- clap.survey.obj
 all.surv.dat.2019 <- all.surv.dat
 bank.dat.2019 <- bank.dat
 surv.Live.2019 <- surv.Live
@@ -63,6 +66,17 @@ for(i in names(survey.obj.2021)[which(names(survey.obj.2021) %in% names(survey.o
                                values=c('2019'="black", '2021'='blue', 'database'='red'))+
             ggtitle(i) +
             theme_bw())
+    print(ggplot() + geom_line(data=clap.survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+            geom_line(data=clap.survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
+            geom_line(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
+            geom_point(data=clap.survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+            geom_point(data=clap.survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
+            geom_point(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
+            scale_color_manual(name='Survey summary run',
+                               breaks=c('2019', '2021', 'database'),
+                               values=c('2019'="black", '2021'='blue', 'database'='red'))+
+            ggtitle(i) +
+            theme_bw())
   }
   if(i=="Ger") {
     print(ggplot() + 
@@ -78,6 +92,17 @@ for(i in names(survey.obj.2021)[which(names(survey.obj.2021) %in% names(survey.o
             #geom_point(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
             geom_point(data=survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
             geom_point(data=survey.obj[[i]]$model.dat, aes(year, I, colour="database")) +
+            scale_color_manual(name='Survey summary run',
+                               breaks=c('2019', '2021', 'database'),
+                               values=c('2019'="black", '2021'='blue', 'database'='red'))+
+            ggtitle(i) +
+            theme_bw())
+    print(ggplot() + geom_line(data=clap.survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+            geom_line(data=clap.survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
+            geom_line(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
+            geom_point(data=clap.survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+            geom_point(data=clap.survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
+            geom_point(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
             scale_color_manual(name='Survey summary run',
                                breaks=c('2019', '2021', 'database'),
                                values=c('2019'="black", '2021'='blue', 'database'='red'))+
@@ -447,6 +472,8 @@ dim(MW.dat.2021[MW.dat.2021$bank=="Ger" & MW.dat.2021$cruise=="CK15",])
 mw.dat.all.db$Ger$ID[which(!mw.dat.all.db$Ger$ID %in% mw.dat.all.2021$Ger$ID)]
 mw.dat.all.2021$Ger$ID[which(!mw.dat.all.2021$Ger$ID %in% mw.dat.all.db$Ger$ID)]
 
+#MW.dat.2021$ID <- paste0(MW.dat.2021$cruise, ".", MW.dat.2021$tow)
+
 missing_21 <- NULL
 missing_db <- NULL
 cruise.mw.db <- NULL
@@ -468,14 +495,22 @@ for(i in c("BBn","Ger","Sab","BBs","GB")){
   test21 <- merge(
     subset(MW.dat.2021[MW.dat.2021$bank==i,], 
            month %in% 5:6 & year %in% 1985:2021,
-           c("cruise", "year",
+           c("cruise","year",
              "lon","lat","depth",
              "sh","wmw","tow", "month")),
     subset(mw.2021[[i]], (month %in% 5:6 & !year == 2015) | year==2015 | year==2000, 
-           select=c("cruise", "ID","year",
+           select=c("cruise","year",
                     "lon","lat","depth",
                     "sh","wmw","tow", "month")),
     all=T)
+  # merge(
+  #   subset(mw.tmp, 
+  #          month %in% 5:6 & year %in% years,
+  #          c("ID","year","lon","lat","depth","sh","wmw","tow")),
+  #   subset(mw[[bnk]], (month %in% 5:6 & !year %in% 2015) | year==2015 | year==2000, 
+  #          select=c("ID","year","lon","lat","depth","sh","wmw","tow")),
+  #   all=T)
+  
   test21$ID <- paste0(test21$cruise, ".", test21$tow)
   
   testdb$tow <- as.character(testdb$tow)
@@ -562,22 +597,76 @@ testdb[testdb$cruise=="P290",]$year
 testdb[testdb$cruise=="P306",]$year
 dim(testdb[testdb$cruise %in% c("P290", "P306"),])
 
+
+weights82 <- read.csv("Y:/Offshore/Assessment/Data/Hydration/Weights_82-92.csv")
+weights92 <- read.csv("Y:/Offshore/Assessment/Data/Hydration/Weights_92-08.csv")
+
 mw.rows <- NULL
+missing_from_csv <- NULL
 for(i in 1:nrow(cruises_added)){
   cruisei <- cruises_added$cruise[i]
   banki <- cruises_added$bank[i]
   yeari <- cruises_added$year[i]
   
-  rows <- data.frame(cruise=cruisei,
-                     bank=banki, 
-                     year=yeari,
-                     MW.dat.new.2021 = dim(MW.dat.new.2021[MW.dat.new.2021$bank==banki & MW.dat.new.2021$cruise==cruisei & !is.na(MW.dat.new.2021$bank),])[1],
-                     MW.dat.2021 = dim(MW.dat.2021[MW.dat.2021$cruise==cruisei & cruise.mw.21$bank==banki,])[1], 
-                     mw.2021 = dim(mw.2021[[bank]][mw.2021[[bank]]$cruise==cruisei,])[1],
-                     cruise.mw.21 = dim(cruise.mw.21[cruise.mw.21$cruise==cruisei & cruise.mw.21$bank==banki,])[1], 
-                     cf.data.2021 = dim(cf.data.2021[[banki]]$CF.data[cf.data.2021[[banki]]$CF.data$year==yeari,])[1]
-                     )
+  if(!banki=="GB") {
+    rows <- data.frame(cruise=cruisei,
+                       bank=banki, 
+                       year=yeari,
+                       MW.dat.new.2021 = dim(MW.dat.new.2021[MW.dat.new.2021$bank %in% banki & MW.dat.new.2021$cruise==cruisei & !is.na(MW.dat.new.2021$bank),])[1],
+                       MW.dat.2021 = dim(MW.dat.2021[MW.dat.2021$cruise==cruisei & MW.dat.2021$bank %in% banki,])[1], 
+                       mw.2021 = dim(mw.2021[[banki]][mw.2021[[banki]]$cruise==cruisei,])[1],
+                       cruise.mw.21 = dim(cruise.mw.21[cruise.mw.21$cruise==cruisei & cruise.mw.21$bank %in% banki,])[1], 
+                       cf.data.2021 = dim(cf.data.2021[[banki]]$CF.data[cf.data.2021[[banki]]$CF.data$year==yeari,])[1]
+                       
+                       
+    )
+    
+    tows <- missing_21[missing_21$cruise==cruisei & missing_21$bank==banki & missing_21$year == yeari,]$tow
+    if(banki=="BBs") tows <- as.numeric(tows)+500
+    missing <- data.frame(cruise=cruisei,
+                          bank=banki, 
+                          year=yeari,
+                          weights82 = dim(weights82[weights82$Cruise==cruisei & weights82$Stn %in% tows,])[1],
+                          weights92 = dim(weights92[weights92$Cruise==cruisei & weights92$Stn %in% tows,])[1],
+                          MW.dat.2021 = dim(MW.dat.2021[MW.dat.2021$cruise==cruisei & MW.dat.2021$tow %in% tows,])[1],
+                          mw.2021 = dim(mw.2021[[banki]][mw.2021[[banki]]$cruise==cruisei & mw.2021[[banki]]$tow %in% tows,])[1],
+                          cruise.mw.21 = dim(cruise.mw.21[cruise.mw.21$cruise==cruisei & cruise.mw.21$tow %in% tows,])[1],
+                          cf.data.2021 = dim(cf.data.2021[[banki]]$CF.data[cf.data.2021[[banki]]$CF.data$year==yeari & cf.data.2021[[banki]]$CF.data$tow %in% tows,])[1],
+                          cf.data.db = dim(cf.data.db[[banki]]$CF.data[cf.data.db[[banki]]$CF.data$year==yeari & cf.data.db[[banki]]$CF.data$tow %in% tows,])[1]
+    )
+  }
+  
+  
+  if(banki=="GB") {
+    rows <- data.frame(cruise=cruisei,
+                       bank=banki, 
+                       year=yeari,
+                       MW.dat.new.2021 = dim(MW.dat.new.2021[MW.dat.new.2021$bank %in% c("GBa", "GBb", "GB") & MW.dat.new.2021$cruise==cruisei & !is.na(MW.dat.new.2021$bank),])[1],
+                       MW.dat.2021 = dim(MW.dat.2021[MW.dat.2021$cruise==cruisei & MW.dat.2021$bank %in% c("GBa", "GBb", "GB"),])[1], 
+                       mw.2021 = dim(mw.2021[[banki]][mw.2021[[banki]]$cruise==cruisei,])[1],
+                       cruise.mw.21 = dim(cruise.mw.21[cruise.mw.21$cruise==cruisei & cruise.mw.21$bank %in% c("GBa", "GBb", "GB"),])[1], 
+                       cf.data.2021 = dim(cf.data.2021[[banki]]$CF.data[cf.data.2021[[banki]]$CF.data$year==yeari,])[1]
+    )
+    
+    tows <- missing_21[missing_21$cruise==cruisei & missing_21$bank==banki & missing_21$year == yeari,]$tow
+    missing <- data.frame(cruise=cruisei,
+                          bank=banki, 
+                          year=yeari,
+                          weights82 = dim(weights82[weights82$Cruise==cruisei & weights82$Stn %in% tows,])[1],
+                          weights92 = dim(weights92[weights92$Cruise==cruisei & weights92$Stn %in% tows,])[1],
+                          MW.dat.2021 = dim(MW.dat.2021[MW.dat.2021$cruise==cruisei & MW.dat.2021$tow %in% tows,])[1],
+                          mw.2021 = dim(mw.2021[[banki]][mw.2021[[banki]]$cruise==cruisei & mw.2021[[banki]]$tow %in% tows,])[1],
+                          cruise.mw.21 = dim(cruise.mw.21[cruise.mw.21$cruise==cruisei & cruise.mw.21$tow %in% tows,])[1],
+                          cf.data.2021 = dim(cf.data.2021[[banki]]$CF.data[cf.data.2021[[banki]]$CF.data$year==yeari & cf.data.2021[[banki]]$CF.data$tow %in% tows,])[1],
+                          cf.data.db = dim(cf.data.db[[banki]]$CF.data[cf.data.db[[banki]]$CF.data$year==yeari & cf.data.db[[banki]]$CF.data$tow %in% tows,])[1]
+    )
+  }
+  
   mw.rows <- rbind(mw.rows, rows)
+  missing_from_csv <- rbind(missing_from_csv, missing)
 }
 
-#import.hyd.data(yrs=1982:2000, export=F,dirt=direct)
+missing_from_csv$MW.dat.2021==(missing_from_csv$weights82+missing_from_csv$weights92)
+
+cf.data.2021$Ger$CF.data[cf.data.2021$Ger$CF.data$year==1985,]
+missing_21[missing_21$bank=="Ger" & missing_21$year==1985,]

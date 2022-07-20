@@ -30,8 +30,7 @@ require(lubridate)
 ```{r, echo=F, include=F, eval=F}
 # Starting with OV, grab the folder names in which the logs are saved
 
-folders <- c("LE15BBNlog", "LE15BBNextralog", "LE15GBMonlog", "LE15GERlog"#, "Middlelogs"
-  )
+folders <- c("GBalog", "GBaextraslog", "GBblog")
 
 # now we're going to loop through the OV log files applying both the getdis function, and mave calculations in order to do high-res comparisons
 ovd_raw <- NULL 
@@ -43,10 +42,9 @@ for(i in folders){
   print(i)
   
   ## OLD WAY
-  townums <- gsub(x=list.files(paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/", i, "/")), pattern=".log", replacement="")
-  #if(any(townums=="440")) townums <- townums[!townums %in% c("440", "450")]
+  townums <- gsub(x=list.files(paste0("Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14/", i, "/")), pattern=".log", replacement="")
   ovd_sub <- dist.coef(tows=townums, 
-                       path=paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/", i, "/"),
+                       path=paste0("Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14/", i, "/"),
                        w=c(1:10,9:1),rule=8,smooth=T,plt=F)
   ovd_sub[[2]]$folder <- i
   ovd_sub[[1]]$PID <- 1:nrow(ovd_sub[[1]])
@@ -59,7 +57,7 @@ for(i in folders){
   for(j in townums){
     print(j)
     sf_use_s2(FALSE)
-    towlog <- read.table(paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/", i, "/", j, ".log"), skip=5)
+    towlog <- read.table(paste0("Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14/", i, "/", j, ".log"), skip=5)
     
     towlog$lon <- as.numeric(gsub(x=towlog$V2, pattern=",", replacement=""))
     towlog$lat <- as.numeric(gsub(x=towlog$V3, pattern=",", replacement=""))
@@ -129,7 +127,7 @@ windows <- 5:20
 olex_mave <- NULL
 mave1 <- NULL
 # this actually contains all middle and sable tracks too
-tracks <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/GBBBNGERLE15.gz", ntows=212, type="sf")
+tracks <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14GBtesttracks.gz", type="track")
 tracks_df <- as.data.frame(st_coordinates(tracks))
 for(w in windows){
   for(i in 1:nrow(tracks)){
@@ -187,15 +185,18 @@ ovd_se <- nav_obj$ovd_se
 # match olex tows to OV tows to get tow ID. Tows aren't always done in the order of their numbering.
 sf_use_s2(FALSE)
 # find the tows in Olex that are nearest the OV tows.
-tow_match <- st_nearest_feature(ovd_mave, tracks)
-ovd_mave$ID <- tow_match
-ovd_raw$ID <- tow_match
+tow_match <- st_nearest_feature(tracks, ovd_mave)
+# names(tracks)[1] <- "ID"
+tracks$ID <- tow_match
+
 # joiner contains the tow number from OV matched to the tow ID from olex
-joiner <- ovd_mave[,c("tow", "ID")]
+joiner <- tracks[,c("tow", "ID")]
 st_geometry(joiner) <- NULL
 # joining the OV tow numbers to the Olex data (first the smoothed, then the unsmoothed "tracks")
-olex_mave <- left_join(olex_mave, joiner)
-names(tracks)[1] <- "ID"
+#olex_mave <- left_join(olex_mave, joiner)
+#
+ovd_mave$ID <- 1:nrow(ovd_mave)
+ovd_raw$ID <- 1:nrow(ovd_raw)
 tracks <- left_join(tracks, joiner)
 
 # getting the points from raw/unsmoothed data
@@ -223,9 +224,9 @@ olex_pts <- as.data.frame(st_coordinates(tracks)) %>%
   left_join(tracks) %>%
   ungroup() %>%
   dplyr::select(-geometry) %>%
-  left_join(olex_mave) %>%
-  ungroup() %>%
-  dplyr::select(-geometry) %>%
+  # left_join(olex_mave) %>%
+  # ungroup() %>%
+  # dplyr::select(-geometry) %>%
   group_by(tow) %>%
   st_as_sf(coords=c("X", "Y"), crs=4326) %>%
   filter(!is.na(tow))
@@ -242,13 +243,13 @@ Black is the raw OV track. Blue is the smoothed OV track.
 Raw Olex and OV _points_ were also plotted, but are not included here due to processing time.   
 ```{r, echo=F}
 # plot em up, change tow number or window number to explore.
-#towplot <- c(201)
+#towplot <- c("028", "030", "053", 110, 28, 30, 53)
 towplot <- unique(tracks$tow)
 g <- ggplot() + 
-  geom_sf(data=tracks[tracks$tow %in% towplot,], aes(group=tow), lwd=4, colour="yellow") + 
+  geom_sf(data=tracks[tracks$ID %in% towplot,], aes(group=tow), lwd=4, colour="yellow")+
   geom_sf(data=ovd_raw[ovd_raw$tow %in% towplot,], aes(group=tow), lwd=3, colour="black") + 
-  geom_sf(data=ovd_mave[ovd_mave$tow %in% towplot,], aes(group=tow), lwd=2, colour="blue") +
-  geom_sf(data=olex_mave[olex_mave$window==14 & olex_mave$tow %in% towplot,], aes(group=tow), colour="red") # +
+  geom_sf(data=ovd_mave[ovd_mave$tow %in% towplot,], aes(group=tow), lwd=2, colour="blue") 
+  #geom_sf(data=olex_mave[olex_mave$window==14 & olex_mave$tow %in% towplot,], aes(group=tow), colour="red") # +
   # geom_sf_text(data=olex_pts[olex_pts$tow %in% towplot,], aes(label=POS)) +
   # geom_sf_text(data=ovd_pts[ovd_pts$tow %in% towplot,], aes(label=POS), colour="pink") 
   #facet_wrap(~tow)
@@ -266,6 +267,11 @@ tracks <- tracks %>%
   st_transform(32620) %>%
   mutate(length=st_length(.)) %>%
   st_transform(4326) 
+
+ggplot() + geom_histogram(data=tracks, aes(as.numeric(length)))
+
+tracks[as.numeric(tracks$length)<500,]
+tracks[as.numeric(tracks$length)>10000,]
 
 # remove any super long or super short tows
 summary(tracks$length)
@@ -326,7 +332,7 @@ lengthcomp_sum$prop_med
 
 Applying the correction factor from above to Olex
 ```{r, echo=F}
-lengthcomp$length_olex_corr <- lengthcomp$length_olex/lengthcomp_sum$prop_med
+lengthcomp$length_olex_corr <- lengthcomp$length_olex/1.04
 
 # replot against ov smooth
 ggplot() + geom_text(data=lengthcomp, aes(as.numeric(length_olex_corr), as.numeric(length_ovd), label=tow)) +
@@ -631,39 +637,6 @@ ggplot() + geom_point(data=overall, aes(as.numeric(dis_coef_corr), as.numeric(di
 
 ```
 
-### Comparing Olex tow lengths to sf tow lengths
-```{r}
-sablengths <- readxl::read_xlsx("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/Sab/OS.scallop.tow.SabLE15_towlengths.xlsx")
-source("C:/Users/keyserf/Documents/Github/Assessment_fns/Survey_and_OSAC/convert.dd.dddd.r")
-sablengths$X <- convert.dd.dddd(x = sablengths$START_LON, format="dec.deg")
-sablengths$Y <- convert.dd.dddd(x = sablengths$START_LAT, format="dec.deg")
-
-sablengths <- st_as_sf(sablengths, coords=c("X", "Y"), crs=4326)
-
-ggplot() + geom_sf(data=sablengths)
-
-sablengths$tow <- st_nearest_feature(sablengths, tracks)
-
-tracks$length <- st_length(tracks)
-
-sablengths <- sablengths %>% 
-  as.data.frame() %>%
-  dplyr::select(TOW_NO, DIS_COEF, TOW_LENGTH_NM, WARP_LENGTH_FM, tow) %>%
-  left_join(as.data.frame(tracks)) %>%
-  dplyr::select(-geometry)
-
-sablengths$TOW_LENGTH_m <- sablengths$TOW_LENGTH_NM * 1852
-sablengths$length_nm <- sablengths$length / 1852
-
-ggplot() + geom_point(data=sablengths, aes(TOW_LENGTH_m, as.numeric(length))) + 
-  geom_abline(slope=1, intercept=0) +
-  xlab("Olex reported length (m, converted from NM)") +
-  ylab("Length calculated using sf") 
-  
-ggplot() + geom_point(data=sablengths, aes(TOW_LENGTH_NM, as.numeric(length_nm))) + 
-  geom_abline(slope=1, intercept=0)
-
-```
 Observations from Trish:      
  - GPS could be off by 1 hundredth. Olex has a separate feed (not a splitter).   
  - We had a freezing issue last year when we tried to use a splitter.    
