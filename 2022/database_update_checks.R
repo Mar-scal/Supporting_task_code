@@ -75,7 +75,7 @@ for(i in names(survey.obj.2021)[which(names(survey.obj.2021) %in% names(survey.o
             scale_color_manual(name='Survey summary run',
                                breaks=c('2019', '2021', 'database'),
                                values=c('2019'="black", '2021'='blue', 'database'='red'))+
-            ggtitle(i) +
+            ggtitle(paste0(i, "-clappers")) +
             theme_bw())
   }
   if(i=="Ger") {
@@ -106,7 +106,7 @@ for(i in names(survey.obj.2021)[which(names(survey.obj.2021) %in% names(survey.o
             scale_color_manual(name='Survey summary run',
                                breaks=c('2019', '2021', 'database'),
                                values=c('2019'="black", '2021'='blue', 'database'='red'))+
-            ggtitle(i) +
+            ggtitle(paste0(i, "-clappers")) +
             theme_bw())
   }
 }
@@ -133,7 +133,7 @@ ggplot() + geom_line(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2
   scale_color_manual(name='Survey summary run',
                      breaks=c('2019', '2021', 'database'),
                      values=c('2019'="black", '2021'='blue', 'database'='red'))+
-  ggtitle(i) +
+  ggtitle(paste0(i, "-clappers")) +
   theme_bw()
 
 
@@ -629,8 +629,11 @@ for(i in 1:nrow(cruises_added)){
                           weights82 = dim(weights82[weights82$Cruise==cruisei & weights82$Stn %in% tows,])[1],
                           weights92 = dim(weights92[weights92$Cruise==cruisei & weights92$Stn %in% tows,])[1],
                           MW.dat.2021 = dim(MW.dat.2021[MW.dat.2021$cruise==cruisei & MW.dat.2021$tow %in% tows,])[1],
+                          MW.dat.new.db = dim(MW.dat.new.db[MW.dat.new.db$cruise==cruisei & MW.dat.new.db$tow %in% tows,])[1],
                           mw.2021 = dim(mw.2021[[banki]][mw.2021[[banki]]$cruise==cruisei & mw.2021[[banki]]$tow %in% tows,])[1],
+                          mw.db = dim(mw.db[[banki]][mw.db[[banki]]$cruise==cruisei & mw.db[[banki]]$tow %in% tows,])[1],
                           cruise.mw.21 = dim(cruise.mw.21[cruise.mw.21$cruise==cruisei & cruise.mw.21$tow %in% tows,])[1],
+                          cruise.mw.db = dim(cruise.mw.db[cruise.mw.db$cruise==cruisei & cruise.mw.db$tow %in% tows,])[1],
                           cf.data.2021 = dim(cf.data.2021[[banki]]$CF.data[cf.data.2021[[banki]]$CF.data$year==yeari & cf.data.2021[[banki]]$CF.data$tow %in% tows,])[1],
                           cf.data.db = dim(cf.data.db[[banki]]$CF.data[cf.data.db[[banki]]$CF.data$year==yeari & cf.data.db[[banki]]$CF.data$tow %in% tows,])[1]
     )
@@ -655,8 +658,11 @@ for(i in 1:nrow(cruises_added)){
                           weights82 = dim(weights82[weights82$Cruise==cruisei & weights82$Stn %in% tows,])[1],
                           weights92 = dim(weights92[weights92$Cruise==cruisei & weights92$Stn %in% tows,])[1],
                           MW.dat.2021 = dim(MW.dat.2021[MW.dat.2021$cruise==cruisei & MW.dat.2021$tow %in% tows,])[1],
+                          MW.dat.new.db = dim(MW.dat.new.db[MW.dat.new.db$cruise==cruisei & MW.dat.new.db$tow %in% tows,])[1],
                           mw.2021 = dim(mw.2021[[banki]][mw.2021[[banki]]$cruise==cruisei & mw.2021[[banki]]$tow %in% tows,])[1],
+                          mw.db = dim(mw.db[[banki]][mw.db[[banki]]$cruise==cruisei & mw.db[[banki]]$tow %in% tows,])[1],
                           cruise.mw.21 = dim(cruise.mw.21[cruise.mw.21$cruise==cruisei & cruise.mw.21$tow %in% tows,])[1],
+                          cruise.mw.db = dim(cruise.mw.db[cruise.mw.db$cruise==cruisei & cruise.mw.db$tow %in% tows,])[1],
                           cf.data.2021 = dim(cf.data.2021[[banki]]$CF.data[cf.data.2021[[banki]]$CF.data$year==yeari & cf.data.2021[[banki]]$CF.data$tow %in% tows,])[1],
                           cf.data.db = dim(cf.data.db[[banki]]$CF.data[cf.data.db[[banki]]$CF.data$year==yeari & cf.data.db[[banki]]$CF.data$tow %in% tows,])[1]
     )
@@ -668,5 +674,4 @@ for(i in 1:nrow(cruises_added)){
 
 missing_from_csv$MW.dat.2021==(missing_from_csv$weights82+missing_from_csv$weights92)
 
-cf.data.2021$Ger$CF.data[cf.data.2021$Ger$CF.data$year==1985,]
-missing_21[missing_21$bank=="Ger" & missing_21$year==1985,]
+missing_from_csv[missing_from_csv$MW.dat.2021>0,]
