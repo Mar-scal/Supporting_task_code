@@ -40,11 +40,11 @@ HCRs <- data.frame(area = c("BBn", "GBa",
 
 areas <- c(#"1A", "1B", "3", "4", "6", 
    #"GBa", 
-  "BBn"#, 
-  # "29A", 
-  # "29B", 
-  # "29C", 
-  # "29D"
+  #"BBn"#, 
+   "29A", 
+   "29B", 
+   "29C", 
+   "29D"
 )
 ```
 
@@ -69,10 +69,12 @@ for(area in areas){
                                                           sample=100,
                                                           path="Repo working directory (fast)", 
                                                           save=F,
-                                                          pred.eval=T))
+                                                          pred.eval=F, 
+                                                          plot_using="out")
+             )
   
   
-  save(out, file = paste0("./", folder, "/", area, "/twoyearprojections.RData"))
+  save(out, file = paste0("./", folder, "/", area, "/twoyearprojections_plotonly.RData"))
 }
 time2 <- Sys.time()
 time2-time1
@@ -132,11 +134,17 @@ for (area in areas){
   
   # zoom.pred.eval
   if(grepl(x=area, "29")){
+    Dmsy <- data.frame(area=c("29A", "29B", "29C", "29D"),
+                       Dmsy=c(NA, 3.75, 4.68, 4.32))
+
     # This simply shows the biomass projections for the most recent year. 
-    png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=300, units="in")
-    print(plot_grid(out[[1]]$realized$zoom.pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ylab("Commercial biomass density\n(metric tonnes/square kilometre)") + ggtitle(NULL, subtitle=NULL),  
-                    out[[2]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ggtitle(NULL, subtitle=NULL),  
-                    out[[3]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ggtitle(NULL, subtitle=NULL), 
+    png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6/1.5, width=22/1.5, res=300, units="in")
+    print(plot_grid(out[[1]]$realized$zoom.pred.eval + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ylab("Commercial biomass density\n(metric tonnes/square kilometre)") + ggtitle(NULL, subtitle=NULL) +
+                      geom_hline(data=Dmsy[Dmsy$area==area,], aes(yintercept=Dmsy), lwd=1, lty="dotted"),  
+                    out[[2]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ggtitle(NULL, subtitle=NULL) +
+                      geom_hline(data=Dmsy[Dmsy$area==area,], aes(yintercept=Dmsy), lwd=1, lty="dotted"),  
+                    out[[3]]$realized$zoom.pred.eval+ ylab(NULL) + theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + ggtitle(NULL, subtitle=NULL) +
+                      geom_hline(data=Dmsy[Dmsy$area==area,], aes(yintercept=Dmsy), lwd=1, lty="dotted"), 
                     ncol=3, align="v"))
     dev.off()
   }

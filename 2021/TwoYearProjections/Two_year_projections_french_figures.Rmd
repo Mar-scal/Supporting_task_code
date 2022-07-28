@@ -9,9 +9,9 @@ editor_options:
 require(purrr)
 require(tidyverse)
 
-areas <- c("1A", "1B", "3", "4", "6", 
-           "GBa", "BBn", 
-           "29A",
+areas <- c(#"1A", "1B", "3", "4", "6", 
+           #"GBa", "BBn", 
+          # "29A",
            "29B",
            "29C",
            "29D"
@@ -76,7 +76,7 @@ for (area in areas){
       png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
       print(plot_grid(out[[1]]$realized$zoom.pred.eval + 
                         theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + 
-                        ylab(en2fr("Commercial biomass density (metric tonnes/square kilometre",french,custom=rosetta_terms,case = 'sentence')) + 
+                        ylab(paste0(en2fr("Commercial biomass density",french,custom=rosetta_terms,case = 'sentence'), "\n(", en2fr("metric tonnes/square kilometre",french,custom=rosetta_terms,case = 'lower'), ")")) + 
                         scale_fill_brewer(type = "qual", palette = "Paired", name=NULL, direction=-1, labels=c(en2fr("actual",french,custom=rosetta_terms,case = 'lower'), en2fr("year 1",french,custom=rosetta_terms,case = 'lower'), en2fr("year 2",french,custom=rosetta_terms,case = 'lower')))+
                         ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),  
                       out[[2]]$realized$zoom.pred.eval+ 

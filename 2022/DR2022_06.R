@@ -8,6 +8,7 @@ load("C:/Users/keyserf/Documents/Data/Model/2022/GBa/Results/Final_model_results
 
 TAC <- TACi[["GBa"]]+proj.catch[["GBa"]]
 
+# FR
 pB<-DD.out[["GBa"]]$sims.list$B.p[,which(DD.out[["GBa"]]$data$C.p==TAC)]
 # Subset the data to be limited to 80% of the data.  DK Note I'm still not convinced this is really the way we should do these.
 pB.box<-pB[pB>quantile(pB,0.2/2)&pB<quantile(pB,1-0.2/2)]
@@ -47,3 +48,25 @@ names(biomass.plt) <- c("Year", "Biomass (tonnes)",
 biomass.plt[is.na(biomass.plt)] <- "NA"
 
 write.csv(row.names=F, x = biomass.plt, file = "Y:/Offshore/Data requests/2022/DR2022_06/Scallop_GBa_Figure4_FR_2022.csv")
+
+
+# recruits
+# Subset the data to be limited to 80% of the data.  DK Note I'm still not convinced this is really the way we should do these.
+recruit.plt <- data.frame(Year = DD.out[["GBa"]]$data$year, 
+                          R = round(DD.out[["GBa"]]$median$R,0),
+                          lowerCI95 = round(apply(DD.out[["GBa"]]$sims.list$R, 2, quantile, 1-0.05/2),0),
+                          upperCI95 = round(apply(DD.out[["GBa"]]$sims.list$R, 2, quantile, 0.05/2),0))
+
+recruit.plt[is.na(recruit.plt)] <- "NA"
+
+png("Y:/Offshore/Data requests/2022/DR2022_06/recruit_check.png", height=4, width=6, res=400, units="in")
+ggplot() + geom_line(data=recruit.plt, aes(Year, R)) +
+  geom_line(data=recruit.plt, aes(Year, upperCI95), lty="dashed") + 
+  geom_line(data=recruit.plt, aes(Year, lowerCI95), lty="dashed") 
+dev.off()
+
+names(recruit.plt) <- c("Year", "Recruit Biomass (tonnes)",
+                        "Upper Credible Interval (95%)",
+                        "Lower Credible Interval (95%)")
+
+write.csv(row.names=F, x = recruit.plt, file = "Y:/Offshore/Data requests/2022/DR2022_06/Scallop_GBa_Figure4_Rec_2022.csv")

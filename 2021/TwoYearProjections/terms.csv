@@ -90,6 +90,7 @@ Commercial,Commercial
 "Commercial biomass (meats, tonnes)","Biomasse commerciale (chair, tonnes)"
 Commercial biomass (metric tonnes),Biomasse commerciale (tonnes)
 Commercial biomass density (metric tonnes/square kilometre), Densité de la biomasse commerciale\n(tonnes/kilomètre carré)
+Commercial biomass density, Densité de la biomasse commerciale
 Commercial bottom trawl CPUE,PUE chalut de fond commercial
 Commercial catch,Prises commerciales
 Commercial CPUE (kg/hour),CPUE commerciales (kg/heure)
@@ -271,6 +272,7 @@ Mean coefficient of variance,Coefficient moyen de variance
 Mean estimate (kg/km^2),Estimation moyenne (kg/km^2)
 Mean positive sets,Moyenne des ensembles positifs
 Median,Médiane
+metric tonnes/square kilometre, tonnes/kilomètre carré
 Midwater trawl,Chalutage pélagique
 Millions,Millions
 Min,Min
