@@ -16,6 +16,43 @@ MW.dat.new.db <- MW.dat.new
 mw.db <- mw
 MW.dat.db <- MW.dat
 
+# survey summary run pulling all survey data from SCALOFF, subsetting commercial by cruise
+#load("C:/Users/keyserf/Documents/temp_data/testing_results_historical_db_comm.Rdata")
+load("Y:/Offshore/Assessment/Data/Survey_data/2022/Survey_summary_output/testing_results_historical_db_comm_2.Rdata")
+
+all.surv.dat.db2 <- all.surv.dat
+bank.dat.db2 <- bank.dat
+surv.Live.db2 <- surv.Live
+surv.Rand.db2 <- surv.Rand
+survey.obj.db2 <- survey.obj
+clap.survey.obj.db2 <- clap.survey.obj
+merged.survey.obj.db2 <- merged.survey.obj
+surv.dat.db2 <- surv.dat
+mw.dat.all.db2 <- mw.dat.all
+cf.data.db2 <- cf.data
+CF.current.db2 <- CF.current
+MW.dat.new.db2 <- MW.dat.new
+mw.db2 <- mw
+MW.dat.db2 <- MW.dat
+
+
+load("Y:/Offshore/Assessment/Data/Survey_data/2022/Survey_summary_output/testing_results_historical_db_gbb2.Rdata")
+
+all.surv.dat.db2 <- all.surv.dat
+bank.dat.db2 <- bank.dat
+surv.Live.db2 <- surv.Live
+surv.Rand.db2 <- surv.Rand
+survey.obj.db2 <- survey.obj
+clap.survey.obj.db2 <- clap.survey.obj
+merged.survey.obj.db2 <- merged.survey.obj
+surv.dat.db2 <- surv.dat
+mw.dat.all.db2 <- mw.dat.all
+cf.data.db2 <- cf.data
+CF.current.db2 <- CF.current
+MW.dat.new.db2 <- MW.dat.new
+mw.db2 <- mw
+MW.dat.db2 <- MW.dat
+
 # survey summary run from 2021 (before historical data were loaded)
 load("C:/Users/keyserf/Documents/temp_data/Survey_all_results - 2021FINAL.Rdata")
 survey.obj.2021 <- survey.obj
@@ -53,71 +90,71 @@ survey.obj.2021$BBn$model.dat$I
 survey.obj.db$BBn$model.dat$I
 
 pdf(file = "Y:/Offshore/Assessment/2022/Presentations/Survey_summary/Database_pull_compare.pdf", onefile=T)
-for(i in names(survey.obj.2021)[which(names(survey.obj.2021) %in% names(survey.obj.2019))]){
+for(i in names(survey.obj.db2)[which(names(survey.obj.db2) %in% names(survey.obj.2021))]){
   if(!i=="Ger") {
-    print(ggplot() + geom_line(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+    print(ggplot() + #geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
             geom_line(data=survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
-            geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
-            geom_point(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+            geom_line(data=survey.obj.db2[[i]]$model.dat, aes(year, I, colour="db2")) +
+            #geom_point(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
             geom_point(data=survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
-            geom_point(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
+            geom_point(data=survey.obj.db2[[i]]$model.dat, aes(year, I, colour="db2")) +
             scale_color_manual(name='Survey summary run',
-                               breaks=c('2019', '2021', 'database'),
-                               values=c('2019'="black", '2021'='blue', 'database'='red'))+
+                               breaks=c('db', '2021', 'db2'),
+                               values=c('db'="black", '2021'='blue', 'db2'='red'))+
             ggtitle(i) +
             theme_bw())
-    print(ggplot() + geom_line(data=clap.survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+    print(ggplot() + #geom_line(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
             geom_line(data=clap.survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
-            geom_line(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
-            geom_point(data=clap.survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+            geom_line(data=clap.survey.obj.db2[[i]]$model.dat, aes(year, I, colour="db2")) +
+            #geom_point(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
             geom_point(data=clap.survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
-            geom_point(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
+            geom_point(data=clap.survey.obj.db2[[i]]$model.dat, aes(year, I, colour="db2")) +
             scale_color_manual(name='Survey summary run',
-                               breaks=c('2019', '2021', 'database'),
-                               values=c('2019'="black", '2021'='blue', 'database'='red'))+
+                               breaks=c('db', '2021', 'db2'),
+                               values=c('db'="black", '2021'='blue', 'db2'='red'))+
             ggtitle(paste0(i, "-clappers")) +
             theme_bw())
   }
   if(i=="Ger") {
     print(ggplot() + 
-            #geom_line(data=merged.survey.obj.2019, aes(year, I, colour="2019")) +
+            #geom_line(data=merged.survey.obj.db, aes(year, I, colour="db")) +
             geom_line(data=merged.survey.obj.2021, aes(year, I, colour="2021")) +
-            geom_line(data=merged.survey.obj, aes(year, I, colour="database")) +
-            #geom_point(data=merged.survey.obj.2019, aes(year, I, colour="2019")) +
+            geom_line(data=merged.survey.obj.db2, aes(year, I, colour="db2")) +
+            #geom_point(data=merged.survey.obj.db, aes(year, I, colour="db")) +
             geom_point(data=merged.survey.obj.2021, aes(year, I, colour="2021")) +
-            geom_point(data=merged.survey.obj, aes(year, I, colour="database")) +
-            #geom_line(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+            geom_point(data=merged.survey.obj.db2, aes(year, I, colour="db2")) +
+            #geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
             geom_line(data=survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
-            geom_line(data=survey.obj[[i]]$model.dat, aes(year, I, colour="database")) +
-            #geom_point(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+            geom_line(data=survey.obj.db2[[i]]$model.dat, aes(year, I, colour="db2")) +
+            #geom_point(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
             geom_point(data=survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
-            geom_point(data=survey.obj[[i]]$model.dat, aes(year, I, colour="database")) +
+            geom_point(data=survey.obj.db2[[i]]$model.dat, aes(year, I, colour="db2")) +
             scale_color_manual(name='Survey summary run',
-                               breaks=c('2019', '2021', 'database'),
-                               values=c('2019'="black", '2021'='blue', 'database'='red'))+
+                               breaks=c('db', '2021', 'db2'),
+                               values=c('db'="black", '2021'='blue', 'db2'='red'))+
             ggtitle(i) +
             theme_bw())
-    print(ggplot() + geom_line(data=clap.survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+    print(ggplot() + #geom_line(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
             geom_line(data=clap.survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
-            geom_line(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
-            geom_point(data=clap.survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2019")) +
+            geom_line(data=clap.survey.obj.db2[[i]]$model.dat, aes(year, I, colour="db2")) +
+            #geom_point(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
             geom_point(data=clap.survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
-            geom_point(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="database")) +
+            geom_point(data=clap.survey.obj.db2[[i]]$model.dat, aes(year, I, colour="db2")) +
             scale_color_manual(name='Survey summary run',
-                               breaks=c('2019', '2021', 'database'),
-                               values=c('2019'="black", '2021'='blue', 'database'='red'))+
+                               breaks=c('db', '2021', 'db2'),
+                               values=c('db'="black", '2021'='blue', 'db2'='red'))+
             ggtitle(paste0(i, "-clappers")) +
             theme_bw())
   }
 }
 print(ggplot() + 
         geom_line(data=survey.obj.2021$BBs$model.dat, aes(year, I, colour="2021")) +
-        geom_line(data=survey.obj.db$BBs$model.dat, aes(year, I, colour="database")) +
+        #geom_line(data=survey.obj.db2$BBs$model.dat, aes(year, I, colour="db2")) +
         geom_point(data=survey.obj.2021$BBs$model.dat, aes(year, I, colour="2021")) +
-        geom_point(data=survey.obj.db$BBs$model.dat, aes(year, I, colour="database")) +
+        #geom_point(data=survey.obj.db2$BBs$model.dat, aes(year, I, colour="db2")) +
         scale_color_manual(name='Survey summary run',
-                           breaks=c('2021', 'database'),
-                           values=c('2021'='blue', 'database'='red'))+
+                           breaks=c('2021', 'db2'),
+                           values=c('2021'='blue', 'db2'='red'))+
         ggtitle("BBs") +
         theme_bw())
 dev.off()
@@ -138,7 +175,7 @@ ggplot() + geom_line(data=survey.obj.2019[[i]]$model.dat, aes(year, I, colour="2
 
 
 require(tidyverse)
-tows <- all.surv.dat.db %>% 
+tows <- all.surv.dat.db2 %>% 
   dplyr::filter(!(bank=="GBa" & random==3)) %>%
   dplyr::filter(!(bank=="GBb" & random==3)) %>%
   #dplyr::filter(!(cruise %in% c("CK03", "P454") & bank%in%c("BBn", "BBs"))) %>%
@@ -162,8 +199,8 @@ tows[!(tows$old==tows$new) & !is.na(tows$old),]
 
 samples.db <- NULL
 samples <- NULL
-for(i in names(mw.dat.all.db)[which(names(mw.dat.all.db) %in% names(mw.dat.all))]){
-  samples.db.1 <- mw.dat.all.db[[i]]
+for(i in names(mw.dat.all.db2)[which(names(mw.dat.all.db2) %in% names(mw.dat.all))]){
+  samples.db.1 <- mw.dat.all.db2[[i]]
   samples.1 <- mw.dat.all[[i]]
   
   samples.db.1$bank <- i
@@ -194,15 +231,15 @@ View(samples.2[!(samples.2$old==samples.2$new),])
 samples.2[samples.2$year==2006 & samples.2$bank=="GBa",]
 mw.dat.all$GBa[mw.dat.all$GBa$year==2006,]
 sort(unique(mw.dat.all$GBa[mw.dat.all$GBa$year==2006,]$tow))
-sort(unique(mw.dat.all.db$GBa[mw.dat.all.db$GBa$year==2006,]$tow))
+sort(unique(mw.dat.all.db2$GBa[mw.dat.all.db2$GBa$year==2006,]$tow))
 
-MW.dat.new.db$GBa[MW.dat.new.db$GBa$tow %in% c(320, 327) & MW.dat.new.db$GBa$year==2006,]
-all.surv.dat.db[all.surv.dat.db$bank=="GBa" & all.surv.dat.db$tow %in% c(320, 327) & all.surv.dat.db$year=="2006",]
-all.surv.dat.db[all.surv.dat.db$bank=="GBa" & all.surv.dat.db$year=="2006",]
+mw.dat.all.db2$GBa[mw.dat.all.db2$GBa$tow %in% c(320, 327) & mw.dat.all.db2$GBa$year==2006,]
+all.surv.dat.db2[all.surv.dat.db2$bank=="GBa" & all.surv.dat.db2$tow %in% c(320, 327) & all.surv.dat.db2$year=="2006",]
+all.surv.dat.db2[all.surv.dat.db2$bank=="GBa" & all.surv.dat.db2$year=="2006",]
 
 all.surv.dat[all.surv.dat$bank=="GBa" & all.surv.dat$tow %in% c(320, 327) & all.surv.dat$year=="2006",]
 table(all.surv.dat$random)
-table(all.surv.dat.db$random)
+table(all.surv.dat.db2$random)
 
 table(mw.dat.all.db$Sab[mw.dat.all.db$Sab$year==2000,]$tow)
 table(mw.dat.all$Sab[mw.dat.all$Sab$year==2000,]$tow)
@@ -478,31 +515,112 @@ missing_21 <- NULL
 missing_db <- NULL
 cruise.mw.db <- NULL
 cruise.mw.21 <-  NULL
-for(i in c("BBn","Ger","Sab","BBs","GB")){
+combined <- NULL
+for(i in c("BBn","Ger","Sab","Mid", "GB", "GBa", "GBb")){
   print(i)
-  testdb <- merge(
-    subset(MW.dat.db[MW.dat.db$bank==i,], 
-           month %in% 5:6 & year %in% 1985:2021,
-           c("cruise", "ID","year",
-             "lon","lat","depth",
-             "sh","wmw","tow", "month")),
-    subset(mw.db[[i]], (month %in% 5:6 & !year == 2015) | year==2015 | year==2000, 
-           select=c("cruise", "ID","year",
-                    "lon","lat","depth",
-                    "sh","wmw","tow", "month")),
-    all=T)
+  if(i %in% c("BBn","Ger","Sab")){
+    testdb <- merge(
+      subset(MW.dat.db2[MW.dat.db2$bank==i,], 
+             month %in% 5:6 & year %in% 1985:2021,
+             c("cruise","year",
+               "lon","lat","depth",
+               "sh","wmw", "month", "tow")),
+      subset(mw.db2[[i]], (month %in% 5:6 & !year %in% c(2015, 2020)) | year==2015 | year==2000, 
+             select=c("cruise","year",
+                      "lon","lat","depth",
+                      "sh","wmw", "month", "tow")),
+      all=T)
+    
+    test21 <- merge(
+      subset(MW.dat.2021[MW.dat.2021$bank==i,], 
+             month %in% 5:6 & year %in% 1985:2021,
+             c("cruise","year",
+               "lon","lat","depth",
+               "sh","wmw", "month", "tow")),
+      subset(mw.2021[[i]], (month %in% 5:6 & !year %in% c(2015, 2020)) | year==2015 | year==2000, 
+             select=c("cruise","year",
+                      "lon","lat","depth",
+                      "sh","wmw", "month", "tow")),
+      all=T)
+  }
   
-  test21 <- merge(
-    subset(MW.dat.2021[MW.dat.2021$bank==i,], 
-           month %in% 5:6 & year %in% 1985:2021,
-           c("cruise","year",
-             "lon","lat","depth",
-             "sh","wmw","tow", "month")),
-    subset(mw.2021[[i]], (month %in% 5:6 & !year == 2015) | year==2015 | year==2000, 
-           select=c("cruise","year",
-                    "lon","lat","depth",
-                    "sh","wmw","tow", "month")),
-    all=T)
+  if(i %in% c("GB")){
+    testdb <- merge(
+      subset(MW.dat.db2[MW.dat.db2$bank %in% c("GB", "GBa", "GBb"),], 
+             month %in% 5:6 & year %in% 1985:2021,
+             c("cruise","year",
+               "lon","lat","depth",
+               "sh","wmw", "month", "tow")),
+      subset(mw.db2[[i]], (month %in% 5:6 & !year %in% c(2015, 2020)) | year==2015 | year==2000, 
+             select=c("cruise","year",
+                      "lon","lat","depth",
+                      "sh","wmw", "month", "tow")),
+      all=T)
+    
+    test21 <- merge(
+      subset(MW.dat.2021[MW.dat.2021$bank %in% c("GB", "GBa", "GBb"),], 
+             month %in% 5:6 & year %in% 1985:2021,
+             c("cruise","year",
+               "lon","lat","depth",
+               "sh","wmw", "month", "tow")),
+      subset(mw.2021[[i]], (month %in% 5:6 & !year %in% c(2015, 2020)) | year==2015 | year==2000, 
+             select=c("cruise","year",
+                      "lon","lat","depth",
+                      "sh","wmw", "month", "tow")),
+      all=T)
+  }
+  
+  if(i %in% c("GBa", "GBb")){
+    testdb <- merge(
+      subset(MW.dat.db2[MW.dat.db2$bank==i,], 
+             month >7 & year %in% years,
+             c("cruise","year",
+               "lon","lat","depth",
+               "sh","wmw", "month", "tow")),
+      subset(mw.db2[[i]], year %in% years & month > 7,
+             select=c("cruise","year",
+                      "lon","lat","depth",
+                      "sh","wmw", "month", "tow")),
+      all=T)
+   
+    test21 <- merge(
+      subset(MW.dat.2021[MW.dat.2021$bank==i,], 
+             month > 7 & year %in% years,
+             c("cruise","year",
+               "lon","lat","depth",
+               "sh","wmw", "month", "tow")),
+      subset(mw.2021[[i]], year %in% years & month > 7,
+             select=c("cruise","year",
+                      "lon","lat","depth",
+                      "sh","wmw", "month", "tow")),
+      all=T)
+  }
+  
+  if(i == "Mid"){
+    testdb <- merge(
+      subset(MW.dat.db2[MW.dat.db2$bank==i,], 
+             month %in% 5:6 & year >1983,
+             c("cruise","year",
+               "lon","lat","depth",
+               "sh","wmw", "month", "tow")),
+      subset(mw.db2[[i]], month %in% 5:6, 
+             select=c("cruise","year",
+                      "lon","lat","depth",
+                      "sh","wmw", "month", "tow")),
+      all=T)
+    
+    test21 <- merge(
+      subset(MW.dat.2021[MW.dat.2021$bank==i,], 
+             month %in% 5:6 & year >1983,
+             c("cruise","year",
+               "lon","lat","depth",
+               "sh","wmw", "month", "tow")),
+      subset(mw.2021[[i]], month %in% 5:6, 
+             select=c("cruise","year",
+                      "lon","lat","depth",
+                      "sh","wmw", "month", "tow")),
+      all=T)
+  }
   # merge(
   #   subset(mw.tmp, 
   #          month %in% 5:6 & year %in% years,
@@ -511,15 +629,41 @@ for(i in c("BBn","Ger","Sab","BBs","GB")){
   #          select=c("ID","year","lon","lat","depth","sh","wmw","tow")),
   #   all=T)
   
-  test21$ID <- paste0(test21$cruise, ".", test21$tow)
+  # test21$ID <- paste0(test21$cruise, ".", test21$tow)
+  # 
+  # testdb$tow <- as.character(testdb$tow)
   
-  testdb$tow <- as.character(testdb$tow)
-  
-  testdb <- unique(dplyr::select(testdb, cruise, ID, year, tow, month))
-  test21 <- unique(dplyr::select(test21, cruise, ID, year, tow, month))
+  testdb <- testdb %>%
+    group_by(cruise, year, lon, lat, month, depth, tow) %>%
+    summarize(numsamples=n(),
+              meansh = mean(sh), 
+              meanwmw = mean(wmw))
+
+  test21 <- test21 %>%
+    group_by(cruise, year, lon, lat, month, depth, tow) %>%
+    summarize(numsamples=n(),
+              meansh = mean(sh), 
+              meanwmw = mean(wmw))
   
   testdb$bank <- i
   test21$bank <- i
+  
+  testdb$db <- "db"
+  test21$old <- "21"
+  
+  testdb$lon <- round(testdb$lon,0)
+  testdb$lat <- round(testdb$lat,0)
+  test21$lon <- round(test21$lon,0)
+  test21$lat <- round(test21$lat,0)
+  test21$depth <- round(test21$depth,-1)
+  testdb$depth <- round(testdb$depth,-1)
+  testdb$meansh <- round(testdb$meansh,0)
+  testdb$meanwmw <- round(testdb$meanwmw,0)
+  test21$meansh <- round(test21$meansh,0)
+  test21$meanwmw <- round(test21$meanwmw,0)
+  
+  combine <- full_join(testdb, test21, by=c("cruise", "year", "lon", "lat", "month", "depth", "numsamples", "meansh", "meanwmw", "bank"))
+  combined <- rbind(combined, combine)
   
   not_in_21 <- anti_join(testdb, test21)
   not_in_db <- anti_join(test21, testdb)
@@ -531,6 +675,118 @@ for(i in c("BBn","Ger","Sab","BBs","GB")){
   cruise.mw.21 <- rbind(cruise.mw.21, test21)
   
 }
+dim(missing_21)
+dim(missing_db)
+
+dim(combined)
+combined$check <- "fine"
+combined$check[is.na(combined$db) | is.na(combined$old)] <- "check"
+
+dim(combined[combined$check == "check",])
+combined[combined$bank=="GB" & combined$check == "check" & combined$cruise=="CK04",]
+
+write.csv(combined, file="C:/Users/keyserf/Documents/temp_data/combined.csv")
+
+
+source("C:/Users/keyserf/Documents/Github/Assessment_fns/Maps/github_spatial_import.R")
+offshore <- github_spatial_import("offshore_survey_strata", "offshore_survey_strata.zip")
+
+ggplot() + geom_sf(data=offshore[offshore$label=="GBa",])+
+  geom_point(data=NULL, aes(x=-66.618, y=	41.98166667))
+
+table(MW.dat.2021[MW.dat.2021$cruise=="P387",]$bank)
+table(mw.db2$GB[mw.db2$GB$cruise=="P387",]$year)
+table(mw.db2$GBa[mw.db2$GBa$cruise=="P387",]$month)
+table(mw.db2$GBb[mw.db2$GBb$cruise=="P387",]$month)
+sort(unique(as.numeric(mw.db2$GBa[mw.db2$GBa$cruise=="P387",]$tow)))
+sort(unique(as.numeric(MW.dat.2021[MW.dat.2021$cruise=="P387" & MW.dat.2021$bank=="GBa",]$tow)))
+sort(unique(as.numeric(MW.dat.2021[MW.dat.2021$cruise=="P387" & MW.dat.2021$bank=="GB",]$tow)))
+sort(unique(as.numeric(mw.db2$GBb[mw.db2$GBb$cruise=="P387",]$tow)))
+sort(unique(as.numeric(MW.dat.2021[MW.dat.2021$cruise=="P387" & MW.dat.2021$bank=="GBb",]$tow)))
+
+table(MW.dat.2021[MW.dat.2021$cruise=="CK32",]$bank)
+table(MW.dat.new.2021[MW.dat.new.2021$cruise=="CK32",]$bank)
+table(mw.db2$GBa[mw.db2$GBa$cruise=="CK32",]$year)
+sort(unique(as.numeric(mw.db2$GBa[mw.db2$GBa$cruise=="CK32",]$tow)))
+sort(unique(as.numeric(MW.dat.new.2021[MW.dat.new.2021$cruise=="CK32" & MW.dat.new.2021$bank=="GBa",]$tow)))
+
+
+ggplot() + geom_sf(data=offshore[offshore$label%in% c("GBa", "GBb"),]) + 
+  #geom_point(data=MW.dat.2021[MW.dat.2021$cruise=="P322",], aes(lon, lat)) +
+  geom_text(data=MW.dat.2021[MW.dat.2021$cruise=="P387" & MW.dat.2021$bank %in% c("GBa", "GBb", "GB"),], aes(lon, lat, label=tow)) +
+  geom_text(data=mw.db2$GBa[mw.db2$GBa$cruise=="P387",], aes(lon, lat, label=tow), colour="red") +
+  geom_text(data=mw.db2$GBb[mw.db2$GBb$cruise=="P387",], aes(lon, lat, label=tow), colour="red") 
+
+
+oldest.41 <- bank.dat.2019$GBb[bank.dat.2019$GBb$year==1998 & bank.dat.2019$GBb$state=="live",]# & bank.dat.2019$GBb$tow==41,]
+old.41 <- bank.dat.2021$GBb[bank.dat.2021$GBb$year==1998 & bank.dat.2021$GBb$state=="live",] #& bank.dat.2021$GBb$tow==41,]
+new.41 <- bank.dat.db2$GBb[bank.dat.db2$GBb$year==1998 & bank.dat.db2$GBb$state=="live",] #& bank.dat.db2$GBb$tow==41,]
+
+# GBb 1992 strata change for tow 41
+oldest.41 <- bank.dat.2019$GBb[bank.dat.2019$GBb$year==1992 & bank.dat.2019$GBb$state=="live" & bank.dat.2019$GBb$tow==41,]
+old.41 <- bank.dat.2021$GBb[bank.dat.2021$GBb$year==1992 & bank.dat.2021$GBb$state=="live" & bank.dat.2021$GBb$tow==41,]
+new.41 <- bank.dat.db2$GBb[bank.dat.db2$GBb$year==1992 & bank.dat.db2$GBb$state=="live" & bank.dat.db2$GBb$tow==41,]
+
+ggplot() + geom_sf(data=offshore[offshore$label %in% c("GBb"),], aes(fill=Strt_ID)) + geom_point(data=old.41, aes(lon, lat), colour="red") + 
+  geom_point(data=new.41, aes(lon, lat), colour="blue") + xlim(-66.16, -66.15) + ylim(42, 42.005)
+# both appear to be in 101
+new.41$Strata_ID
+old.41$Strata_ID
+
+which(!bank.dat.2021$GBb$Strata_ID == bank.dat.db2$GBb$Strata_ID)
+bank.dat.2021$GBb[265:266,]
+bank.dat.db2$GBb[265:266,]
+
+require(PBSmapping)
+survey.detail.polys <- read.csv(paste0(direct,"Data/Maps/approved/Survey/survey_detail_polygons.csv"), 
+                                header=T,stringsAsFactors = F)
+detail.poly.surv <- subset(survey.detail.polys,label=="GBb")
+attr(detail.poly.surv,"projection")<-"LL"
+source(paste(direct_fns,"Survey_and_OSAC/assign_strata.r",sep=""),local=T) 
+new.41 <- dplyr::select(new.41, -Strata_ID)
+old.41 <- dplyr::select(old.41, -Strata_ID)
+oldest.41 <- dplyr::select(oldest.41, -Strata_ID)
+
+new.gbb <- assign.strata(new.41,detail.poly.surv)
+old.gbb <- assign.strata(old.41,detail.poly.surv)
+oldest.gbb <- assign.strata(oldest.41,detail.poly.surv)
+
+# detail.poly.surv hasn't changed, why was this put in the wrong stratum? Check 2019 run of survey summary
+
+gbb_sf <- detail.poly.surv %>% sf::st_as_sf(coords=c(x="X", y="Y"), crs=4326) %>%
+  group_by(label, Strata_ID, startyear, PID, SID) %>%
+  summarize(do_union=F) %>% 
+  st_cast("POLYGON") %>%
+  ungroup() %>%
+  group_by(label, Strata_ID, startyear, PID) %>%
+  summarize(do_union=F) %>%
+  st_cast("MULTIPOLYGON")
+
+ggplot() + geom_sf(data=gbb_sf, aes(fill=as.factor(Strata_ID))) + 
+  geom_point(data=old.41, aes(slon, slat), colour="red") + 
+  geom_point(data=new.41, aes(slon, slat), colour="blue") +
+  geom_point(data=oldest.41, aes(slon, slat), colour="green") + xlim(-66.16, -66.15) + ylim(41.995, 42.01) +
+  geom_point(data=old.41, aes(elon, elat), colour="red") + 
+  geom_point(data=new.41, aes(elon, elat), colour="blue") +
+  geom_point(data=oldest.41, aes(elon, elat), colour="green")
+
+# assign.strata uses START position to place stn in stratum. The start position for this tow has changed slightly since being entered in the db, 
+# such that the tow is now being placed in stratum 101. Looking at the midpoint coords and endpoints, it should have been in 101 all along. 
+# Need to check if 1992 had the appropriate tow allocation by strata
+
+table(bank.dat.db2$GBb[bank.dat.db2$GBb$year==1992 & bank.dat.db2$GBb$state=="live",]$Strata_ID)
+table(bank.dat.2021$GBb[bank.dat.2021$GBb$year==1992 & bank.dat.2021$GBb$state=="live",]$Strata_ID)
+table(bank.dat.2019$GBb[bank.dat.2019$GBb$year==1992 & bank.dat.2019$GBb$state=="live",]$Strata_ID)
+
+table(bank.dat.db2$GBb[bank.dat.db2$GBb$year==1991 & bank.dat.db2$GBb$state=="live",]$Strata_ID)
+table(bank.dat.2021$GBb[bank.dat.2021$GBb$year==1991 & bank.dat.2021$GBb$state=="live",]$Strata_ID)
+table(bank.dat.2019$GBb[bank.dat.2019$GBb$year==1991 & bank.dat.2019$GBb$state=="live",]$Strata_ID)
+
+table(bank.dat.db2$GBb[bank.dat.db2$GBb$year==1993 & bank.dat.db2$GBb$state=="live",]$Strata_ID)
+table(bank.dat.2021$GBb[bank.dat.2021$GBb$year==1993 & bank.dat.2021$GBb$state=="live",]$Strata_ID)
+table(bank.dat.2019$GBb[bank.dat.2019$GBb$year==1993 & bank.dat.2019$GBb$state=="live",]$Strata_ID)
+# don't you need the same number of tows in each stratum each year? 
+
 
 for (i in 1983:2000){
   table1 <- table(cruise.mw.db[cruise.mw.db$year==i,]$bank,cruise.mw.db[cruise.mw.db$year==i,]$month)
@@ -579,13 +835,13 @@ cruises_added <- missing_21 %>%
   distinct() %>%
   arrange(year, bank, cruise)
 
-write.csv(file="C:/Users/keyserf/Documents/temp_data/cruises_added.csv", cruises_added)
+write.csv(file="C:/Users/keyserf/Documents/temp_data/cruises_added2.csv", cruises_added)
 
 cruises_removed <- missing_db %>%
   dplyr::select(bank, cruise, year) %>%
   distinct()
 
-write.csv(file="C:/Users/keyserf/Documents/temp_data/cruises_removed.csv", cruises_removed)
+write.csv(file="C:/Users/keyserf/Documents/temp_data/cruises_removed2.csv", cruises_removed)
 
 
 dim(unique(testdb))
@@ -629,13 +885,13 @@ for(i in 1:nrow(cruises_added)){
                           weights82 = dim(weights82[weights82$Cruise==cruisei & weights82$Stn %in% tows,])[1],
                           weights92 = dim(weights92[weights92$Cruise==cruisei & weights92$Stn %in% tows,])[1],
                           MW.dat.2021 = dim(MW.dat.2021[MW.dat.2021$cruise==cruisei & MW.dat.2021$tow %in% tows,])[1],
-                          MW.dat.new.db = dim(MW.dat.new.db[MW.dat.new.db$cruise==cruisei & MW.dat.new.db$tow %in% tows,])[1],
+                          MW.dat.new.db = dim(MW.dat.new.db2[MW.dat.new.db2$cruise==cruisei & MW.dat.new.db2$tow %in% tows,])[1],
                           mw.2021 = dim(mw.2021[[banki]][mw.2021[[banki]]$cruise==cruisei & mw.2021[[banki]]$tow %in% tows,])[1],
-                          mw.db = dim(mw.db[[banki]][mw.db[[banki]]$cruise==cruisei & mw.db[[banki]]$tow %in% tows,])[1],
+                          mw.db = dim(mw.db2[[banki]][mw.db2[[banki]]$cruise==cruisei & mw.db2[[banki]]$tow %in% tows,])[1],
                           cruise.mw.21 = dim(cruise.mw.21[cruise.mw.21$cruise==cruisei & cruise.mw.21$tow %in% tows,])[1],
                           cruise.mw.db = dim(cruise.mw.db[cruise.mw.db$cruise==cruisei & cruise.mw.db$tow %in% tows,])[1],
                           cf.data.2021 = dim(cf.data.2021[[banki]]$CF.data[cf.data.2021[[banki]]$CF.data$year==yeari & cf.data.2021[[banki]]$CF.data$tow %in% tows,])[1],
-                          cf.data.db = dim(cf.data.db[[banki]]$CF.data[cf.data.db[[banki]]$CF.data$year==yeari & cf.data.db[[banki]]$CF.data$tow %in% tows,])[1]
+                          cf.data.db = dim(cf.data.db2[[banki]]$CF.data[cf.data.db2[[banki]]$CF.data$year==yeari & cf.data.db2[[banki]]$CF.data$tow %in% tows,])[1]
     )
   }
   
@@ -658,13 +914,13 @@ for(i in 1:nrow(cruises_added)){
                           weights82 = dim(weights82[weights82$Cruise==cruisei & weights82$Stn %in% tows,])[1],
                           weights92 = dim(weights92[weights92$Cruise==cruisei & weights92$Stn %in% tows,])[1],
                           MW.dat.2021 = dim(MW.dat.2021[MW.dat.2021$cruise==cruisei & MW.dat.2021$tow %in% tows,])[1],
-                          MW.dat.new.db = dim(MW.dat.new.db[MW.dat.new.db$cruise==cruisei & MW.dat.new.db$tow %in% tows,])[1],
+                          MW.dat.new.db = dim(MW.dat.new.db2[MW.dat.new.db2$cruise==cruisei & MW.dat.new.db2$tow %in% tows,])[1],
                           mw.2021 = dim(mw.2021[[banki]][mw.2021[[banki]]$cruise==cruisei & mw.2021[[banki]]$tow %in% tows,])[1],
-                          mw.db = dim(mw.db[[banki]][mw.db[[banki]]$cruise==cruisei & mw.db[[banki]]$tow %in% tows,])[1],
+                          mw.db = dim(mw.db2[[banki]][mw.db2[[banki]]$cruise==cruisei & mw.db2[[banki]]$tow %in% tows,])[1],
                           cruise.mw.21 = dim(cruise.mw.21[cruise.mw.21$cruise==cruisei & cruise.mw.21$tow %in% tows,])[1],
                           cruise.mw.db = dim(cruise.mw.db[cruise.mw.db$cruise==cruisei & cruise.mw.db$tow %in% tows,])[1],
                           cf.data.2021 = dim(cf.data.2021[[banki]]$CF.data[cf.data.2021[[banki]]$CF.data$year==yeari & cf.data.2021[[banki]]$CF.data$tow %in% tows,])[1],
-                          cf.data.db = dim(cf.data.db[[banki]]$CF.data[cf.data.db[[banki]]$CF.data$year==yeari & cf.data.db[[banki]]$CF.data$tow %in% tows,])[1]
+                          cf.data.db = dim(cf.data.db2[[banki]]$CF.data[cf.data.db2[[banki]]$CF.data$year==yeari & cf.data.db2[[banki]]$CF.data$tow %in% tows,])[1]
     )
   }
   

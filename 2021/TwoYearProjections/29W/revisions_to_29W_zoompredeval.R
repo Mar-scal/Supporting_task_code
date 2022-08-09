@@ -6,7 +6,7 @@ require(cowplot)
 require(ggplot2)
 
 folder <- "29W"
-area <- "29B"
+area <- "29D"
 
 
 load(paste0("./", folder, "/", area, "/twoyearprojections.RData"))
@@ -83,4 +83,97 @@ out[[1]]$realized$zoom.pred.eval <- zoom.pred.eval[[1]]
 out[[2]]$realized$zoom.pred.eval <- zoom.pred.eval[[2]]
 out[[3]]$realized$zoom.pred.eval <- zoom.pred.eval[[3]]
 # hop over to two_year_projections_french_figures to make the french version
+
+
+out[[1]]$realized$evaluation1$theme <- ggplot2::theme_bw() + theme(panel.grid=element_blank(), legend.position = c(0.5, 0.95), legend.direction="horizontal")
+out[[2]]$realized$evaluation1$theme <- ggplot2::theme_bw() + theme(panel.grid=element_blank(), legend.position = c(0.5, 0.95), legend.direction="horizontal")
+out[[3]]$realized$evaluation1$theme <- ggplot2::theme_bw() + theme(panel.grid=element_blank(), legend.position = c(0.5, 0.95), legend.direction="horizontal")
+
+out[[1]]$realized$evaluation2$theme <- ggplot2::theme_bw() + theme(panel.grid=element_blank(), legend.position = c(0.5, 0.95), legend.direction="horizontal")
+out[[2]]$realized$evaluation2$theme <- ggplot2::theme_bw() + theme(panel.grid=element_blank(), legend.position = c(0.5, 0.95), legend.direction="horizontal")
+out[[3]]$realized$evaluation2$theme <- ggplot2::theme_bw() + theme(panel.grid=element_blank(), legend.position = c(0.5, 0.95), legend.direction="horizontal")
+
+out[[1]]$impact_HCR1$evaluation3$theme <- ggplot2::theme_bw() + theme(panel.grid=element_blank(), legend.position = c(0.5, 0.95), legend.direction="horizontal")
+out[[2]]$impact_HCR1$evaluation3$theme <- ggplot2::theme_bw() + theme(panel.grid=element_blank(), legend.position = c(0.5, 0.95), legend.direction="horizontal")
+out[[3]]$impact_HCR1$evaluation3$theme <- ggplot2::theme_bw() + theme(panel.grid=element_blank(), legend.position = c(0.5, 0.95), legend.direction="horizontal")
+
+out[[1]]$impact_HCR1$evaluation4$theme <- ggplot2::theme_bw() + theme(panel.grid=element_blank(), legend.position = c(0.5, 0.95), legend.direction="horizontal")
+out[[2]]$impact_HCR1$evaluation4$theme <- ggplot2::theme_bw() + theme(panel.grid=element_blank(), legend.position = c(0.5, 0.95), legend.direction="horizontal")
+out[[3]]$impact_HCR1$evaluation4$theme <- ggplot2::theme_bw() + theme(panel.grid=element_blank(), legend.position = c(0.5, 0.95), legend.direction="horizontal")
+
+# A - 125, 1; 15, 1
+# B - 100, 3.5; 30, 1
+# C - 150, 2.5; 20, 1.5
+# D - 125, 1; 30, 1
+
+french <- T
+
+require(rosettafish)
+rosetta_terms <- as.data.frame(readr::read_csv("terms.csv"))
+if(french==F) {
+  catch_diff <- "Difference in catch potential (mt)"
+  prop_catch_diff <- "Proportional difference in catch potential"
+}
+if(french==T) {
+  catch_diff <- "Différence des prises\npotentielles (tonnes)"
+  prop_catch_diff <- "Différence proportionelle\ndes prises potentielles"
+}
+
+if(french==T) folder <- paste0("french/", folder)
+
+png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12/1.5, width=22/1.5, res=300, units="in")
+print(plot_grid(out[[1]]$realized$evaluation1 + 
+                  ggtitle(NULL, subtitle=NULL) +
+                  ylab(en2fr("Difference in biomass (mt)",french,custom=rosetta_terms,case = 'sentence'))+ 
+                  xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')) + ylim(-125, 125), 
+                out[[2]]$realized$evaluation1+ 
+                  ylab(NULL) + 
+                  ggtitle(NULL, subtitle=NULL)+ 
+                  xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')) + ylim(-125, 125), 
+                out[[3]]$realized$evaluation1+ 
+                  ylab(NULL) + 
+                  ggtitle(NULL, subtitle=NULL)+ 
+                  xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')) + ylim(-125, 125),
+                out[[1]]$realized$evaluation2 + 
+                  ggtitle(NULL, subtitle=NULL) + 
+                  xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence'))+ 
+                  ylab(en2fr("Proportional difference in biomass",french,custom=rosetta_terms,case = 'sentence'))+ ylim(-1,1), 
+                out[[2]]$realized$evaluation2+ 
+                  ylab(NULL) +
+                  ggtitle(NULL, subtitle=NULL)+ 
+                  xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence'))+ ylim(-1,1), 
+                out[[3]]$realized$evaluation2+ 
+                  ylab(NULL) + 
+                  ggtitle(NULL, subtitle=NULL)+ 
+                  xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence'))+ ylim(-1,1), 
+                ncol=3, align="v"))
+dev.off()
+
+png(paste0("./figures/", folder, "/", area, "/decision_impact_HCR1.png"), height=12/1.5, width=22/1.5, res=300, units="in")
+print(plot_grid(out[[1]]$impact_HCR1$evaluation3 + 
+                  ggtitle(NULL, subtitle=NULL) +
+                  ylab(catch_diff) +
+                  xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')) + ylim(-30, 30), 
+                out[[2]]$impact_HCR1$evaluation3 + 
+                  ylab(NULL) + 
+                  ggtitle(NULL, subtitle=NULL)+ 
+                  xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')) + ylim(-30, 30), 
+                out[[3]]$impact_HCR1$evaluation3 + 
+                  ylab(NULL) + 
+                  ggtitle(NULL, subtitle=NULL)+ 
+                  xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')) + ylim(-30, 30),
+                out[[1]]$impact_HCR1$evaluation4 + 
+                  ggtitle(NULL, subtitle=NULL)+ 
+                  xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')) +
+                  ylab(prop_catch_diff) + ylim(-1, 1), 
+                out[[2]]$impact_HCR1$evaluation4 + 
+                  ylab(NULL) + 
+                  ggtitle(NULL, subtitle=NULL)+ 
+                  xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')) + ylim(-1, 1), 
+                out[[3]]$impact_HCR1$evaluation4 + 
+                  ylab(NULL) + 
+                  ggtitle(NULL, subtitle=NULL)+ 
+                  xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')) + ylim(-1, 1),
+                ncol=3, align="v"))
+dev.off()
 

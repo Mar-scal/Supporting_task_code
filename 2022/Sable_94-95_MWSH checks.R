@@ -74,3 +74,4 @@ db[db$year %in% 1994:1995,] %>%
 # But there are some oddballs where it seems like the tow numbering has changed because the mean SH/mean WMW values are found in another tow:
 # e.g. CK04.37, P454.27, and more.  
 
+numbering in comm is wrong! need to come up with a different way to exclude tows from csvs that are in db
