@@ -787,6 +787,126 @@ table(bank.dat.2021$GBb[bank.dat.2021$GBb$year==1993 & bank.dat.2021$GBb$state==
 table(bank.dat.2019$GBb[bank.dat.2019$GBb$year==1993 & bank.dat.2019$GBb$state=="live",]$Strata_ID)
 # don't you need the same number of tows in each stratum each year? 
 
+# Sab 1984
+table(MW.dat.db2[MW.dat.db2$bank=="Sab" & MW.dat.db2$year==1984,]$tow)
+table(MW.dat.new.db2[MW.dat.new.db2$bank=="Sab" & MW.dat.new.db2$year==1984,]$tow)
+table(MW.dat.2021[MW.dat.2021$bank=="Sab" & MW.dat.2021$year==1984,]$tow)
+table(MW.dat.new.2021[MW.dat.new.2021$bank=="Sab" & MW.dat.new.2021$year==1984,]$tow)
+
+table(MW.dat.new.db2[MW.dat.new.db2$bank=="Sab" & MW.dat.new.db2$year==1984,]$month)
+table(MW.dat.2021[MW.dat.2021$bank=="Sab" & MW.dat.2021$year==1984 & !MW.dat.2021$tow==0,]$month)
+
+ggplot() + geom_sf(data=offshore[offshore$label=="Sab",]) + theme_minimal() +
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$bank=="Sab" & MW.dat.new.db2$year==1984,], aes(lon, lat, label=tow), colour="red") + 
+  geom_text(data=MW.dat.2021[MW.dat.2021$bank=="Sab" & MW.dat.2021$year==1984 & !MW.dat.2021$tow==0,], aes(lon, lat, label=tow), colour="blue") +
+  ggtitle("Sable 1984 (blue is pre-update, red is current database")
+
+# GBa 1984
+table(MW.dat.db2[MW.dat.db2$bank=="GBa" & MW.dat.db2$year==1984,]$tow)
+table(MW.dat.new.db2[MW.dat.new.db2$bank=="GBa" & MW.dat.new.db2$year==1984,]$tow)
+table(MW.dat.2021[MW.dat.2021$bank=="GBa" & MW.dat.2021$year==1984,]$tow)
+table(MW.dat.new.2021[MW.dat.new.2021$bank=="GBa" & MW.dat.new.2021$year==1984,]$tow)
+
+table(MW.dat.new.db2[MW.dat.new.db2$bank=="GBa" & MW.dat.new.db2$year==1984,]$month)
+table(MW.dat.2021[MW.dat.2021$bank=="GBa" & MW.dat.2021$year==1984 & !MW.dat.2021$tow==0,]$month)
+
+table(MW.dat.new.db2[MW.dat.new.db2$bank=="GBa" & MW.dat.new.db2$year==1984,]$month)
+table(MW.dat.2021[MW.dat.2021$bank=="GBa" & MW.dat.2021$year==1984 & !MW.dat.2021$tow==0,]$month)
+
+MW.dat.new.db2[MW.dat.new.db2$bank=="GBa" & MW.dat.new.db2$year==1984 & MW.dat.new.db2$tow %in% c(13,8,3),]
+unique(MW.dat.2021[MW.dat.2021$bank=="GBa" & MW.dat.2021$year==1984 & MW.dat.2021$tow %in% c(13,8,3),c("tow", "month", "day")])
+MW.dat.new.db2[MW.dat.new.db2$bank=="GBa" & MW.dat.new.db2$year==1984 & MW.dat.new.db2$tow %in% 173,]
+MW.dat.2021[MW.dat.2021$bank=="GBa" & MW.dat.2021$year==1984 & MW.dat.2021$tow %in% 173,]
+
+ggplot() + geom_sf(data=offshore[offshore$label=="GBa",]) + theme_minimal() +
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$bank=="GBa" & MW.dat.new.db2$year==1984,], aes(lon, lat, label=tow), colour="red") + 
+  geom_text(data=MW.dat.2021[MW.dat.2021$bank=="GBa" & MW.dat.2021$year==1984 & !MW.dat.2021$tow==0,], aes(lon, lat, label=tow), colour="blue") +
+  ggtitle("GBa 1984 (blue is pre-update, red is current database") + facet_wrap(~month)
+
+# GBa 1985
+table(MW.dat.db2[MW.dat.db2$bank=="GBb" & MW.dat.db2$year==1985,]$tow)
+table(MW.dat.new.db2[MW.dat.new.db2$bank=="GBb" & MW.dat.new.db2$year==1985,]$tow)
+table(MW.dat.2021[MW.dat.2021$bank=="GBb" & MW.dat.2021$year==1985,]$tow)
+table(MW.dat.new.2021[MW.dat.new.2021$bank=="GBb" & MW.dat.new.2021$year==1985,]$tow)
+
+table(MW.dat.new.db2[MW.dat.new.db2$bank=="GBb" & MW.dat.new.db2$year==1985,]$month)
+table(MW.dat.2021[MW.dat.2021$bank=="GBb" & MW.dat.2021$year==1985 & !MW.dat.2021$tow==0,]$month)
+
+ggplot() + geom_sf(data=offshore[offshore$label=="GBb",]) + theme_minimal() +
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$bank=="GBb" & MW.dat.new.db2$year==1985,], aes(lon, lat, label=tow), colour="red") + 
+  geom_text(data=MW.dat.2021[MW.dat.2021$bank=="GBb" & MW.dat.2021$year==1985 & !MW.dat.2021$tow==0,], aes(lon, lat, label=tow), colour="blue") +
+  ggtitle("GBb 1985 (blue is pre-update, red is current database)") #+ facet_wrap(~month)
+
+ggplot() + geom_sf(data=offshore[offshore$label %in% c("GBa", "GBb"),]) + theme_minimal() +
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb") & MW.dat.new.db2$year==1985,], aes(lon, lat, label=tow), colour="red") + 
+  geom_text(data=MW.dat.2021[MW.dat.2021$bank %in% c("GBa", "GBb") & MW.dat.2021$year==1985 & !MW.dat.2021$tow==0,], aes(lon, lat, label=tow), colour="blue") +
+  ggtitle("GBa/GBb 1985 (blue is pre-update, red is current database)") + facet_wrap(~cruise)
+
+# GBa 1987
+table(MW.dat.db2[MW.dat.db2$bank=="GBa" & MW.dat.db2$year==1987,]$tow)
+table(MW.dat.new.db2[MW.dat.new.db2$bank=="GBa" & MW.dat.new.db2$year==1987,]$tow)
+table(MW.dat.2021[MW.dat.2021$bank=="GBa" & MW.dat.2021$year==1987,]$tow)
+table(MW.dat.new.2021[MW.dat.new.2021$bank=="GBa" & MW.dat.new.2021$year==1987,]$tow)
+table(MW.dat.2021[MW.dat.2021$cruise=="P387",]$tow)
+table(MW.dat.new.db2[MW.dat.new.db2$cruise=="P387",]$tow)
+
+table(MW.dat.new.db2[MW.dat.new.db2$bank=="GBa" & MW.dat.new.db2$year==1987,]$month)
+table(MW.dat.2021[MW.dat.2021$bank=="GBa" & MW.dat.2021$year==1987 & !MW.dat.2021$tow==0,]$month)
+
+ggplot() + geom_sf(data=offshore[offshore$label %in% c("GBa", "GBb"),]) + theme_minimal() +
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb") & MW.dat.new.db2$year==1987,], aes(lon, lat, label=tow), colour="red") + 
+  geom_text(data=MW.dat.2021[MW.dat.2021$bank %in% c("GBa", "GBb") & MW.dat.2021$year==1987 & !MW.dat.2021$tow==0,], aes(lon, lat, label=tow), colour="blue") +
+  ggtitle("GBa/GBb 1987 (blue is pre-update, red is current database)") + facet_wrap(~cruise)
+
+# GBa/GBb 1988
+table(MW.dat.db2[MW.dat.db2$bank %in% c("GBa", "GBb") & MW.dat.db2$year==1988,]$tow)
+table(MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb") & MW.dat.new.db2$year==1988,]$tow)
+table(MW.dat.2021[MW.dat.2021$bank %in% c("GBa", "GBb") & MW.dat.2021$year==1988,]$tow)
+table(MW.dat.new.2021[MW.dat.new.2021$bank %in% c("GBa", "GBb") & MW.dat.new.2021$year==1988,]$tow)
+table(MW.dat.2021[MW.dat.2021$cruise=="P371",]$tow)
+table(MW.dat.new.db2[MW.dat.new.db2$cruise=="P371",]$tow)
+
+table(MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb")  & MW.dat.new.db2$year==1988,]$month)
+table(MW.dat.2021[MW.dat.2021$bank %in% c("GBa", "GBb")  & MW.dat.2021$year==1988 & !MW.dat.2021$tow==0,]$month)
+
+ggplot() + geom_sf(data=offshore[offshore$label %in% c("GBa", "GBb"),]) + theme_minimal() +
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb") & MW.dat.new.db2$year==1988,], aes(lon, lat, label=tow), colour="red") + 
+  geom_text(data=MW.dat.2021[MW.dat.2021$bank %in% c("GBa", "GBb") & MW.dat.2021$year==1988 & !MW.dat.2021$tow==0,], aes(lon, lat, label=tow), colour="blue") +
+  ggtitle("GBa/GBb 1988 (blue is pre-update, red is current database)") + facet_wrap(~month)
+
+# GBa/GBb 1989
+table(MW.dat.db2[MW.dat.db2$bank %in% c("GBa", "GBb", "GB") & MW.dat.db2$year==1989,]$tow)
+table(MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb", "GB") & MW.dat.new.db2$year==1989,]$tow)
+table(MW.dat.2021[MW.dat.2021$bank %in% c("GBa", "GBb", "GB") & MW.dat.2021$year==1989,]$tow)
+table(MW.dat.new.2021[MW.dat.new.2021$bank %in% c("GBa", "GBb", "GB") & MW.dat.new.2021$year==1989,]$tow)
+table(MW.dat.2021[MW.dat.2021$cruise=="P384",]$tow)
+table(MW.dat.new.db2[MW.dat.new.db2$cruise=="P384",]$tow)
+
+table(MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb", "GB")  & MW.dat.new.db2$year==1989,]$month)
+table(MW.dat.2021[MW.dat.2021$bank %in% c("GBa", "GBb", "GB")  & MW.dat.2021$year==1989 & !MW.dat.2021$tow==0,]$month)
+
+ggplot() + geom_sf(data=offshore[offshore$label %in% c("GBa", "GBb", "GB"),]) + theme_minimal() +
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb", "GB") & MW.dat.new.db2$year==1989,], aes(lon, lat, label=tow), colour="red") + 
+  geom_text(data=MW.dat.2021[MW.dat.2021$bank %in% c("GBa", "GBb", "GB") & MW.dat.2021$year==1989 & !MW.dat.2021$tow==0,], aes(lon, lat, label=tow), colour="blue") +
+  ggtitle("GBa/GBb 1989 (blue is pre-update, red is current database)") + facet_wrap(~month)
+
+
+# GBa/GBb 2006
+table(MW.dat.db2[MW.dat.db2$bank %in% c("GBa", "GBb", "GB") & MW.dat.db2$year==2006,]$tow)
+table(MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb", "GB") & MW.dat.new.db2$year==2006,]$tow)
+table(MW.dat.2021[MW.dat.2021$bank %in% c("GBa", "GBb", "GB") & MW.dat.2021$year==2006,]$tow)
+table(MW.dat.new.2021[MW.dat.new.2021$bank %in% c("GBa", "GBb", "GB") & MW.dat.new.2021$year==2006,]$tow)
+table(MW.dat.new.2021[MW.dat.new.2021$cruise=="CK32",]$tow)
+table(MW.dat.new.db2[MW.dat.new.db2$cruise=="CK32",]$tow)
+
+table(MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb", "GB")  & MW.dat.new.db2$year==2006,]$month)
+table(MW.dat.new.2021[MW.dat.new.2021$bank %in% c("GBa", "GBb", "GB")  & MW.dat.new.2021$year==2006 & !MW.dat.new.2021$tow==0,]$month)
+
+ggplot() + geom_sf(data=offshore[offshore$label %in% c("GBa", "GBb", "GB"),]) + theme_minimal() +
+  geom_text(data=unique(MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb", "GB") & MW.dat.new.db2$year==2006,c("lon", "lat", "tow", "month")]), aes(lon, lat, label=tow), colour="red", position=position_jitter(width=0.01, height=0.01)) + 
+  geom_text(data=MW.dat.new.2021[MW.dat.new.2021$bank %in% c("GBa", "GBb", "GB") & MW.dat.new.2021$year==2006 & !MW.dat.new.2021$tow==0,], aes(lon, lat, label=tow), colour="blue") +
+  ggtitle("GBa/GBb 2006 (blue is pre-update, red is current database)") + facet_wrap(~month)
+
 
 for (i in 1983:2000){
   table1 <- table(cruise.mw.db[cruise.mw.db$year==i,]$bank,cruise.mw.db[cruise.mw.db$year==i,]$month)
