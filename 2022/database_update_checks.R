@@ -93,11 +93,44 @@ pdf(file = "Y:/Offshore/Assessment/2022/Presentations/Survey_summary/Database_pu
 for(i in names(survey.obj.db2)[which(names(survey.obj.db2) %in% names(survey.obj.2021))]){
   if(!i=="Ger") {
     print(ggplot() + #geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
+            geom_line(data=survey.obj.2021[[i]]$model.dat, aes(year, n, colour="2021")) +
+            geom_line(data=survey.obj.db2[[i]]$model.dat, aes(year, n, colour="db2")) +
+            #geom_point(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
+            geom_point(data=survey.obj.2021[[i]]$model.dat, aes(year, n, colour="2021")) +
+            geom_point(data=survey.obj.db2[[i]]$model.dat, aes(year, n, colour="db2")) +
+            scale_color_manual(name='Survey summary run',
+                               breaks=c('db', '2021', 'db2'),
+                               values=c('db'="black", '2021'='blue', 'db2'='red'))+
+            ggtitle(i) +
+            theme_bw())
+    print(ggplot() + #geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
+            geom_line(data=survey.obj.2021[[i]]$model.dat, aes(year, N, colour="2021")) +
+            geom_line(data=survey.obj.db2[[i]]$model.dat, aes(year, N, colour="db2")) +
+            #geom_point(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
+            geom_point(data=survey.obj.2021[[i]]$model.dat, aes(year, N, colour="2021")) +
+            geom_point(data=survey.obj.db2[[i]]$model.dat, aes(year, N, colour="db2")) +
+            scale_color_manual(name='Survey summary run',
+                               breaks=c('db', '2021', 'db2'),
+                               values=c('db'="black", '2021'='blue', 'db2'='red'))+
+            ggtitle(i) +
+            theme_bw())
+    print(ggplot() + #geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
             geom_line(data=survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
             geom_line(data=survey.obj.db2[[i]]$model.dat, aes(year, I, colour="db2")) +
             #geom_point(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
             geom_point(data=survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
             geom_point(data=survey.obj.db2[[i]]$model.dat, aes(year, I, colour="db2")) +
+            scale_color_manual(name='Survey summary run',
+                               breaks=c('db', '2021', 'db2'),
+                               values=c('db'="black", '2021'='blue', 'db2'='red'))+
+            ggtitle(i) +
+            theme_bw())
+    print(ggplot() + #geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
+            geom_line(data=survey.obj.2021[[i]]$model.dat, aes(year, CF, colour="2021")) +
+            geom_line(data=survey.obj.db2[[i]]$model.dat, aes(year, CF, colour="db2")) +
+            #geom_point(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
+            geom_point(data=survey.obj.2021[[i]]$model.dat, aes(year, CF, colour="2021")) +
+            geom_point(data=survey.obj.db2[[i]]$model.dat, aes(year, CF, colour="db2")) +
             scale_color_manual(name='Survey summary run',
                                breaks=c('db', '2021', 'db2'),
                                values=c('db'="black", '2021'='blue', 'db2'='red'))+
@@ -118,6 +151,42 @@ for(i in names(survey.obj.db2)[which(names(survey.obj.db2) %in% names(survey.obj
   if(i=="Ger") {
     print(ggplot() + 
             #geom_line(data=merged.survey.obj.db, aes(year, I, colour="db")) +
+            geom_line(data=merged.survey.obj.2021, aes(year, n, colour="2021")) +
+            geom_line(data=merged.survey.obj.db2, aes(year, n, colour="db2")) +
+            #geom_point(data=merged.survey.obj.db, aes(year, I, colour="db")) +
+            geom_point(data=merged.survey.obj.2021, aes(year, n, colour="2021")) +
+            geom_point(data=merged.survey.obj.db2, aes(year, n, colour="db2")) +
+            #geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
+            geom_line(data=survey.obj.2021[[i]]$model.dat, aes(year, n, colour="2021")) +
+            geom_line(data=survey.obj.db2[[i]]$model.dat, aes(year, n, colour="db2")) +
+            #geom_point(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
+            geom_point(data=survey.obj.2021[[i]]$model.dat, aes(year, n, colour="2021")) +
+            geom_point(data=survey.obj.db2[[i]]$model.dat, aes(year, n, colour="db2")) +
+            scale_color_manual(name='Survey summary run',
+                               breaks=c('db', '2021', 'db2'),
+                               values=c('db'="black", '2021'='blue', 'db2'='red'))+
+            ggtitle(i) +
+            theme_bw())
+     print(ggplot() + 
+            #geom_line(data=merged.survey.obj.db, aes(year, I, colour="db")) +
+            geom_line(data=merged.survey.obj.2021, aes(year, N, colour="2021")) +
+            geom_line(data=merged.survey.obj.db2, aes(year, N, colour="db2")) +
+            #geom_point(data=merged.survey.obj.db, aes(year, I, colour="db")) +
+            geom_point(data=merged.survey.obj.2021, aes(year, N, colour="2021")) +
+            geom_point(data=merged.survey.obj.db2, aes(year, N, colour="db2")) +
+            #geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
+            geom_line(data=survey.obj.2021[[i]]$model.dat, aes(year, N, colour="2021")) +
+            geom_line(data=survey.obj.db2[[i]]$model.dat, aes(year, N, colour="db2")) +
+            #geom_point(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
+            geom_point(data=survey.obj.2021[[i]]$model.dat, aes(year, N, colour="2021")) +
+            geom_point(data=survey.obj.db2[[i]]$model.dat, aes(year, N, colour="db2")) +
+            scale_color_manual(name='Survey summary run',
+                               breaks=c('db', '2021', 'db2'),
+                               values=c('db'="black", '2021'='blue', 'db2'='red'))+
+            ggtitle(i) +
+            theme_bw())
+     print(ggplot() + 
+            #geom_line(data=merged.survey.obj.db, aes(year, I, colour="db")) +
             geom_line(data=merged.survey.obj.2021, aes(year, I, colour="2021")) +
             geom_line(data=merged.survey.obj.db2, aes(year, I, colour="db2")) +
             #geom_point(data=merged.survey.obj.db, aes(year, I, colour="db")) +
@@ -134,6 +203,24 @@ for(i in names(survey.obj.db2)[which(names(survey.obj.db2) %in% names(survey.obj
                                values=c('db'="black", '2021'='blue', 'db2'='red'))+
             ggtitle(i) +
             theme_bw())
+     print(ggplot() + 
+             #geom_line(data=merged.survey.obj.db, aes(year, I, colour="db")) +
+             geom_line(data=merged.survey.obj.2021, aes(year, CF, colour="2021")) +
+             geom_line(data=merged.survey.obj.db2, aes(year, CF, colour="db2")) +
+             #geom_point(data=merged.survey.obj.db, aes(year, I, colour="db")) +
+             geom_point(data=merged.survey.obj.2021, aes(year, CF, colour="2021")) +
+             geom_point(data=merged.survey.obj.db2, aes(year, CF, colour="db2")) +
+             #geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
+             geom_line(data=survey.obj.2021[[i]]$model.dat, aes(year, CF, colour="2021")) +
+             geom_line(data=survey.obj.db2[[i]]$model.dat, aes(year, CF, colour="db2")) +
+             #geom_point(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
+             geom_point(data=survey.obj.2021[[i]]$model.dat, aes(year, CF, colour="2021")) +
+             geom_point(data=survey.obj.db2[[i]]$model.dat, aes(year, CF, colour="db2")) +
+             scale_color_manual(name='Survey summary run',
+                                breaks=c('db', '2021', 'db2'),
+                                values=c('db'="black", '2021'='blue', 'db2'='red'))+
+             ggtitle(i) +
+             theme_bw())
     print(ggplot() + #geom_line(data=clap.survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
             geom_line(data=clap.survey.obj.2021[[i]]$model.dat, aes(year, I, colour="2021")) +
             geom_line(data=clap.survey.obj.db2[[i]]$model.dat, aes(year, I, colour="db2")) +
@@ -147,16 +234,26 @@ for(i in names(survey.obj.db2)[which(names(survey.obj.db2) %in% names(survey.obj
             theme_bw())
   }
 }
-print(ggplot() + 
-        geom_line(data=survey.obj.2021$BBs$model.dat, aes(year, I, colour="2021")) +
-        #geom_line(data=survey.obj.db2$BBs$model.dat, aes(year, I, colour="db2")) +
-        geom_point(data=survey.obj.2021$BBs$model.dat, aes(year, I, colour="2021")) +
-        #geom_point(data=survey.obj.db2$BBs$model.dat, aes(year, I, colour="db2")) +
-        scale_color_manual(name='Survey summary run',
-                           breaks=c('2021', 'db2'),
-                           values=c('2021'='blue', 'db2'='red'))+
-        ggtitle("BBs") +
-        theme_bw())
+# print(ggplot() + 
+#         geom_line(data=survey.obj.2021$BBs$model.dat, aes(year, I, colour="2021")) +
+#         #geom_line(data=survey.obj.db2$BBs$model.dat, aes(year, I, colour="db2")) +
+#         geom_point(data=survey.obj.2021$BBs$model.dat, aes(year, I, colour="2021")) +
+#         #geom_point(data=survey.obj.db2$BBs$model.dat, aes(year, I, colour="db2")) +
+#         scale_color_manual(name='Survey summary run',
+#                            breaks=c('2021', 'db2'),
+#                            values=c('2021'='blue', 'db2'='red'))+
+#         ggtitle("BBs") +
+#         theme_bw())
+# print(ggplot() + 
+#         geom_line(data=clap.survey.obj.2021$BBs$model.dat, aes(year, I, colour="2021")) +
+#         #geom_line(data=survey.obj.db2$BBs$model.dat, aes(year, I, colour="db2")) +
+#         geom_point(data=clap.survey.obj.2021$BBs$model.dat, aes(year, I, colour="2021")) +
+#         #geom_point(data=survey.obj.db2$BBs$model.dat, aes(year, I, colour="db2")) +
+#         scale_color_manual(name='Survey summary run',
+#                            breaks=c('2021', 'db2'),
+#                            values=c('2021'='blue', 'db2'='red'))+
+#         ggtitle("BBs") +
+#         theme_bw())
 dev.off()
 
 
@@ -906,6 +1003,194 @@ ggplot() + geom_sf(data=offshore[offshore$label %in% c("GBa", "GBb", "GB"),]) + 
   geom_text(data=unique(MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb", "GB") & MW.dat.new.db2$year==2006,c("lon", "lat", "tow", "month")]), aes(lon, lat, label=tow), colour="red", position=position_jitter(width=0.01, height=0.01)) + 
   geom_text(data=MW.dat.new.2021[MW.dat.new.2021$bank %in% c("GBa", "GBb", "GB") & MW.dat.new.2021$year==2006 & !MW.dat.new.2021$tow==0,], aes(lon, lat, label=tow), colour="blue") +
   ggtitle("GBa/GBb 2006 (blue is pre-update, red is current database)") + facet_wrap(~month)
+
+
+# GB 1988
+# surv.dat[[bnk]]$random[surv.dat[[bnk]]$tow > 312 & surv.dat[[bnk]]$year == 1988] <- 4
+
+arrange(unique(surv.dat.2021$GB[surv.dat.2021$GB$year==1988, c("month", "tow", "random")]), tow)
+arrange(unique(surv.dat.db2$GB[surv.dat.db2$GB$year==1988, c("month", "tow", "random")]), tow)
+
+survey.obj.2021$GB$model.dat$n[survey.obj.2021$GB$model.dat$year==1988]
+survey.obj.db2$GB$model.dat$n[survey.obj.db2$GB$model.dat$year==1988]
+survey.obj.2021$GB$model.dat$I[survey.obj.2021$GB$model.dat$year==1988]
+survey.obj.db2$GB$model.dat$I[survey.obj.db2$GB$model.dat$year==1988]
+survey.obj.2021$GB$model.dat$CF[survey.obj.2021$GB$model.dat$year==1988]
+survey.obj.db2$GB$model.dat$CF[survey.obj.db2$GB$model.dat$year==1988]
+survey.obj.2021$GB$model.dat$N[survey.obj.2021$GB$model.dat$year==1988]
+survey.obj.db2$GB$model.dat$N[survey.obj.db2$GB$model.dat$year==1988]
+dim(surv.dat.2021$GB[surv.dat.2021$GB$year==1988,])
+dim(surv.dat.db2$GB[surv.dat.db2$GB$year==1988,])
+MW.dat.new.2021[MW.dat.new.2021$bank %in% c("GBa", "GBb", "GB") & MW.dat.new.2021$year==1988,]
+unique(MW.dat.2021[MW.dat.2021$bank %in% c("GBa", "GBb", "GB") & MW.dat.2021$year==1988,]$cruise)
+unique(MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb", "GB") & MW.dat.new.db2$year==1988,]$cruise)
+unique(MW.dat.db2[MW.dat.db2$bank %in% c("GBa", "GBb", "GB") & MW.dat.db2$year==1988,]$cruise)
+dim(mw.dat.all.2021$GB[mw.dat.all.2021$GB$year==1988,])
+dim(mw.dat.all.db2$GB[mw.dat.all.db2$GB$year==1988,])
+cf.data.2021$GB$CF.data[cf.data.2021$GB$CF.data$year==1988,]
+cf.data.db2$GB$CF.data[cf.data.db2$GB$CF.data$year==1988,]
+dim(subset(surv.dat.2021$GB,state=='live' & random==3))
+dim(subset(surv.dat.db2$GB,state=='live' & random==3))
+
+
+surv.dat.2021$GB[surv.dat.2021$GB$year==1988 & surv.dat.2021$GB$tow %in% c(1,26),]
+surv.dat.db2$GB[surv.dat.db2$GB$year==1988 & surv.dat.db2$GB$tow %in% c(301,326),]
+# 1988 gets condition estimate because only tow type 3s are used for analysis and there had been a tow type 3 tow with no depth info
+
+
+
+# sable 1992
+length(unique(surv.dat.2021$Sab[surv.dat.2021$Sab$year==1992,]$tow))
+length(unique(surv.dat.db2$Sab[surv.dat.db2$Sab$year==1992,]$tow))
+length(unique(surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992,]$tow))
+length(unique(surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992,]$tow))
+table(surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992,]$random)
+table(surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992,]$random)
+table(surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992,]$month)
+table(surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992,]$month)
+summary(surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992,]$CF)
+summary(surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992,]$CF)
+summary(surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992,]$date)
+summary(surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992,]$date)
+summary(surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992,]$date)
+summary(surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992,]$date)
+
+survey.obj.2021$Sab$model.dat$n[survey.obj.2021$Sab$model.dat$year==1992]
+survey.obj.db2$Sab$model.dat$n[survey.obj.db2$Sab$model.dat$year==1992]
+survey.obj.2021$Sab$model.dat$N[survey.obj.2021$Sab$model.dat$year==1992]
+survey.obj.db2$Sab$model.dat$N[survey.obj.db2$Sab$model.dat$year==1992]
+summary(surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992,]$Strata_ID_new)
+summary(surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992,]$Strata_ID_old)
+summary(surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992,]$Strata_ID_new)
+summary(surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992,]$Strata_ID_old)
+surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992 & is.na(surv.Rand.db2$Sab$Strata_ID_new) & !is.na(surv.Rand.db2$Sab$Strata_ID_old),]
+#tow 47!
+surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992 & surv.Rand.2021$Sab$tow==47, c("slat", "slon", "elat", "elon")]
+surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992 & surv.Rand.db2$Sab$tow==47, c("slat", "slon", "elat", "elon")]
+
+sabsf2021 <- st_as_sf(surv.Rand.2021$Sab, coords=c(X="lon", Y="lat"), crs=4326)
+sabsfdb2 <- st_as_sf(surv.Rand.db2$Sab, coords=c(X="lon", Y="lat"), crs=4326)
+
+
+
+ggplot() + geom_sf(data=offshore[offshore$label=="Sab",]) +
+  # geom_segment(data=surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992 & surv.Rand.2021$Sab$tow==47, ],
+  #              aes(x=slon, xend=elon, y=slat, yend=slat), colour="red") +
+  # geom_segment(data=surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992 & surv.Rand.db2$Sab$tow==47, ],
+  #              aes(x=slon, xend=elon, y=slat, yend=slat), colour="blue") +
+  geom_point(data=surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992 & surv.Rand.2021$Sab$tow==47,],
+             aes(x=slon, y=slat), colour="red") +
+  geom_point(data=surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992 & surv.Rand.db2$Sab$tow==47,],
+             aes(x=slon, y=slat), colour="blue") +
+  coord_sf(xlim=c(-61.806, -61.808), ylim=c(43.135, 43.136))
+
+ggplot() + geom_sf(data=offshore[offshore$label=="Sab",]) +
+  geom_segment(data=surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==2018 & surv.Rand.2021$Sab$tow==47, ],
+               aes(x=slon, xend=elon, y=slat, yend=slat), colour="red") +
+  geom_segment(data=surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==2018 & surv.Rand.db2$Sab$tow==47, ],
+               aes(x=slon, xend=elon, y=slat, yend=slat), colour="blue") +
+  geom_point(data=surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==2018 & surv.Rand.2021$Sab$tow==47,],
+             aes(x=lon, y=lat), colour="red") +
+  geom_point(data=surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==2018 & surv.Rand.db2$Sab$tow==47,],
+             aes(x=lon, y=lat), colour="blue") +
+  coord_sf(xlim=c(-61.3, -61.5), ylim=c(43.2, 43.3))
+
+
+ggplot() + geom_sf(data=offshore[offshore$label=="BBn",]) +
+  geom_segment(data=surv.Rand.2021$BBn[surv.Rand.2021$BBn$year==2018 & surv.Rand.2021$BBn$tow==201, ],
+               aes(x=slon, xend=elon, y=slat, yend=slat), colour="red") +
+  geom_segment(data=surv.Rand.db2$BBn[surv.Rand.db2$BBn$year==2018 & surv.Rand.db2$BBn$tow==201, ],
+               aes(x=slon, xend=elon, y=slat, yend=slat), colour="blue") +
+  geom_point(data=surv.Rand.2021$BBn[surv.Rand.2021$BBn$year==2018 & surv.Rand.2021$BBn$tow==201,],
+             aes(x=slon, y=slat), colour="red") +
+  geom_point(data=surv.Rand.db2$BBn[surv.Rand.db2$BBn$year==2018 & surv.Rand.db2$BBn$tow==201,],
+             aes(x=lon, y=lat), colour="blue") +
+  coord_sf(xlim=c(-65.85, -65.95), ylim=c(42.55, 42.60))
+
+surv.Rand.db2$BBn[surv.Rand.db2$BBn$year==1992 & surv.Rand.db2$BBn$tow==201, c("lon", "lat", "slon", "slat", "elon", "elat")]
+surv.Rand.2021$BBn[surv.Rand.2021$BBn$year==1992 & surv.Rand.2021$BBn$tow==201, c("lon", "lat", "slon", "slat", "elon", "elat")]
+  
+surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992 & surv.Rand.db2$Sab$tow==47, c("lon", "lat", "slon", "slat", "elon", "elat")]
+surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992 & surv.Rand.2021$Sab$tow==47, c("lon", "lat", "slon", "slat", "elon", "elat")]
+
+pt1 <- st_as_sf(surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1992 & surv.Rand.db2$Sab$tow==47,], coords=c(X="slon", Y="slat"), crs=4326) %>% st_transform(32620)
+pt2 <- st_as_sf(surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1992 & surv.Rand.2021$Sab$tow==47,], coords=c(X="slon", Y="slat"), crs=4326) %>% st_transform(32620)
+st_distance(pt1, pt2)
+# Tow 47 from 1992 was excluded because the start point was moved 4m, and now it is getting placed outside the survey domain by the assign_strata function (which uses start points)
+# also of note, it looks like our lon/lat calculations based on slon/slat/elon/elat are weird, but this has been the same all along?
+
+ggplot() + geom_segment(data=NULL, aes(x=-61.807, xend=-61.80367, y=43.13583, yend=43.147)) +
+  geom_point(data=NULL, aes(x=mean(c(-61.807, -61.80367)), y=mean(c(43.13583, 43.147)))) + 
+  coord_sf()
+
+mean(c(-61.807, -61.80367))
+mean(c(43.13583, 43.147))
+
+seg <- st_as_sf(data.frame(X=c(-61.807, -61.80367), Y=c(43.13583, 43.147)), coords=c("X", "Y"), crs=4326) %>% summarize() %>% st_cast("LINESTRING")
+pt <- st_as_sf(data.frame(X=mean(c(-61.807, -61.80367)), Y=mean(c(43.13583, 43.147))), coords=c("X", "Y"), crs=4326)
+
+ggplot() + geom_sf(data=seg) + geom_sf(data=pt) +
+  geom_segment(data=NULL, aes(x=-61.807, xend=-61.80367, y=43.13583, yend=43.147), lty=2, lwd=2)
+
+# never mind, seems fine? moving on...
+
+# Sable 1999
+
+survey.obj.2021$Sab$model.dat[survey.obj.2021$Sab$model.dat$year==1999,]
+survey.obj.db2$Sab$model.dat[survey.obj.db2$Sab$model.dat$year==1999,]
+length(unique(surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1999,]$tow))
+length(unique(surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1999,]$tow))
+table(surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1999,]$Strata_ID_new)
+table(surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1999,]$Strata_ID_new)
+table(surv.Rand.2021$Sab[surv.Rand.2021$Sab$year==1999,]$Strata_ID_old)
+table(surv.Rand.db2$Sab[surv.Rand.db2$Sab$year==1999,]$Strata_ID_old)
+# Must be the same issue. Tows getting INCLUDED here that weren't before. 
+
+# Sable 1989
+length(unique(surv.dat.2021$Sab[surv.dat.2021$Sab$year==1989,]$tow))
+length(unique(surv.dat.db2$Sab[surv.dat.db2$Sab$year==1989,]$tow))
+unique(surv.dat.db2$Sab[surv.dat.db2$Sab$year==1989,]$tow)[which(!unique(surv.dat.db2$Sab[surv.dat.db2$Sab$year==1989,]$tow) %in% unique(surv.dat.2021$Sab[surv.dat.2021$Sab$year==1989,]$tow))]
+surv.dat.db2$Sab[surv.dat.db2$Sab$tow %in% c(100:106),]
+
+sabdb2 <- st_as_sf(surv.dat.db2$Sab[surv.dat.db2$Sab$year==1989,], coords=c("lon", "lat"), crs=4326)
+sab2021 <- st_as_sf(surv.dat.2021$Sab[surv.dat.2021$Sab$year==1989,], coords=c("lon", "lat"), crs=4326)
+
+ggplot() + geom_sf(data=offshore[offshore$label=="Sab",]) +
+  geom_sf_text(data=sabdb2, colour="red", aes(label=tow)) +
+  geom_sf_text(data=sab2021, colour="blue",aes(label=tow)) +
+  ggtitle("Sable 1992, blue is before, red is after.\nBlue plotted over red.")
+# so these tows were added to the db, but don't affect analysis since they are way outside domain
+
+# BBn 2005
+survey.obj.2021$BBn$model.dat[survey.obj.2021$BBn$model.dat$year==2005,]$n
+survey.obj.db2$BBn$model.dat[survey.obj.db2$BBn$model.dat$year==2005,]$n
+length(unique(surv.dat.2021$BBn[surv.dat.2021$BBn$year==2005,]$tow))
+length(unique(surv.dat.db2$BBn[surv.dat.db2$BBn$year==2005,]$tow))
+table(surv.dat.2021$BBn[surv.dat.2021$BBn$year==2005,]$Strata_ID)
+table(surv.dat.db2$BBn[surv.dat.db2$BBn$year==2005,]$Strata_ID)
+table(surv.dat.2021$BBn[surv.dat.2021$BBn$year==2005,]$cruise)
+table(surv.dat.db2$BBn[surv.dat.db2$BBn$year==2005,]$cruise)
+table(surv.Rand.db2$BBn[surv.Rand.db2$BBn$year==2005,]$tow)
+table(surv.Rand.2021$BBn[surv.Rand.2021$BBn$year==2005,]$tow)
+
+unique(surv.dat.db2$BBn[surv.dat.db2$BBn$year==2005,]$tow)[which(!unique(surv.dat.db2$BBn[surv.dat.db2$BBn$year==2005,]$tow) %in% unique(surv.dat.2021$BBn[surv.dat.2021$BBn$year==2005,]$tow))]
+
+sabdb2 <- st_as_sf(surv.dat.db2$BBn[surv.dat.db2$BBn$year==1989,], coords=c("lon", "lat"), crs=4326)
+sab2021 <- st_as_sf(surv.dat.2021$BBn[surv.dat.2021$BBn$year==1989,], coords=c("lon", "lat"), crs=4326)
+
+#remove!
+all.surv.dat.db2[all.surv.dat.db2$cruise=="CK29",]$bank
+
+
+for(i in names(surv.dat.2021)){
+  print(i)
+  print(dim(surv.dat.2021[[i]][is.na(surv.dat.2021[[i]]$date),])[1]/dim(surv.dat.2021[[i]])[1])
+}
+for(i in names(surv.dat.db2)){
+  print(i)
+  print(dim(surv.dat.db2[[i]][is.na(surv.dat.db2[[i]]$date),])[1]/dim(surv.dat.db2[[i]])[1])
+}
+
 
 
 for (i in 1983:2000){
