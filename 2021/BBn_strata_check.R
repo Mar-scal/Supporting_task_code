@@ -50,7 +50,7 @@ plot(strata[1])
 st_area(strata[strata$Strt_ID==205,])/100000
 
 
-surv.info <- read.csv("Y:/Offshore/Assessment/Data/Survey_data/survey_information_2021-07-09.csv")
+surv.info <- read.csv("Y:/Offshore/Assessment/Data/Survey_data/archive/survey_information_2021-07-09.csv")
 surv.info2 <- read.csv("Y:/Offshore/Assessment/Data/Survey_data/survey_information.csv")
 
 surv.info[surv.info$label=="BBn",]$area_km2==surv.info2[surv.info2$label=="BBn",]$area_km2
@@ -202,10 +202,10 @@ quer.off <- paste(
 # Run the query and add data to the log.lst object
 strata.db <- ScallopQuery(package="ROracle", un="keyserf", pw="Decade06", db.con="ptran", SQLtext= quer.off)
 
-source("C:/Documents/Assessment_fns/Maps/Convert_PBSmapping_into_GIS_shapefiles.R")
+source("C:/Users/keyserf/Documents/Github/Assessment_fns/Maps/Convert_PBSmapping_into_GIS_shapefiles.R")
 
-banks <- c("BBn", "BBs", 
-           "Sab", "GBa", "GBb")
+banks <- c("BBn")#, "BBs", 
+           #"Sab", "GBa", "GBb")
 strata <- NULL
 for(i in 1:length(banks)){
   strata.db.sub <- strata.db[grepl(x=strata.db$COMMENTS, pattern=banks[i]),]
@@ -258,7 +258,7 @@ for(i in 1:length(banks)){
   stratum <- unique(strata.db.PBS$label)
   sf.obj<- NULL
   for(j in 1:length(stratum)){
-    sf.obj[[j]] <- pbs.2.gis(dat=strata.db.PBS[strata.db.PBS$label==stratum[j],], type = "polygon", make.sf=T, env.object = T)
+    sf.obj[[j]] <- pbs.2.gis(dat=strata.db.PBS[strata.db.PBS$label==stratum[j],], type = "polygon", make.sf=T, env.object = T)[[stratum[j]]]
     sf.obj[[j]] <- st_make_valid(sf.obj[[j]])
     sf.obj[[j]]$label <- unique(strata.db.PBS[strata.db.PBS$label==stratum[j], "label"])
     
@@ -369,7 +369,7 @@ ggplot() + geom_sf(data=st_union(realstrata), fill="#d95f02", colour=NA, lwd=3, 
   #geom_sf(data=st_union(realstrata), fill="white", colour=NA) +
   #geom_sf(data=st_union(strata[[which(banks=="BBn")]]), fill=NA, colour="#d95f02", lwd=2, alpha=0.2) +
   geom_sf(data=st_union(stratashp), fill="#7570b3", colour=NA, lwd=2, alpha=1) + 
-  geom_sf(data=st_contour(bathy.sf, breaks=-110), colour="black", fill=NA)+ 
+  #geom_sf(data=st_contour(bathy.sf, breaks=-110), colour="black", fill=NA)+ 
  # coord_sf(xlim=c(-66.25, -66.1), ylim=c(42.8, 42.9))+
   theme_bw()
 
@@ -377,6 +377,8 @@ ggplot() + geom_sf(data=st_union(realstrata), fill="#d95f02", colour=NA, lwd=3, 
 #BBs is fine
 
 realstrata
+#BBn strata
+stratashp %>% st_transform(32619) %>% st_area
 
 #indreport <- ScallopQuery(package="ROracle", un="keyserf", pw="Decade06", db.con="ptran", 
  #            SQLtext= "SELECT * FROM SCALOFF.OSINDUSTRYREPORT_SS_VW")

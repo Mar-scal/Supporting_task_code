@@ -18,7 +18,7 @@ MW.dat.db <- MW.dat
 
 # survey summary run pulling all survey data from SCALOFF, subsetting commercial by cruise
 #load("C:/Users/keyserf/Documents/temp_data/testing_results_historical_db_comm.Rdata")
-load("Y:/Offshore/Assessment/Data/Survey_data/2022/Survey_summary_output/testing_results_historical_db_comm_2.Rdata")
+load("Y:/Offshore/Assessment/Data/Survey_data/2022/Survey_summary_output/testing_results_summer2022_4.Rdata")
 
 all.surv.dat.db2 <- all.surv.dat
 bank.dat.db2 <- bank.dat
@@ -89,7 +89,8 @@ survey.obj.2019$BBn$model.dat$I
 survey.obj.2021$BBn$model.dat$I
 survey.obj.db$BBn$model.dat$I
 
-pdf(file = "Y:/Offshore/Assessment/2022/Presentations/Survey_summary/Database_pull_compare.pdf", onefile=T)
+pdf(file = "Y:/Offshore/Assessment/2022/Presentations/Survey_summary/Database_pull_compare_2.pdf", onefile=T)
+pdf(file = "C:/Users/keyserf/Documents/temp_data/Database_pull_compare_2.pdf", onefile=T)
 for(i in names(survey.obj.db2)[which(names(survey.obj.db2) %in% names(survey.obj.2021))]){
   if(!i=="Ger") {
     print(ggplot() + #geom_line(data=survey.obj.db[[i]]$model.dat, aes(year, I, colour="db")) +
@@ -788,6 +789,10 @@ write.csv(combined, file="C:/Users/keyserf/Documents/temp_data/combined.csv")
 source("C:/Users/keyserf/Documents/Github/Assessment_fns/Maps/github_spatial_import.R")
 offshore <- github_spatial_import("offshore_survey_strata", "offshore_survey_strata.zip")
 
+source("C:/Users/keyserf/Documents/Github/Assessment_fns/Maps/github_spatial_import.R")
+offshore <- github_spatial_import("survey_boundaries", "survey_boundaries.zip")
+
+
 ggplot() + geom_sf(data=offshore[offshore$label=="GBa",])+
   geom_point(data=NULL, aes(x=-66.618, y=	41.98166667))
 
@@ -944,16 +949,20 @@ table(MW.dat.db2[MW.dat.db2$bank=="GBa" & MW.dat.db2$year==1987,]$tow)
 table(MW.dat.new.db2[MW.dat.new.db2$bank=="GBa" & MW.dat.new.db2$year==1987,]$tow)
 table(MW.dat.2021[MW.dat.2021$bank=="GBa" & MW.dat.2021$year==1987,]$tow)
 table(MW.dat.new.2021[MW.dat.new.2021$bank=="GBa" & MW.dat.new.2021$year==1987,]$tow)
-table(MW.dat.2021[MW.dat.2021$cruise=="P387",]$tow)
-table(MW.dat.new.db2[MW.dat.new.db2$cruise=="P387",]$tow)
+table(MW.dat.2021[MW.dat.2021$cruise=="P357",]$tow)
+table(MW.dat.new.db2[MW.dat.new.db2$cruise=="P357",]$tow)
 
 table(MW.dat.new.db2[MW.dat.new.db2$bank=="GBa" & MW.dat.new.db2$year==1987,]$month)
 table(MW.dat.2021[MW.dat.2021$bank=="GBa" & MW.dat.2021$year==1987 & !MW.dat.2021$tow==0,]$month)
 
 ggplot() + geom_sf(data=offshore[offshore$label %in% c("GBa", "GBb"),]) + theme_minimal() +
-  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb") & MW.dat.new.db2$year==1987,], aes(lon, lat, label=tow), colour="red") + 
-  geom_text(data=MW.dat.2021[MW.dat.2021$bank %in% c("GBa", "GBb") & MW.dat.2021$year==1987 & !MW.dat.2021$tow==0,], aes(lon, lat, label=tow), colour="blue") +
-  ggtitle("GBa/GBb 1987 (blue is pre-update, red is current database)") + facet_wrap(~cruise)
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GBa", "GBb") & MW.dat.new.db2$year==1987 & MW.dat.new.db2$tow >600,], aes(lon, lat, label=tow), colour="red") + 
+  geom_text(data=MW.dat.2021[MW.dat.2021$bank %in% c("GBa", "GBb") & MW.dat.2021$year==1987 & as.numeric(MW.dat.2021$tow)>600,], aes(lon, lat, label=tow), colour="blue") +
+  ggtitle("GBa/GBb 1987 (blue is pre-update, red is current database)") + facet_wrap(~cruise) +
+  xlim(-66.2, -65.8) +
+  ylim(41.6, 41.9)
+
+
 
 # GBa/GBb 1988
 table(MW.dat.db2[MW.dat.db2$bank %in% c("GBa", "GBb") & MW.dat.db2$year==1988,]$tow)
@@ -1179,8 +1188,168 @@ sabdb2 <- st_as_sf(surv.dat.db2$BBn[surv.dat.db2$BBn$year==1989,], coords=c("lon
 sab2021 <- st_as_sf(surv.dat.2021$BBn[surv.dat.2021$BBn$year==1989,], coords=c("lon", "lat"), crs=4326)
 
 #remove!
-all.surv.dat.db2[all.surv.dat.db2$cruise=="CK29",]$bank
+all.surv.dat.db2[all.surv.dat.db2$cruise=="CK29",]
 
+
+# Middle Bank might still have issues
+dim(all.surv.dat.db2[all.surv.dat.db2$bank=="Mid" & all.surv.dat.db2$year<2022,])
+dim(all.surv.dat.2021[all.surv.dat.2021$bank=="Mid",]) # 6 tows removed
+
+sort(unique(all.surv.dat.db2[all.surv.dat.db2$bank=="Mid",]$cruise))
+sort(unique(all.surv.dat.2021[all.surv.dat.2021$bank=="Mid",]$cruise))
+
+all.surv.dat.2021$cruise <- toupper(all.surv.dat.2021$cruise)
+all.surv.dat.2021$cruise[all.surv.dat.2021$cruise=="M306"] <- "P306"
+
+table(all.surv.dat.db2[all.surv.dat.db2$bank=="Mid",]$cruise, all.surv.dat.db2[all.surv.dat.db2$bank=="Mid",]$tow)
+table(all.surv.dat.2021[all.surv.dat.2021$bank=="Mid",]$cruise, all.surv.dat.2021[all.surv.dat.2021$bank=="Mid",]$tow)
+
+table(all.surv.dat.db2[all.surv.dat.db2$bank=="Mid",]$cruise)
+table(all.surv.dat.2021[all.surv.dat.2021$bank=="Mid",]$cruise)
+
+#P306 has 18 more stations
+sort(unique(all.surv.dat.db2[all.surv.dat.db2$bank=="Mid" & all.surv.dat.db2$cruise=="P306",]$tow))
+sort(unique(all.surv.dat.2021[all.surv.dat.2021$bank=="Mid" & all.surv.dat.2021$cruise=="P306",]$tow))
+
+all.surv.dat.db2[all.surv.dat.db2$cruise=="P306",]
+bank.dat.db2$Mid[bank.dat.db2$Mid$cruise=="P306",]
+bank.dat.2021$Mid[bank.dat.2021$Mid$cruise=="P306",]
+# so this isn't it, because this is before the 1984
+
+dim(mw.dat.all.db2$Mid)
+dim(mw.dat.all.2021$Mid) # 177 samples added
+
+
+mw.dat.all.db2$Mid[mw.dat.all.db2$Mid$year==1999,]
+mw.dat.all.2021$Mid[mw.dat.all.2021$Mid$year==1999,]
+
+dim(bank.dat.db2$Mid[bank.dat.db2$Mid$year==1999,])
+dim(bank.dat.2021$Mid[bank.dat.2021$Mid$year==1999,])
+
+arrange(unique(bank.dat.db2$Mid[bank.dat.db2$Mid$year==1999,c("tow", "lat", "lon")]), tow)
+arrange(unique(bank.dat.db2$Mid[bank.dat.db2$Mid$year==2021,c("tow", "lat", "lon")]), tow)
+unique(bank.dat.2021$Mid[bank.dat.2021$Mid$year==1999,c("tow", "lat", "lon")])
+
+mean(bank.dat.2021$Mid[bank.dat.2021$Mid$year==1999,]$lat)
+mean(bank.dat.2021$Mid[bank.dat.2021$Mid$year==1999,]$lon)
+mean(bank.dat.2021$Mid[bank.dat.2021$Mid$year==1999,]$depth)
+
+mean(bank.dat.2021$Mid[bank.dat.2021$Mid$year==2000,]$lat)
+mean(bank.dat.2021$Mid[bank.dat.2021$Mid$year==2000,]$lon)
+
+mean(bank.dat.db2$Mid[bank.dat.db2$Mid$year==1999,]$lat)
+mean(bank.dat.db2$Mid[bank.dat.db2$Mid$year==1999,]$lon)
+mean(bank.dat.db2$Mid[bank.dat.db2$Mid$year==1999,]$depth)
+
+mean(bank.dat.db2$Mid[bank.dat.db2$Mid$year==2021,]$lat)
+mean(bank.dat.db2$Mid[bank.dat.db2$Mid$year==2021,]$lon)
+mean(bank.dat.db2$Mid[bank.dat.db2$Mid$year==2021,]$depth)
+
+mean(bank.dat.db2$Mid[bank.dat.db2$Mid$year==1998,]$lat)
+mean(bank.dat.db2$Mid[bank.dat.db2$Mid$year==1998,]$lon)
+mean(bank.dat.db2$Mid[bank.dat.db2$Mid$year==1998,]$depth)
+
+mw.dat.all.db2$Mid[mw.dat.all.db2$Mid$year==1998,]
+
+ggplot() + 
+  geom_boxplot(data=bank.dat.db2$Mid, aes(year, depth, group=year)) + 
+  geom_boxplot(data=bank.dat.2021$Mid, aes(year, depth, group=year), fill="yellow", alpha=0.5)
+ggplot() + 
+  geom_boxplot(data=bank.dat.db2$Sab, aes(year, depth, group=year)) + 
+  geom_boxplot(data=bank.dat.2021$Sab, aes(year, depth, group=year), fill="yellow", alpha=0.5)
+
+require(tmap)
+tmap_mode("view")
+tm_shape(st_as_sf(bank.dat.db2$Mid, coords=c(X="lon", Y="lat"), crs=4326))+  
+  tm_dots("depth") +
+  tm_basemap(leaflet::providers$Esri.OceanBasemap)
+
+tm_shape(st_as_sf(bank.dat.2021$Mid, coords=c(X="lon", Y="lat"), crs=4326))+  
+  tm_dots("depth") +
+  tm_basemap(leaflet::providers$Esri.OceanBasemap)
+
+tm_shape(st_as_sf(bank.dat.2021$Sab, coords=c(X="lon", Y="lat"), crs=4326))+  
+  tm_dots("depth") +
+  tm_basemap(leaflet::providers$Esri.OceanBasemap)
+
+tm_shape(st_as_sf(bank.dat.db2$Sab, coords=c(X="lon", Y="lat"), crs=4326))+  
+  tm_dots("depth") +
+  tm_basemap(leaflet::providers$Esri.OceanBasemap)
+
+ggplot() + 
+  geom_text(data=bank.dat.db2$Mid, aes(lon, lat, label=round(depth,0)), colour="red") + 
+  geom_text(data=bank.dat.2021$Mid, aes(lon, lat, label=round(depth,0)))+
+  facet_wrap(~year)
+
+a <- ggplot() + 
+  geom_text(data=bank.dat.2021$Sab[bank.dat.2021$Sab$year==1999,], aes(lon, lat, label=round(tow,0)), colour="red") + 
+  geom_text(data=bank.dat.2021$Mid[bank.dat.2021$Mid$year==1999,], aes(lon, lat, label=round(tow,0))) +
+  ggtitle("1999 - before\n(red assigned to Sable, black assigned to Middle)")
+
+b <- ggplot() + 
+  geom_text(data=bank.dat.db2$Sab[bank.dat.db2$Sab$year==1999,], aes(lon, lat, label=round(tow, 0)), colour="red") + 
+  geom_text(data=bank.dat.db2$Mid[bank.dat.db2$Mid$year==1999,], aes(lon, lat, label=round(tow,0))) +
+  ggtitle("1999 - after\n(red assigned to Sable, black assigned to Middle)")
+
+require(patchwork)
+a+b
+# The depths for 1999 are almost certainly wrong!
+
+mid_sum_new <- mw.dat.all.db2$Mid %>%
+  group_by(year, tow) %>%
+  dplyr::summarize(new=n())
+mid_sum_old <- mw.dat.all.2021$Mid %>%
+  group_by(year, tow) %>%
+  dplyr::summarize(old=n())
+
+mid_sum <- full_join(mid_sum_new, mid_sum_old)
+
+head(mid_sum)
+
+mid_sum[is.na(mid_sum$new),]
+mid_sum[is.na(mid_sum$old),]
+
+sum(mid_sum[is.na(mid_sum$old),]$new)
+sum(mid_sum[is.na(mid_sum$new),]$old)
+
+unique(mw.dat.all.db2$Mid[mw.dat.all.db2$Mid$year==1986 & mw.dat.all.db2$Mid$tow==2, c("lon", "lat")])
+unique(mw.dat.all.2021$Mid[mw.dat.all.2021$Mid$year==1986 & mw.dat.all.2021$Mid$tow==77, c("lon", "lat")])
+
+unique(mw.dat.all.db2$Mid[mw.dat.all.db2$Mid$year==1988 & mw.dat.all.db2$Mid$tow==2, c("lon", "lat")])
+unique(mw.dat.all.2021$Mid[mw.dat.all.2021$Mid$year==1988 & mw.dat.all.2021$Mid$tow==101, c("lon", "lat")])
+
+unique(mw.dat.all.db2$Mid[mw.dat.all.db2$Mid$year==1992 & mw.dat.all.db2$Mid$tow==4, c("lon", "lat")])
+unique(mw.dat.all.2021$Mid[mw.dat.all.2021$Mid$year==1992 & mw.dat.all.2021$Mid$tow==86, c("lon", "lat")])
+
+mid_sum[]
+
+> mid_sum[is.na(mid_sum$new),]
+# A tibble: 3 x 4
+# Groups:   year [3]
+year  tow     new   old
+<chr> <chr> <int> <int>
+  1 1986  77       NA    30
+2 1988  101      NA    29
+3 1992  86       NA    30
+> mid_sum[is.na(mid_sum$old),]
+# A tibble: 10 x 4
+# Groups:   year [5]
+year  tow     new   old
+<chr> <chr> <int> <int>
+  1 1983  14       20    NA
+2 1983  7        30    NA
+3 1986  2        30    NA
+4 1988  2        29    NA
+5 1992  4        30    NA
+6 2022  1        32    NA
+7 2022  11       10    NA
+8 2022  13       48    NA
+9 2022  4        13    NA
+10 2022  7        24    NA
+
+
+# these years have survey data but no MWSH
+87, 95, 97, 98, 99, 00, 01, 02, 03, 05, 06, 08, 09, 10
 
 for(i in names(surv.dat.2021)){
   print(i)
@@ -1336,3 +1505,333 @@ for(i in 1:nrow(cruises_added)){
 missing_from_csv$MW.dat.2021==(missing_from_csv$weights82+missing_from_csv$weights92)
 
 missing_from_csv[missing_from_csv$MW.dat.2021>0,]
+
+
+
+### GBb
+
+summary(bank.dat.db2$GBb[bank.dat.db2$GBb$year==1986,])
+summary(bank.dat.2021$GBb[bank.dat.2021$GBb$year==1986,])
+survey.obj.db2$GBb$model.dat$n[survey.obj.db2$GBb$model.dat$year==1986]
+survey.obj.2021$GBb$model.dat$n[survey.obj.2021$GBb$model.dat$year==1986]
+table(bank.dat.db2$GBb[bank.dat.db2$GBb$year==1986,]$random)
+table(bank.dat.2021$GBb[bank.dat.2021$GBb$year==1986,]$random)
+dim(surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1986,])
+dim(surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1986,])
+# dates added
+# depths changed slightly
+
+ggplot() + 
+  geom_text(data=surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1986,], aes(tow, Strata_ID, label=tow), colour="red", nudge_x=0.1) +
+  geom_text(data=surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1986,], aes(tow, Strata_ID, label=tow))
+surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1986 & surv.Rand.db2$GBb$tow==11,]
+surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1986 & surv.Rand.2021$GBb$tow==11,]
+# tow 11 now outside strata (it was outside the strata before too)
+
+ggplotly(
+ggplot() + geom_sf(data=offshore[offshore$label=="GBb",]) +
+  geom_point(data=surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1986 & surv.Rand.db2$GBb$tow==11,], aes(slon, slat), colour="red") +
+  geom_point(data=surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1986 & surv.Rand.2021$GBb$tow==11,], aes(slon, slat), colour="black")
+)
+
+surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1986 & surv.Rand.db2$GBb$tow==11,c("slon", "slat")]
+surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1986 & surv.Rand.2021$GBb$tow==11,c("slon", "slat")]
+
+summary(mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1986,])
+summary(mw.dat.all.2021$GBb[mw.dat.all.2021$GBb$year==1986,])
+# slight changes to depth and coordinates
+### NOTHING JUMPS OUT
+
+
+### 1992
+summary(bank.dat.db2$GBb[bank.dat.db2$GBb$year==1992,])
+summary(bank.dat.2021$GBb[bank.dat.2021$GBb$year==1992,])
+# dates added
+# depths changed slightly
+
+summary(mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1992,])
+summary(mw.dat.all.2021$GBb[mw.dat.all.2021$GBb$year==1992,])
+# slight changes to depth and coordinates
+### NOTHING JUMPS OUT
+ggplot() + 
+  geom_text(data=surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1992,], aes(tow, Strata_ID, label=tow), colour="red", nudge_x=0.1) +
+  geom_text(data=surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1992,], aes(tow, Strata_ID, label=tow))
+
+# tow 41 changed strata
+ggplotly(
+  ggplot() + geom_sf(data=offshore[offshore$label=="GBb",]) +
+    geom_point(data=surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1992 & surv.Rand.db2$GBb$tow==41,], aes(slon, slat), colour="red") +
+    geom_point(data=surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1992 & surv.Rand.2021$GBb$tow==41,], aes(slon, slat), colour="black")
+)
+
+### 1997
+summary(bank.dat.db2$GBb[bank.dat.db2$GBb$year==1997,])
+summary(bank.dat.2021$GBb[bank.dat.2021$GBb$year==1997,])
+# dates added
+# depths changed slightly
+# tow type changed
+table(bank.dat.db2$GBb[bank.dat.db2$GBb$year==1997,]$random)
+table(bank.dat.2021$GBb[bank.dat.2021$GBb$year==1997,]$random)
+# exploratory tows tow type corrected to 2 from 0, but these tows were exlcuded all along anyway. 
+
+table(surv.dat.db2$GBb[surv.dat.db2$GBb$year==1997,]$Strata_ID)
+table(surv.dat.2021$GBb[surv.dat.2021$GBb$year==1997,]$Strata_ID)
+
+table(surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1997,]$random)
+table(surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1997,]$random)
+
+table(surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1997,]$tow)
+table(surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1997,]$tow)
+
+summary(mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1997,])
+summary(mw.dat.all.2021$GBb[mw.dat.all.2021$GBb$year==1997,])
+# slight changes to depth and coordinates
+### NOTHING JUMPS OUT
+ggplot() + 
+  geom_text(data=surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1997,], aes(tow, Strata_ID, label=tow), colour="red", nudge_x=0.1) +
+  geom_text(data=surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1997,], aes(tow, Strata_ID, label=tow))
+
+ggplotly(
+  ggplot() + geom_sf(data=offshore[offshore$label=="GBb",]) +
+    geom_point(data=surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1997,], aes(slon, slat), colour="red") +
+    geom_point(data=surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1997,], aes(slon, slat), colour="black")
+)
+
+ggplot() + 
+  geom_text(data=surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1997,], aes(tow, com, colour=as.factor(Strata_ID), label=tow), colour="red", nudge_x=0.1) +
+  geom_text(data=surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1997,], aes(tow, com, colour=as.factor(Strata_ID), label=tow))
+
+surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1997 & surv.Rand.db2$GBb$tow==47,] ==
+surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1997 & surv.Rand.2021$GBb$tow==47,]
+
+surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1997 & surv.Rand.db2$GBb$tow==47,]$h40
+surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1997 & surv.Rand.2021$GBb$tow==47,]$h40
+
+surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1997 & surv.Rand.db2$GBb$tow==47,]$h110
+surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1997 & surv.Rand.2021$GBb$tow==47,]$h110
+#h40 and h110 changed. why? 
+
+surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1997 & surv.Rand.db2$GBb$tow==2,] ==
+  surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1997 & surv.Rand.2021$GBb$tow==2,]
+
+for (i in paste0("h", seq(5, 200, 5))) {
+  print(i)
+  print(round(surv.Rand.db2$GBb[surv.Rand.db2$GBb$year==1997 & surv.Rand.db2$GBb$tow==47,i], 1) ==
+    round(surv.Rand.2021$GBb[surv.Rand.2021$GBb$year==1997 & surv.Rand.2021$GBb$tow==47,i], 1))
+}
+
+unique(all.surv.dat.2021$cruise)
+
+
+mw.dat.sum.db2 <- mw.dat.all.db2$GBb %>%
+  group_by(year) %>%
+  summarize(tows=length(unique(tow)))
+
+mw.dat.sum.2021 <- mw.dat.all.2021$GBb %>%
+  group_by(year) %>%
+  summarize(tows=length(unique(tow)))
+
+ggplot() + geom_line(data=mw.dat.sum.db2, aes(year, tows, group=1), colour="red") + 
+  geom_line(data=mw.dat.sum.db2, aes(year, tows, group=1), colour="blue")
+
+mw.dat.sum.db2 <- mw.dat.all.db2$GBb %>%
+  group_by(year) %>%
+  summarize(samples=n())
+
+mw.dat.sum.2021 <- mw.dat.all.2021$GBb %>%
+  group_by(year) %>%
+  summarize(samples=n())
+
+ggplot() + geom_line(data=mw.dat.sum.db2, aes(year, samples, group=1), colour="red") + 
+  geom_line(data=mw.dat.sum.db2, aes(year, samples, group=1), colour="blue")
+
+ggplot() + geom_boxplot(data=mw.dat.all.db2$GBa, aes(year, depth), fill="red", alpha=0.5) + 
+  geom_boxplot(data=mw.dat.all.2021$GBa, aes(year, depth), fill="blue", alpha=0.5)
+
+# check depths of mwsh samples for GBb for 1987 and 1998
+# check depths of mwsh samples for GBa for 1998 
+
+ggplot() + geom_text(data=mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1998,], aes(lon, lat, label=tow), colour="red") + 
+  geom_text(data=mw.dat.all.2021$GBb[mw.dat.all.2021$GBb$year==1998,], aes(lon, lat, label=tow), colour="blue") 
+
+ggplot() + geom_point(data=mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1998,], aes(tow, depth), colour="red") + 
+  geom_point(data=mw.dat.all.2021$GBb[mw.dat.all.2021$GBb$year==1998,], aes(tow, depth), colour="blue") 
+
+bank.dat.db2$GBb[bank.dat.db2$GBb$year==1998 & bank.dat.db2$GBb$tow %in% c(45, 50, 122) & bank.dat.db2$GBb$state=="live",c("year", "tow", "lon","lat", "depth")]
+bank.dat.2021$GBb[bank.dat.2021$GBb$year==1998 & bank.dat.2021$GBb$tow %in% c(45, 50, 122) & bank.dat.2021$GBb$state=="live",c("year", "tow", "lon","lat", "depth")]
+
+unique(mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1998 & mw.dat.all.db2$GBb$tow %in% c(45, 50, 122), c("year", "tow", "lon","lat", "depth")])
+unique(mw.dat.all.2021$GBb[mw.dat.all.2021$GBb$year==1998 & mw.dat.all.2021$GBb$tow %in% c(45, 50, 122), c("year", "tow", "lon","lat", "depth")])
+# GBb 1998 sample depths updated. The new ones are correct (match tow data)
+
+ggplot() + geom_text(data=mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1987,], aes(lon, lat, label=tow), colour="red", position="jitter") + 
+  geom_text(data=mw.dat.all.2021$GBb[mw.dat.all.2021$GBb$year==1987,], aes(lon, lat, label=tow), colour="blue") 
+
+ggplot() + geom_point(data=mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1987,], aes(tow, depth), colour="red") + 
+  geom_point(data=mw.dat.all.2021$GBb[mw.dat.all.2021$GBb$year==1987,], aes(tow, depth), colour="blue") 
+
+ggplot() + geom_boxplot(data=mw.dat.all.db2$GBb, aes(year, depth), fill="red", alpha=0.5) + 
+  geom_boxplot(data=mw.dat.all.2021$GBb, aes(year, depth), fill="blue", alpha=0.5)
+
+
+bank.dat.db2$GBb[bank.dat.db2$GBb$year==1987 & bank.dat.db2$GBb$tow %in% c(313, 49, 53) & bank.dat.db2$GBb$state=="live",c("year", "tow", "lon","lat", "depth")]
+bank.dat.2021$GBb[bank.dat.2021$GBb$year==1987 & bank.dat.2021$GBb$tow %in% c(313, 49, 53) & bank.dat.2021$GBb$state=="live",c("year", "tow", "lon","lat", "depth")]
+
+bank.dat.2021$GBb[bank.dat.2021$GBb$year==1987 & bank.dat.2021$GBb$state=="live",c("year", "tow", "lon","lat", "depth")]
+bank.dat.db2$GBb[bank.dat.db2$GBb$year==1987 & bank.dat.db2$GBb$state=="live",c("year", "tow", "lon","lat", "depth")]
+
+unique(mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1987, c("year", "tow", "lon","lat", "depth")])
+unique(mw.dat.all.2021$GBb[mw.dat.all.2021$GBb$year==1987, c("year", "tow", "lon","lat", "depth")])
+
+MW.dat.2021[MW.dat.2021$bank=="GBb" & MW.dat.2021$year==1987,]$tow
+MW.dat.new.db2[MW.dat.new.db2$bank=="GBb" & MW.dat.new.db2$year==1987,]$tow
+MW.dat.db2[MW.dat.db2$bank=="GBb" & MW.dat.db2$year==1987,]$tow
+unique(MW.dat.2021[MW.dat.2021$bank=="GBb" & MW.dat.2021$year==1987 & MW.dat.2021$tow %in% c(401, 602, 603, 605), c("year", "month", "tow", "lon", "lat", "depth")])
+
+ggplot() + geom_sf(data=offshore[offshore$label=="GBb",]) + 
+  #geom_text(data=mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1987,], aes(lon, lat, label=tow), colour="red") + 
+  geom_text(data=mw.dat.all.2021$GBb[mw.dat.all.2021$GBb$year==1987,], aes(lon, lat, label=tow), colour="green") +
+  #geom_text(data=bank.dat.db2$GBb[bank.dat.db2$GBb$year==1987,], aes(lon, lat, label=tow), colour="red") #+ 
+  geom_text(data=bank.dat.2021$GBb[bank.dat.2021$GBb$year==1987,], aes(lon, lat, label=tow), colour="blue") 
+
+mw.dat.all.2021$GBb[mw.dat.all.2021$GBb$year==1987 & mw.dat.all.2021$GBb$tow %in% c(401, 602, 603, 605),]
+unique(mw.dat.all.2021$GBb[mw.dat.all.2021$GBb$year==1987,]$ID)
+unique(mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1987,]$ID)
+
+ggplot() + geom_sf(data=offshore[offshore$label=="GBb",]) + 
+  geom_text(data=mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1987 & mw.dat.all.db2$GBb$tow==0,], aes(lon, lat, label=tow), colour="red") 
+mw.dat.all.db2$GBb[mw.dat.all.db2$GBb$year==1987,]
+
+MW.dat.db2[MW.dat.db2$bank%in% c("GBb", "GBa", "GB") & MW.dat.db2$year==1987 & MW.dat.db2$tow %in% c(401, 602, 603, 604, 605, 606),]
+dim(MW.dat.2021[MW.dat.2021$bank%in% c("GBb", "GBa", "GB") & MW.dat.2021$year==1987 & MW.dat.2021$tow %in% c(401, 602, 603, 604, 605, 606),])
+
+MW.dat.db2[MW.dat.db2$bank=="GBb" & MW.dat.db2$year==1987 & MW.dat.db2$cruise== "P357",]
+unique(MW.dat.2021[MW.dat.2021$bank=="GBb" & MW.dat.2021$year==1987 & MW.dat.2021$cruise== "P357",]$tow)
+
+unique(MW.dat.new.db2[MW.dat.new.db2$bank=="GBb" & MW.dat.new.db2$year==1987 & MW.dat.new.db2$cruise== "P357",]$tow)
+MW.dat.new.2021[MW.dat.new.2021$bank=="GBb" & MW.dat.new.2021$year==1987 & MW.dat.new.2021$cruise== "P357",]$tow
+
+dim(MW.dat.new.db2[MW.dat.new.db2$cruise=="P357",])
+
+table(MW.dat.new.db2$cruise, MW.dat.new.db2$bank)
+table(MW.dat.new.2021$cruise, MW.dat.new.2021$bank)
+table(MW.dat.2021$cruise, MW.dat.2021$bank)
+arrange(unique(MW.dat.new.db2[,c("cruise","year")]), cruise)
+
+bank.dat.db2$GBb[bank.dat.db2$GBb$year==1987 & bank.dat.db2$GBb$cruise== "P357",]
+bank.dat.2021$GBb[bank.dat.2021$GBb$year==1987 & bank.dat.2021$GBb$cruise== "P357",]
+
+sort(unique(MW.dat.new.db2[MW.dat.new.db2$bank=="GBa" & MW.dat.new.db2$cruise=="CK32",]$tow))
+sort(unique(MW.dat.new.2021[MW.dat.new.2021$bank=="GBa" & MW.dat.new.2021$cruise=="CK32",]$tow))
+
+sort(unique(all.surv.dat.db2[all.surv.dat.db2$bank=="GBa" & all.surv.dat.db2$cruise=="CK32",]$tow))
+
+# dropped tows 401, 602, 603, and 605 from GBb 1987 samples
+
+ggplot() + geom_sf(data=offshore[offshore$label=="GBb",]) +
+  geom_point(data=unique(MW.dat.2021[MW.dat.2021$bank=="GBb" & MW.dat.2021$year==1987 & MW.dat.2021$tow %in% c(401, 602, 603, 605), c("year", "month", "tow", "lon", "lat", "depth")])
+, aes(lon, lat))  
+
+
+# gba 1998
+ggplot() + geom_text(data=mw.dat.all.db2$GBa[mw.dat.all.db2$GBa$year==1998,], aes(lon, lat, label=tow), colour="red") + 
+  geom_text(data=mw.dat.all.2021$GBa[mw.dat.all.2021$GBa$year==1998,], aes(lon, lat, label=tow), colour="blue") 
+
+ggplot() + geom_point(data=mw.dat.all.db2$GBa[mw.dat.all.db2$GBa$year==1998,], aes(tow, depth), colour="red") + 
+  geom_point(data=mw.dat.all.2021$GBa[mw.dat.all.2021$GBa$year==1998,], aes(tow, depth), colour="blue") 
+
+for(i in c(107, 114, 12, 141, 17, 21, 38, 42, 54, 61, 94)) {
+  print(i)
+  mwtownew <- unique(mw.dat.all.db2$GBa[mw.dat.all.db2$GBa$year==1998 & mw.dat.all.db2$GBa$tow ==i,c("year", "tow", "lon","lat", "depth")])
+  mwtowold <- unique(mw.dat.all.2021$GBa[mw.dat.all.2021$GBa$year==1998 & mw.dat.all.2021$GBa$tow ==i,c("year", "tow", "lon","lat", "depth")])
+  townew <- unique(bank.dat.db2$GBa[bank.dat.db2$GBa$year==1998 & bank.dat.db2$GBa$tow ==i,c("year", "tow", "lon","lat", "depth")])
+  towold <- unique(bank.dat.2021$GBa[bank.dat.2021$GBa$year==1998 & bank.dat.2021$GBa$tow ==i,c("year", "tow", "lon","lat", "depth")])
+  
+  print(mwtownew$depth==townew$depth)
+  print(mwtownew$depth==towold$depth)
+  print(mwtowold$depth==towold$depth)
+  print(mwtowold$depth==townew$depth)
+  print(mwtowold$depth==mwtownew$depth)
+}
+
+
+# gba 1992
+ggplot() + geom_text(data=mw.dat.all.db2$GBa[mw.dat.all.db2$GBa$year==1992,], aes(lon, lat, label=tow), colour="red") + 
+  geom_text(data=mw.dat.all.2021$GBa[mw.dat.all.2021$GBa$year==1992,], aes(lon, lat, label=tow), colour="blue") 
+
+ggplot() + geom_point(data=mw.dat.all.db2$GBa[mw.dat.all.db2$GBa$year==1992,], aes(tow, depth), colour="red") + 
+  geom_point(data=mw.dat.all.2021$GBa[mw.dat.all.2021$GBa$year==1992,], aes(tow, depth), colour="blue") 
+
+for(i in c(100,107,111,118,13,132,136,18,27,31,33,58,63,70)) {
+  print(i)
+  mwtownew <- unique(mw.dat.all.db2$GBa[mw.dat.all.db2$GBa$year==1992 & mw.dat.all.db2$GBa$tow ==i,c("year", "tow", "lon","lat", "depth")])
+  mwtowold <- unique(mw.dat.all.2021$GBa[mw.dat.all.2021$GBa$year==1992 & mw.dat.all.2021$GBa$tow ==i,c("year", "tow", "lon","lat", "depth")])
+  townew <- unique(bank.dat.db2$GBa[bank.dat.db2$GBa$year==1992 & bank.dat.db2$GBa$tow ==i,c("year", "tow", "lon","lat", "depth")])
+  towold <- unique(bank.dat.2021$GBa[bank.dat.2021$GBa$year==1992 & bank.dat.2021$GBa$tow ==i,c("year", "tow", "lon","lat", "depth")])
+  
+  print(mwtownew$depth==townew$depth)
+  print(mwtownew$depth==towold$depth)
+  print(mwtowold$depth==towold$depth)
+  print(mwtowold$depth==townew$depth)
+  print(mwtowold$depth==mwtownew$depth)
+}
+# GBa 1998 sample depths updated. The new ones are correct (match tow data)
+
+
+ggplot() + geom_sf(data=offshore[offshore$label %in% c("GB", "GBa", "GBb"),]) +
+  geom_text(data=MW.dat.2021[MW.dat.2021$bank %in% c("GB", "GBa", "GBb") & MW.dat.2021$cruise=="P294",], aes(lon, lat, label=tow), colour="red")+
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GB", "GBa", "GBb") & MW.dat.new.db2$cruise=="P294",], aes(lon, lat, label=tow)) 
+
+sort(as.numeric(unique(MW.dat.2021[MW.dat.2021$bank %in% c("GB", "GBa", "GBb") & MW.dat.2021$cruise=="P294","tow"]))) %in% sort(unique(MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GB", "GBa", "GBb") & MW.dat.new.db2$cruise=="P294","tow"]))
+# 8 tows removed from GB
+
+ggplot() + 
+  geom_point(data=MW.dat.2021[MW.dat.2021$bank %in% c("GB", "GBa", "GBb") & MW.dat.2021$cruise=="P294",], aes(as.numeric(tow), month), colour="red") +
+  geom_point(data=MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GB", "GBa", "GBb") & MW.dat.new.db2$cruise=="P294",], aes(as.numeric(tow), month), colour="black")
+
+missing <- sort(as.numeric(unique(MW.dat.2021[MW.dat.2021$bank %in% c("GB", "GBa", "GBb") & MW.dat.2021$cruise=="P294","tow"])))[which(!sort(as.numeric(unique(MW.dat.2021[MW.dat.2021$bank %in% c("GB", "GBa", "GBb") & MW.dat.2021$cruise=="P294","tow"]))) %in% 
+  sort(unique(MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GB", "GBa", "GBb") & MW.dat.new.db2$cruise=="P294","tow"])))]
+dim(MW.dat.2021[MW.dat.2021$bank %in% c("GB", "GBa", "GBb") & MW.dat.2021$cruise=="P294" & MW.dat.2021$tow %in% missing,])
+
+ggplot() + geom_sf(data=offshore[offshore$label %in% c("GB", "GBa", "GBb"),]) +
+  geom_text(data=MW.dat.2021[MW.dat.2021$bank %in% c("GB", "GBa", "GBb") & MW.dat.2021$cruise=="P322",], aes(lon, lat, label=tow), colour="red")+
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GB", "GBa", "GBb") & MW.dat.new.db2$cruise=="P326",], aes(lon, lat, label=tow)) 
+
+ggplot() + 
+  geom_point(data=MW.dat.2021[MW.dat.2021$bank %in% c("GB", "GBa", "GBb") & MW.dat.2021$cruise=="P322",], aes(as.numeric(tow), month), colour="red") +
+  geom_point(data=MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GB", "GBa", "GBb") & MW.dat.new.db2$cruise=="P322",], aes(as.numeric(tow), month), colour="black")
+
+bank.dat.2021$GBb[bank.dat.2021$GBb$cruise=="P322",]
+
+ggplot() + 
+  geom_point(data=MW.dat.2021[MW.dat.2021$bank %in% c("GB", "GBa", "GBb") & MW.dat.2021$cruise=="P357",], aes(as.numeric(tow), month), colour="red") +
+  geom_point(data=MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GB", "GBa", "GBb") & MW.dat.new.db2$cruise=="P357",], aes(as.numeric(tow), month), colour="black")
+
+ggplot() + geom_sf(data=offshore[offshore$label %in% c("GB", "GBa", "GBb"),]) +
+  geom_text(data=MW.dat.2021[MW.dat.2021$bank %in% c("GB", "GBa", "GBb") & MW.dat.2021$cruise=="P357",], aes(lon, lat, label=tow), colour="red")+
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$bank %in% c("GB", "GBa", "GBb") & MW.dat.new.db2$cruise=="P357",], aes(lon, lat, label=tow)) 
+
+table(all.surv.dat.db2[all.surv.dat.db2$cruise=="P384" & all.surv.dat.db2$bank  %in% c("Sab", "Ban"),]$tow, all.surv.dat.db2[all.surv.dat.db2$cruise=="P384" & all.surv.dat.db2$bank  %in% c("Sab", "Ban"),]$bank)
+table(all.surv.dat.2021[all.surv.dat.2021$cruise=="P384" & all.surv.dat.2021$bank  %in% c("Sab", "Ban"),]$tow, all.surv.dat.2021[all.surv.dat.2021$cruise=="P384" & all.surv.dat.2021$bank  %in% c("Sab", "Ban"),]$bank)
+
+ggplot() + geom_sf(data=offshore[offshore$label %in% c("Sab", "Ban"),]) +
+  geom_text(data=all.surv.dat.db2[all.surv.dat.db2$cruise=="P384",], aes(lon, lat, label=tow)) +
+  geom_text(data=all.surv.dat.2021[all.surv.dat.2021$cruise=="P384",], aes(lon, lat, label=tow), colour="red") 
+
+
+table(MW.dat.new.db2[MW.dat.new.db2$cruise=="P384",]$tow, MW.dat.new.db2[MW.dat.new.db2$cruise=="P384",]$bank)
+table(MW.dat.2021[MW.dat.2021$cruise=="P384" & MW.dat.2021$bank %in% c("Sab", "Ban"),]$tow, MW.dat.2021[MW.dat.2021$cruise=="P384" & MW.dat.2021$bank %in% c("Sab", "Ban"),]$bank)
+
+ggplot() + geom_sf(data=offshore[offshore$ID %in% c("Sab", "Ban"),]) +
+  geom_text(data=all.surv.dat.db2[all.surv.dat.db2$cruise=="P384",], aes(lon, lat, label=tow)) +
+  geom_text(data=all.surv.dat.2021[all.surv.dat.2021$cruise=="P384",], aes(lon, lat, label=tow), colour="red") 
+
+ggplot() + geom_sf(data=offshore[offshore$ID %in% c("Sab", "Ban"),]) +
+  geom_text(data=MW.dat.2021[MW.dat.2021$cruise=="P384" & MW.dat.2021$bank %in% c("Sab", "Ban"),], aes(lon, lat, label=tow), colour="red") +
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$cruise=="P384" & MW.dat.new.db2$bank %in% c("Sab", "Ban"),], aes(lon, lat, label=tow))
+
+ggplot() + geom_sf(data=offshore[offshore$ID %in% c("Sab", "Ban"),]) +
+  geom_text(data=MW.dat.new.db2[MW.dat.new.db2$cruise=="P384" & MW.dat.new.db2$bank %in% c("Sab", "Ban"),], aes(lon, lat, label=tow)) 
+
+# tow 110 is on banquereau, but was not included in new database
+  
