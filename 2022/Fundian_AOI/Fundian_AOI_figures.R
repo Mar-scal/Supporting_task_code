@@ -14,20 +14,21 @@ source(paste(direct_fns,"Maps/pectinid_projector_sf.R",sep="")) #logs_and_fish i
 source(paste(direct_fns,"Maps/combo_shp.R",sep="")) #logs_and_fish is function call
 #fundian.aoi <- read.csv(paste0(direct,"2019/Supporting_tasks/Fundian_AOI/fundian_georgebasin_coords.csv"))
 
-fundian.aoi.2022 <- st_read(paste0(direct,"2022/Supporting_tasks/Fundian_AOI/FCBB_riskassessment_extent.shp"))
+fundian.aoi.2022 <- st_read(paste0(direct,"2022/Supporting_tasks/Fundian_AOI/FCBB_riskassessment_extent.shp")) %>%
+  st_transform(32620)
 
 # 2021 coords revised from Gary Pardy (bigger area)
-fundian.aoi <- st_as_sf(data.frame(ID = 1:5, 
-                                   lon  = c(-68.1411, -68.3348, -64.3653, -64.3113, -68.1411),
-                                   lat = c(40.87354, 43.22435, 43.34079, 40.98401, 40.87354)), 
-                        coords=c("lon", "lat"),
-                        crs=4326)
+# fundian.aoi <- st_as_sf(data.frame(ID = 1:5, 
+#                                    lon  = c(-68.1411, -68.3348, -64.3653, -64.3113, -68.1411),
+#                                    lat = c(40.87354, 43.22435, 43.34079, 40.98401, 40.87354)), 
+#                         coords=c("lon", "lat"),
+#                         crs=4326)
+# 
+# fundian.aoi <- st_as_sf(st_cast(st_combine(fundian.aoi), "POLYGON")) %>% st_transform(32620)
+# plot(fundian.aoi)
 
-fundian.aoi <- st_as_sf(st_cast(st_combine(fundian.aoi), "POLYGON")) %>% st_transform(32620)
-plot(fundian.aoi)
-
-ggplot() + geom_sf(data=fundian.aoi.2022, fill="blue", alpha=0.5) +
-  geom_sf(data=fundian.aoi, fill="red", alpha=0.5)
+# ggplot() + geom_sf(data=fundian.aoi.2022, fill="blue", alpha=0.5) +
+#   geom_sf(data=fundian.aoi, fill="red", alpha=0.5)
 
 # this crosses the EEZ. Crop off EEZ. 
 temp <- tempfile()
@@ -42,8 +43,8 @@ eez.all <- st_read(paste0(temp2, "/EEZ.shp"), quiet=T) %>%
   st_transform(4326)
 eez <- st_polygonize(st_combine(eez.all))
 eez <- st_transform(eez,32620)
-eez <- st_crop(eez, fundian.aoi)
-ggplot() + geom_sf(data=fundian.aoi) + geom_sf(data=eez)
+eez <- st_crop(eez, fundian.aoi.2022)
+ggplot() + geom_sf(data=fundian.aoi.2022) + geom_sf(data=eez)
 plot(eez)
 
 #need to exclude points from 29. 
@@ -68,7 +69,7 @@ offshore.spa <- st_transform(offshore.spa,32620)
 offshore.spa <- st_crop(offshore.spa, fundian.aoi) 
 
 ggplot() + geom_sf(data=offshore.spa) +
-  geom_sf(data=fundian.aoi, fill=NA)
+  geom_sf(data=fundian.aoi.2022, fill=NA)
 
 # decided to just append 2019 onto previous years
 years <- 1980:2021
@@ -86,21 +87,25 @@ fish.locs <- fish.locs %>%
   st_transform(32620)
 
 
-ggplot() + geom_sf(data=fundian.aoi) + 
+ggplot() + geom_sf(data=fundian.aoi.2022) + 
   geom_sf(data=eez) +
   geom_sf(data=offshore.spa)+
   geom_sf(data=fish.locs)
 
 # Now find all the data within these polygons
-dim(fish.locs) #240652
-fish.locs <- fish.locs[fundian.aoi,] #223179      
+dim(fish.locs) #253526      
+fish.locs.old <- fish.locs[fundian.aoi.2022,] #223179   
+fish.locs.sf <- st_intersection(fish.locs, fundian.aoi.2022) #223179   
+dim(fish.locs.old)==dim(fish.locs.sf) # these match so do whichever way
+
+fish.locs <- fish.locs[fundian.aoi.2022,] #215255      
 dim(fish.locs)
-fish.locs <- fish.locs[eez,] #219888 
+fish.locs <- fish.locs[eez,] #212225       
 dim(fish.locs)
-fish.locs <- fish.locs[offshore.spa,] # 219872 (exclude data in 29W area)  
+fish.locs <- fish.locs[offshore.spa,] # 212225 (exclude data in 29W area)  
 dim(fish.locs)
 
-ggplot() + geom_sf(data=fundian.aoi) + 
+ggplot() + geom_sf(data=fundian.aoi.2022) + 
   geom_sf(data=eez) +
   geom_sf(data=offshore.spa) + 
   geom_sf(data=fish.locs) 
@@ -118,13 +123,34 @@ table(aggregate(pro.repwt ~ year + vesid,inside.dat,length)$year)
 # need the vessel info since Dave provided it last year
 # In 2022, they asked for 1980-2021 for this new bbox
 inside.dat <- inside.dat %>%
-  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum)
+  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, vesid)
 
 fleet <- read.csv(paste0(direct, "Data/Offshore_Fleet.csv"))
-fleet <- fleet %>% rename(vrnum = ID)
 
-inside.dat <- left_join(inside.dat, fleet) %>%
+inside.dat.2007 <- inside.dat %>%
+  filter(year<2008) %>%
+  dplyr::select(-vrnum) %>%
+  rename(vrnum = vesid) %>%
+  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum)
+# fleet.2007 <- fleet %>% rename(vrnum=Pre_2008_ID) %>% dplyr::select(vrnum, ID, Vessel, Company) %>%
+#   filter(!Vessel=="Cape Blomidon")
+# inside.dat.2007 <- left_join(inside.dat.2007, fleet.2007) %>%
+#   dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, Vessel, Company)
+# 
+inside.dat.2008 <- inside.dat %>%
+  filter(year>2007 & year<2016)
+fleet.2008 <- fleet %>% rename(vrnum=ID) %>% filter(!Vessel=="MAUDE ADAMS")
+inside.dat.2008 <- left_join(inside.dat.2008, fleet.2008) %>%
   dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, Vessel, Company)
+
+inside.dat.2016 <- inside.dat %>%
+  filter(year>2015)
+fleet.2016 <- fleet %>% rename(vrnum=ID) %>% filter(!Vessel=="ATLANTIC GUARDIAN")
+inside.dat.2016 <- left_join(inside.dat.2016, fleet.2016) %>%
+  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, Vessel, Company)
+
+inside.dat <- full_join(inside.dat.2007, rbind(inside.dat.2008, inside.dat.2016)) %>%
+  dplyr::arrange(year, Company, vrnum, lon, lat)
 
 rm(eez.all)
 rm(eez)
@@ -133,7 +159,7 @@ rm(offshore.spa)
 offshore_map <- pecjector(area="offshore", add_layer=list(land="world",
                                                      sfa="offshore"))
 
-map <- offshore_map + geom_sf(data=st_transform(fundian.aoi, 4326), fill=NA, colour="red", lty="dashed") + 
+map <- offshore_map + geom_sf(data=st_transform(fundian.aoi.2022, 4326), fill=NA, colour="red", lty="dashed") + 
   geom_point(data=inside.dat, aes(lon, lat)) +
   ggtitle("1980-2021")
 
@@ -146,7 +172,7 @@ require(patchwork)
 maps <- NULL
 yr5 <- seq(1980, 2021, 5)
 for(i in 1:length(yr5)){
-  map1 <- offshore_map + geom_sf(data=fundian.aoi, fill=NA, colour="red", lty="dashed") + 
+  map1 <- offshore_map + geom_sf(data=fundian.aoi.2022, fill=NA, colour="red", lty="dashed") + 
     geom_point(data=inside.dat[inside.dat$year %in% yr5[i]:(yr5[i]+4),], aes(lon, lat)) +
     ggtitle(paste0(yr5[i], "-", (yr5[i]+4)))
   if(i==1) maps <- map1
@@ -157,8 +183,7 @@ png(file=paste0(direct,"2022/Supporting_tasks/Fundian_AOI/fishing_locations_1980
 maps
 dev.off()
 
-
-write.csv(inside.dat,paste0(direct,"2022/Supporting_tasks/Fundian_AOI/FGB_fishery_locations_with_vessel_names_1980-2021_broaderpoly.csv"))
+write.csv(inside.dat,paste0(direct,"2022/Supporting_tasks/Fundian_AOI/FGB_fishery_locations_with_vessel_names_1980-2021.csv"))
 
 # then append to last year in excel
 
