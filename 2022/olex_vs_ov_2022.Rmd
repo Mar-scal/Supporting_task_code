@@ -6,7 +6,7 @@ editor_options:
 ---
 ### Comparisons to prepare for transition to Olex
 
-Comparative tow tracking occurred on Middle, Browns North, Georges Bank Monitoring Stations, and German Bank in Spring 2022. 
+Comparative tow tracking occurred on Middle, Browns North, Georges Bank Monitoring Stations, and German Bank in Spring 2022
 
 ```{r, echo=F, include=F}
 # read in functions and load packages
@@ -30,8 +30,8 @@ require(lubridate)
 ```{r, echo=F, include=F, eval=F}
 # Starting with OV, grab the folder names in which the logs are saved
 
-folders <- c("LE15BBNlog", "LE15BBNextralog", "LE15GBMonlog", "LE15GERlog"#, "Middlelogs"
-  )
+folders <- c("LE15/LE15BBNlog", "LE15/LE15BBNextralog", "LE15/LE15GBMonlog", "LE15/LE15GERlog",
+             "LE16/GBalogs", "LE16/GBblogs", "LE16/GBaextralogs")#, "Middlelogs"
 
 # now we're going to loop through the OV log files applying both the getdis function, and mave calculations in order to do high-res comparisons
 ovd_raw <- NULL 
@@ -43,10 +43,10 @@ for(i in folders){
   print(i)
   
   ## OLD WAY
-  townums <- gsub(x=list.files(paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/", i, "/")), pattern=".log", replacement="")
+  townums <- gsub(x=list.files(paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/", i, "/")), pattern=".log", replacement="")
   #if(any(townums=="440")) townums <- townums[!townums %in% c("440", "450")]
   ovd_sub <- dist.coef(tows=townums, 
-                       path=paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/", i, "/"),
+                       path=paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/", i, "/"),
                        w=c(1:10,9:1),rule=8,smooth=T,plt=F)
   ovd_sub[[2]]$folder <- i
   ovd_sub[[1]]$PID <- 1:nrow(ovd_sub[[1]])
@@ -59,7 +59,7 @@ for(i in folders){
   for(j in townums){
     print(j)
     sf_use_s2(FALSE)
-    towlog <- read.table(paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/", i, "/", j, ".log"), skip=5)
+    towlog <- read.table(paste0("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/", i, "/", j, ".log"), skip=5)
     
     towlog$lon <- as.numeric(gsub(x=towlog$V2, pattern=",", replacement=""))
     towlog$lat <- as.numeric(gsub(x=towlog$V3, pattern=",", replacement=""))
@@ -128,8 +128,8 @@ for(i in folders){
 windows <- 5:20
 olex_mave <- NULL
 mave1 <- NULL
-# this actually contains all middle and sable tracks too
-tracks <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/GBBBNGERLE15.gz", ntows=212, type="sf")
+# this actually contains all spring and summer tracks
+tracks <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE16/LE16tracks.gz", type="sf")
 tracks_df <- as.data.frame(st_coordinates(tracks))
 for(w in windows){
   for(i in 1:nrow(tracks)){
@@ -270,6 +270,9 @@ tracks <- tracks %>%
 # remove any super long or super short tows
 summary(tracks$length)
 summary(ovd_raw$length)
+
+tracks[as.numeric(tracks$length)>1200,]
+tracks <- tracks[!(tracks$ID==499 & tracks$bank=="GBa"),]
 
 rawlengthcomp <- as.data.frame(tracks) %>%
   dplyr::select(tow, length) %>%
@@ -553,7 +556,7 @@ ggplot() + geom_point(data=dis_hist, aes(ymd_hms(TOW_DATE), DIS_COEF_ID))
 
 ### comparing final distance coefs
 ```{r, echo=F, message=F, warning=F}
-tracks_corr <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/GBBBNGERLE15.gz", type="load", correction_factor = 1.04)
+tracks_corr <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE16/LE16tracks.gz", type="load", correction_factor = 1.04)
 
 corr_compare <- tracks_corr %>%
   rename(ID=tow,
@@ -632,7 +635,7 @@ ggplot() + geom_point(data=overall, aes(as.numeric(dis_coef_corr), as.numeric(di
 ```
 
 ### Comparing Olex tow lengths to sf tow lengths
-```{r}
+```{r echo=F, message=F, warning=F, include=F, eval=F}
 sablengths <- readxl::read_xlsx("Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/Sab/OS.scallop.tow.SabLE15_towlengths.xlsx")
 source("C:/Users/keyserf/Documents/Github/Assessment_fns/Survey_and_OSAC/convert.dd.dddd.r")
 sablengths$X <- convert.dd.dddd(x = sablengths$START_LON, format="dec.deg")
@@ -664,6 +667,7 @@ ggplot() + geom_point(data=sablengths, aes(TOW_LENGTH_NM, as.numeric(length_nm))
   geom_abline(slope=1, intercept=0)
 
 ```
+
 Observations from Trish:      
  - GPS could be off by 1 hundredth. Olex has a separate feed (not a splitter).   
  - We had a freezing issue last year when we tried to use a splitter.    

@@ -13,7 +13,7 @@ ggplot() + geom_point(data=ann_bank_sum, aes(year, prorated_discards)) #+ facet_
 ggplot() + geom_point(data=ann_bank_sum, aes(year, prorated_discards)) + facet_grid(~bank)
 
 
-halibut <- select(discards_report, TRIP, prophooks, bank, hm, `HALIBUT(ATLANTIC)`)
+halibut <- select(discards_report2, TRIP, prophooks, bank, hm, `HALIBUT(ATLANTIC)`)
 halibut <- left_join(halibut, unique(set_coord[, c("TRIP", "LANDING_DATE")]))
 halibut$presence <- ifelse(halibut$`HALIBUT(ATLANTIC)`>0, "present", "absent")
 a <- ggplot() + geom_point(data=halibut, aes(ymd(LANDING_DATE), `HALIBUT(ATLANTIC)`/prophooks, shape=presence)) +
