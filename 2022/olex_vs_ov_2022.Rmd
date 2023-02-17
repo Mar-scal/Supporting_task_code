@@ -262,10 +262,28 @@ Smoothed tows are shorter than raw tows.
 Distance first    
 Using raw values      
 ```{r, echo=F}
-tracks <- tracks %>%
+#UTM 19: German, BBn, GBa, GBb
+#UTM 20: BBs, Sab, Mid
+#UTM 21: Ban, SPB
+tracks_19 <- tracks %>%
+  filter(bank %in% c("GBa", "GBb", "BBn", "Ger")) %>%
+  st_transform(32619) %>%
+  mutate(length=st_length(.)) %>%
+  st_transform(4326)
+
+tracks_20 <- tracks %>%
+  filter(bank %in% c("BBs", "Sab", "Mid")) %>%
   st_transform(32620) %>%
   mutate(length=st_length(.)) %>%
-  st_transform(4326) 
+  st_transform(4326)
+
+tracks_21 <- tracks %>%
+  filter(bank %in% c("Ban")) %>%
+  st_transform(32621) %>%
+  mutate(length=st_length(.)) %>%
+  st_transform(4326)
+
+tracks <- rbind(tracks_19, tracks_20, tracks_21)
 
 # remove any super long or super short tows
 summary(tracks$length)
@@ -535,7 +553,7 @@ source("C:/Users/keyserf/Documents/Github/Assessment_fns/Other_functions/Scallop
 dis_hist <- ScallopQuery("ROracle", db.con="ptran", SQLtext = "Select * from SCALOFF.OSTOWS")
 head(dis_hist)
 require(lubridate)
-dis_hist$year <- year(ymd_hms(dis_hist$TOW_DATE))
+dis_hist$year <- year(ymd(dis_hist$TOW_DATE))
 
 dis_hist_means <- dis_hist %>%
   group_by(year) %>%
@@ -556,7 +574,7 @@ ggplot() + geom_point(data=dis_hist, aes(ymd_hms(TOW_DATE), DIS_COEF_ID))
 
 ### comparing final distance coefs
 ```{r, echo=F, message=F, warning=F}
-tracks_corr <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE16/LE16tracks.gz", type="load", correction_factor = 1.04)
+tracks_corr_spring <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE16/LE16tracks.gz", type="load", correction_factor = 1.04)
 
 corr_compare <- tracks_corr %>%
   rename(ID=tow,

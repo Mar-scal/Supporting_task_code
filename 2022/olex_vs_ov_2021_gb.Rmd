@@ -559,7 +559,7 @@ ggplot() + geom_point(data=dis_hist, aes(ymd_hms(TOW_DATE), DIS_COEF_ID))
 
 ### comparing final distance coefs
 ```{r, echo=F, message=F, warning=F}
-tracks_corr <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/GBBBNGERLE15.gz", type="load", correction_factor = 1.04)
+tracks_corr <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE16/LE16tracks.gz", type="load", correction_factor = 1.04)
 
 corr_compare <- tracks_corr %>%
   rename(ID=tow,
