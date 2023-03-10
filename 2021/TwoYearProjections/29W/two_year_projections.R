@@ -8,7 +8,8 @@ two_year_projections <- function(
   path="Repo working directory (fast)",
   save=F, 
   pred.eval=T,
-  load=T) # will LOAD RDATA AND THEN OVERWRITE IT!
+  load=T,
+  plot_using=NULL) # will LOAD RDATA AND THEN OVERWRITE IT!
 {
   ## packages
   require(tidyverse)
@@ -20,11 +21,12 @@ two_year_projections <- function(
   if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"
   
   #################### Load data ###################
-  
-  direct_bof <- "//DCNSBIONA01A/edc_v1_shr/MARFIS/Shares/ESS/INSHORE SCALLOP/BoF"
+  direct_bof <- "//DCNSBIONA01A/edc_v1_shr/MARFIS/Shares/ESS/Inshore/BoF"
+  direct_29 <- "//DCNSBIONA01A/edc_v1_shr/MARFIS/Shares/ESS/Inshore/SFA29"
   
   if(path == "Network (slow)") {
-    load(file = paste0(direct_bof,"/2020/Assessment/Data/Model/SPA", area, "/SPA", area, "_Model_2019.RData"))
+    if(folder=="BoF") load(file = paste0(direct_bof,"/2020/Assessment/Data/Model/SPA", area, "/SPA", area, "_Model_2019.RData"))
+    if(folder=="29W") load(file = paste0(direct_29,"/2020/model/SFA", area, "_results/SFA_", area, "_2019.RData"))
   }
   
   if(path == "Repo working directory (fast)"){
@@ -155,14 +157,22 @@ two_year_projections <- function(
   # to use an exploitation value for the 1st year projection, set exp = c(0.15, NA)
   # to use an exploitation value for the 2nd year projection, set exp = c(NA, 0.15)
   # to use exploitation values for BOTH years, set exp = c(0.15, 0.15)
-  
+  browser()
   if(pred.eval==T){
     message("running projection evaluation (incl. figures)")
     source(paste0("./", folder, "/proj_eval_plot.R"))
     # note, proj_eval_plot uses process_2y_proj inside!
     realized <- proj_eval_plot(object=mod.res, area=area, surplus=surplus, mu=c(NA, NA), ref.pts=RP, save=save)
   }
-  if(pred.eval==F){
+  if(pred.eval == F & !is.null(plot_using)){
+    message("running projection evaluation (incl. figures)")
+    source(paste0("./", folder, "/proj_eval_plot.R"))
+    # note, proj_eval_plot uses process_2y_proj inside!
+    load(plot_using)
+    realized <- proj_eval_plot(object=mod.res, area=area, surplus=surplus, mu=c(NA, NA), ref.pts=RP, save=save, plot_using=out)
+    return(realized=realized)
+  }
+  if(pred.eval==F & is.null(plot_using)){
     message("skipping projection evaluation")
     if(load==T) {
       message(paste0("loading pred.eval from ./", folder, "/", area, "/twoyearprojections.RData"))
