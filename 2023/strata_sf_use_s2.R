@@ -341,16 +341,6 @@ ggplot() + geom_point(data=info3, aes(as.numeric(area_utm)/1000000, area_km2)) +
   xlab("calculated area (utm)") +
   ylab("recorded area_csv")
 
-info3 <- info3 %>%
-  group_by(label, startyr, s2_read, s2_calc) %>%
-  summarize(total_area = sum(area_km2)) %>%
-  ungroup() %>%
-  full_join(info3) %>% 
-  mutate(alloc_cur = round(area_km2/total_area * 100,0))
-
-dplyr::select(info3[which(!as.numeric(info3$alloc_cur) == round(as.numeric(info3$alloc_utm*100),0)),], -geometry, -ID, -towbl_r, -border, -PName, -X, -col, -Strata_ID, -Strt_ID, -towable_area)
-# keep going here... need to figure out whether tow allocations from CSV match the ones using WGS, UTM, and s2 on/off
-
 unique(dplyr::select(info3, label, utm))
 #UTM 19: German, BBn, GBa, GBb
 #UTM 20: BBs, Sab, Mid
@@ -362,6 +352,19 @@ domain <- github_spatial_import(subfolder = "survey_boundaries", zipname = "surv
 ggplot() + geom_sf(data=domain) + 
   geom_sf(data=UTMs[UTMs$ZONE%in% 19:21 & UTMs$HEMISPHERE=="n",], fill=NA) +
   ylim(40, 50)
+
+info3 <- info3 %>%
+  group_by(label, startyr, s2_read, s2_calc) %>%
+  summarize(total_area = sum(area_km2)) %>%
+  ungroup() %>%
+  full_join(info3) %>% 
+  mutate(alloc_cur = round(area_km2/total_area * 100,0))
+
+alloc <- dplyr::select(info3[which(!as.numeric(info3$alloc_cur) == round(as.numeric(info3$alloc_utm*100),0)),], -geometry, -ID, -towbl_r, -border, -PName, -X, -col, -Strata_ID, -Strt_ID, -towable_area)
+# keep going here... need to figure out whether tow allocations from CSV match the ones using WGS, UTM, and s2 on/off
+
+alloc[which(!as.numeric(alloc$alloc_cur) == as.numeric(alloc$alloc)),]
+
 
 # conclusions:
 # UTM 19 and 20 give the same tow allocations

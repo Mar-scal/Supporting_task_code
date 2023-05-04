@@ -76,7 +76,7 @@ quer.off <- paste(
   sep=""
 )
 # Run the query and add data to the log.lst object
-strata.db <- ScallopQuery(package="ROracle", un="keyserf", pw="Decade06", db.con="ptran", SQLtext= quer.off)
+strata.db <- ScallopQuery(package="ROracle", un="keyserf", pw="", db.con="ptran", SQLtext= quer.off)
 head(strata.db)
 strata.db <- strata.db %>%
   dplyr::filter(grepl(COMMENTS, pattern = "BBn"))
@@ -200,7 +200,7 @@ quer.off <- paste(
   sep=""
 )
 # Run the query and add data to the log.lst object
-strata.db <- ScallopQuery(package="ROracle", un="keyserf", pw="Decade06", db.con="ptran", SQLtext= quer.off)
+strata.db <- ScallopQuery(package="ROracle", un="keyserf", pw="", db.con="ptran", SQLtext= quer.off)
 
 source("C:/Users/keyserf/Documents/Github/Assessment_fns/Maps/Convert_PBSmapping_into_GIS_shapefiles.R")
 
@@ -380,7 +380,7 @@ realstrata
 #BBn strata
 stratashp %>% st_transform(32619) %>% st_area
 
-#indreport <- ScallopQuery(package="ROracle", un="keyserf", pw="Decade06", db.con="ptran", 
+#indreport <- ScallopQuery(package="ROracle", un="keyserf", pw="", db.con="ptran", 
  #            SQLtext= "SELECT * FROM SCALOFF.OSINDUSTRYREPORT_SS_VW")
 load("Y:/Offshore/Assessment/Data/Survey_data/2019/Survey_summary_output/Survey_all_results.Rdata")
 
