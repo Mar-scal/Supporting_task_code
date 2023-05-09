@@ -37,6 +37,7 @@ GB <- st_transform(GB, 32619)
 # rasterize it
 # to get size^2 grid
 size <- 15000 #(grid size in m)
+years <- 2017:2021
 nx <- round((st_bbox(GB)$xmax[[1]] - st_bbox(GB)$xmin[[1]])/size, 0)
 ny <- round((st_bbox(GB)$ymax[[1]] -  st_bbox(GB)$ymin[[1]])/size, 0)
 # grid cells are 5 km2
@@ -70,8 +71,8 @@ fish_sf3 <- dplyr::filter(fish_sf, year>2008 & year >2015) %>%
 
 fish_sf <- rbind(fish_sf2, fish_sf3)
 
-fish_grid <- st_intersection(fish_sf[fish_sf$year==2017,], GBraster) %>%
-  dplyr::group_by(cell, year) %>%
+fish_grid <- st_intersection(fish_sf[fish_sf$year %in% years,], GBraster) %>%
+  dplyr::group_by(cell) %>%
   dplyr::summarize(kg = sum(pro.repwt, na.rm = T),
             hm = sum(hm, na.rm=T),
             nvessels = length(unique(vrnum)),
@@ -81,21 +82,21 @@ st_geometry(fish_grid) <- NULL
 
 fish_grid <- dplyr::left_join(GBraster, fish_grid)
 
-comp <- ggplot() + geom_sf(data=fish_grid) + facet_wrap(~ncompanies) + ggtitle("number of companies")
-ves <- ggplot() + geom_sf(data=fish_grid) + facet_wrap(~nvessels) + ggtitle("number of vessels")
+comp <- ggplot() + geom_sf(data=fish_grid, fill="blue") + facet_wrap(~ncompanies) + ggtitle("number of companies")
+ves <- ggplot() + geom_sf(data=fish_grid, fill="blue") + facet_wrap(~nvessels) + ggtitle("number of vessels")
 catch <- ggplot() + geom_sf(data=fish_grid, aes(fill=kg))
 hm <- ggplot() + geom_sf(data=fish_grid, aes(fill=hm))
 
 
 require(patchwork)
-png(paste0("Y:/Offshore/Data requests/2023/CDD_Peter/grid_", (size/1000)^2, "km2.png"), height=6, width=12, units="in", res=420)
+png(paste0("Y:/Offshore/Data requests/2023/CDD_Peter/grid_", (size/1000)^2, "km2_", length(years), "_years.png"), height=6, width=12, units="in", res=420)
 (catch / hm) | (comp + ves)
 dev.off()
 
 hist_comp <- ggplot() + geom_histogram(data=fish_grid, aes(ncompanies))
 hist_ves <- ggplot() + geom_histogram(data=fish_grid, aes(nvessels))
 
-png(paste0("Y:/Offshore/Data requests/2023/CDD_Peter/grid_", (size/1000)^2, "km2_hist.png"), height=6, width=10, units="in", res=420)
+png(paste0("Y:/Offshore/Data requests/2023/CDD_Peter/grid_", (size/1000)^2, "km2_", length(years), "_years_hist.png"), height=6, width=10, units="in", res=420)
 hist_comp + hist_ves
 dev.off()
 
