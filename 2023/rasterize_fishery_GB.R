@@ -133,3 +133,7 @@ ggplot() + geom_sf(data=GB) + geom_sf(data=test[!is.na(test$year),], aes(fill=kg
 
 test2 <- raster("Y:/Offshore/Data requests/2023/CDD_Peter/GB_scallop_catch_2017.tif")
 plot(test2)
+
+
+
+
