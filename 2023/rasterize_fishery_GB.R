@@ -38,21 +38,29 @@ GB <- st_transform(GB, 32619)
 # to get size^2 grid
 size <- 15000 #(grid size in m)
 years <- 2017:2021
-nx <- round((st_bbox(GB)$xmax[[1]] - st_bbox(GB)$xmin[[1]])/size, 0)
-ny <- round((st_bbox(GB)$ymax[[1]] -  st_bbox(GB)$ymin[[1]])/size, 0)
-# grid cells are 5 km2
+get_grid <- function(gridsize, polygon) {
+  require(sf)
+  require(raster)
+  require(stars)
+  nx <- round((st_bbox(polygon)$xmax[[1]] - st_bbox(polygon)$xmin[[1]])/gridsize, 0)
+  ny <- round((st_bbox(polygon)$ymax[[1]] -  st_bbox(polygon)$ymin[[1]])/gridsize, 0)
+  # grid cells are 5 km2
+  
+  # adjust these numbers to get exactly 1km2
+  xmin <- st_bbox(polygon)$xmin[[1]]
+  xmax <- xmin + ((nx+1)*gridsize)
+  ymin <- st_bbox(polygon)$ymin[[1]]
+  ymax <- ymin + ((ny+1)*gridsize)
+  box <- st_as_sf(x = expand.grid(x=c(xmin,xmax), y=c(ymin, ymax))[c(1,2,4,3),],coords=c(X="x", Y="y"), crs=32619) %>% 
+    st_combine() %>% 
+    st_cast("POLYGON")
+  r <- st_rasterize(sf = st_sf(box), template = st_as_stars(box, nx = (nx+1), ny = (ny+1)))
+  r <- st_as_sf(r)
+  r$cell <- 1:nrow(r)
+  return(r)
+}
 
-# adjust these numbers to get exactly 1km2
-xmin <- st_bbox(GB)$xmin[[1]]
-xmax <- xmin + ((nx+1)*size)
-ymin <- st_bbox(GB)$ymin[[1]]
-ymax <- ymin + ((ny+1)*size)
-box <- st_as_sf(x = expand.grid(x=c(xmin,xmax), y=c(ymin, ymax))[c(1,2,4,3),],coords=c(X="x", Y="y"), crs=32619) %>% 
-  st_combine() %>% 
-  st_cast("POLYGON")
-r <- st_rasterize(sf = st_sf(box), template = st_as_stars(box, nx = (nx+1), ny = (ny+1)))
-GBraster <- st_as_sf(r)
-GBraster$cell <- 1:nrow(GBraster)
+GBraster <- get_grid(gridsize=15000, polygon=GB)
 
 vessels <- read.csv("Y:/Offshore/Assessment/Data/Offshore_Fleet.csv")
 vessels$vrnum <- vessels$ID
