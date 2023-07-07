@@ -1,4 +1,4 @@
-proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
+proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save, plot_using=NULL){
  
   require(patchwork)
   # this will loop through years to run projections for boxplots
@@ -6,59 +6,60 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
   if(area %in% c("1A", "1B", "3", "4", "6")) folder <- "BoF"
   if(area %in% c("29A", "29B", "29C", "29D")) folder <- "29W"
   source(paste0("./", folder, "/process_2y_proj.R"))
-  
-  results_process <- process_2y_proj(object=object, area=area, surplus=surplus, mu=mu, LRP = LRP, USR = USR, lastyear=F, decisiontable=F)
-  
-  options(scipen = 999)
-
-  if(area == "29A") strata <- which(object$labels == "Medium")
-  if(area %in% c("29B", "29C", "29D")) strata <- which(object$labels == "High")
-  
-  strata.area <- object$data$Area[strata]
-  
-  # tidy up the output
-  B.next0 <- map_df(1:length(results_process$B.next0), function(x) rbind(results_process$B.next0[[x]][[strata]]))
-  B.next1 <- map_df(1:length(results_process$B.next1), function(x) rbind(results_process$B.next1[[x]][[strata]]))
-  B.next2 <- map_df(1:length(results_process$B.next2), function(x) rbind(results_process$B.next2[[x]][[strata]]))
-  process <- rbind(B.next0, B.next1, B.next2)
-  
-  # summarize it
-  all_sum <- process %>%
-    dplyr::group_by(year, proj) %>%
-    dplyr::summarize(catch = median(catch),
-                     mu=median(mu),
-                     min=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[1],
-                     lower=quantile(Biomass, na.rm = T,  c(0.05,0.25, 0.75, 0.95))[2],
-                     med=median(Biomass, na.rm = T),
-                     meanB = mean(Biomass, na.rm = T),
-                     upper=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[3],
-                     max=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[4]) 
-  
-  densities <- process %>%
-    dplyr::mutate(density = Biomass/strata.area) %>%
-    dplyr::group_by(year, proj) %>%
-    dplyr::summarize(catch = median(catch),
-                     mu=median(mu),
-                     min=quantile(density, na.rm = T, c(0.05,0.25, 0.75, 0.95))[1],
-                     lower=quantile(density, na.rm = T,  c(0.05,0.25, 0.75, 0.95))[2],
-                     med=median(density, na.rm = T),
-                     meanB = mean(density, na.rm = T),
-                     upper=quantile(density, na.rm = T, c(0.05,0.25, 0.75, 0.95))[3],
-                     max=quantile(density, na.rm = T, c(0.05,0.25, 0.75, 0.95))[4]) 
-  
-  diffs <- all_sum %>%
-    dplyr::select(year, med, proj) %>%
-    tidyr::pivot_wider(names_from=proj, values_from=med) %>%
-    dplyr::rename(actual = `0`,
-                  yr1 = `1`,
-                  yr2 = `2`) %>%
-    dplyr::mutate(actualdiff = yr2 - actual,
-                  actualprop = yr2/actual - 1,
-                  projdiff = yr2 - yr1,
-                  projprop = yr2/yr1 - 1) %>%
-    dplyr::select(year, actualdiff, actualprop, projdiff, projprop) %>%
-    tidyr::pivot_longer(cols=c("actualdiff", "actualprop", "projdiff", "projprop"))
-  
+  browser()
+  if(is.null(plot_using)){
+    results_process <- process_2y_proj(object=object, area=area, surplus=surplus, mu=mu, LRP = LRP, USR = USR, lastyear=F, decisiontable=F)
+    
+    options(scipen = 999)
+    
+    if(area == "29A") strata <- which(object$labels == "Medium")
+    if(area %in% c("29B", "29C", "29D")) strata <- which(object$labels == "High")
+    
+    strata.area <- object$data$Area[strata]
+    
+    # tidy up the output
+    B.next0 <- map_df(1:length(results_process$B.next0), function(x) rbind(results_process$B.next0[[x]][[strata]]))
+    B.next1 <- map_df(1:length(results_process$B.next1), function(x) rbind(results_process$B.next1[[x]][[strata]]))
+    B.next2 <- map_df(1:length(results_process$B.next2), function(x) rbind(results_process$B.next2[[x]][[strata]]))
+    process <- rbind(B.next0, B.next1, B.next2)
+    
+    # summarize it
+    all_sum <- process %>%
+      dplyr::group_by(year, proj) %>%
+      dplyr::summarize(catch = median(catch),
+                       mu=median(mu),
+                       min=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[1],
+                       lower=quantile(Biomass, na.rm = T,  c(0.05,0.25, 0.75, 0.95))[2],
+                       med=median(Biomass, na.rm = T),
+                       meanB = mean(Biomass, na.rm = T),
+                       upper=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[3],
+                       max=quantile(Biomass, na.rm = T, c(0.05,0.25, 0.75, 0.95))[4]) 
+    
+    densities <- process %>%
+      dplyr::mutate(density = Biomass/strata.area) %>%
+      dplyr::group_by(year, proj) %>%
+      dplyr::summarize(catch = median(catch),
+                       mu=median(mu),
+                       min=quantile(density, na.rm = T, c(0.05,0.25, 0.75, 0.95))[1],
+                       lower=quantile(density, na.rm = T,  c(0.05,0.25, 0.75, 0.95))[2],
+                       med=median(density, na.rm = T),
+                       meanB = mean(density, na.rm = T),
+                       upper=quantile(density, na.rm = T, c(0.05,0.25, 0.75, 0.95))[3],
+                       max=quantile(density, na.rm = T, c(0.05,0.25, 0.75, 0.95))[4]) 
+    
+    diffs <- all_sum %>%
+      dplyr::select(year, med, proj) %>%
+      tidyr::pivot_wider(names_from=proj, values_from=med) %>%
+      dplyr::rename(actual = `0`,
+                    yr1 = `1`,
+                    yr2 = `2`) %>%
+      dplyr::mutate(actualdiff = yr2 - actual,
+                    actualprop = yr2/actual - 1,
+                    projdiff = yr2 - yr1,
+                    projprop = yr2/yr1 - 1) %>%
+      dplyr::select(year, actualdiff, actualprop, projdiff, projprop) %>%
+      tidyr::pivot_longer(cols=c("actualdiff", "actualprop", "projdiff", "projprop"))
+  }
   
   # labelling:
   if(!is.null(surplus)){
@@ -125,6 +126,18 @@ proj_eval_plot <- function(object, area, surplus, mu, ref.pts, save){
   }
   if(area =="29A"){
     break2 <- seq(0,10,2)
+  }
+  browser()
+  if(!is.null(plot_using)) {
+    if(!is.null(surplus)){
+      if(surplus==0) num <- 1
+      if(!surplus==0) num <- 2
+    }
+    if(is.null(surplus)) num <- 3
+    all_sum <- plot_using[[num]]$realized$all_sum
+    densities <- plot_using[[num]]$realized$densities
+    diffs <- plot_using[[num]]$realized$diffs
+    process <- plot_using[[num]]$realized$results_process
   }
   
   # boxplot code here

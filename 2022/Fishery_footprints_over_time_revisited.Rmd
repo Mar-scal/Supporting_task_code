@@ -13,8 +13,8 @@ runtime: shiny
 # This script is used to get the fishery footprint over time and to see how it changes.
 # Started by DK in Sept 2017, modified by FK in Nov 2021
 
-yr <- 2021
-years.t <- 2015:2021 # The years of interest make temporary as this could be overwritten when I bring in the survey results...
+yr <- 2022
+years.t <- 2015:2022 # The years of interest make temporary as this could be overwritten when I bring in the survey results...
 ```
 
 ```{r, include=F}
@@ -31,7 +31,7 @@ library(data.table)
 require(maptools)
 require(PBSmapping)
 
-direct <- "//142.2.83.63/cloudscallop/Offshore/Assessment/"
+direct <- "//142.2.93.33/skyscallop/Offshore/Assessment/"
 direct_fns <- "C:/Users/keyserf/Documents/Github/Assessment_fns/"
 
 source(paste(direct_fns,"/Survey_and_OSAC/OSAC_fishery_figures.r",sep="")) #Source1
@@ -54,7 +54,7 @@ fish.dat<-new.log.dat
 #fish.dat <- read.csv("C:/Users/keyserf/Desktop/newlogdat.csv")
 fish.dat$ID<-1:nrow(fish.dat)
 
-out2 <- fishery_footprint_history(years=2015:2021, bnk="GBa", high=0, highcpue=0, subarea=NULL,
+out2 <- fishery_footprint_history(years=2015:2022, bnk="BBn", high=5, highcpue=20, subarea=NULL,
                                 survey=survey, other=other, fish.dat=fish.dat, direct_fns = direct_fns)
 ```
 
@@ -134,7 +134,7 @@ startyear <- reactive(input$startyear)
 months <- reactive(input$months)
 
 out <- eventReactive(input$go_out, {
-  fishery_footprint_history(years=input$startyear:2021, bnk="GBa",
+  fishery_footprint_history(years=input$startyear:2022, bnk="GBa",
                             high=input$high,
                             highcpue=input$highcpue,
                             subarea=input$subarea,

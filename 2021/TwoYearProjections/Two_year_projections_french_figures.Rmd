@@ -9,9 +9,9 @@ editor_options:
 require(purrr)
 require(tidyverse)
 
-areas <- c("1A", "1B", "3", "4", "6", 
-           "GBa", "BBn", 
-           "29A",
+areas <- c(#"1A", "1B", "3", "4", "6", 
+           #"GBa", "BBn", 
+          # "29A",
            "29B",
            "29C",
            "29D"
@@ -76,7 +76,7 @@ for (area in areas){
       png(paste0("./figures/", folder, "/", area, "/zoom_pred_eval.png"), height=6, width=22, res=400, units="in")
       print(plot_grid(out[[1]]$realized$zoom.pred.eval + 
                         theme(legend.position = c(0.5, 0.95), legend.direction="horizontal") + 
-                        ylab(en2fr("Commercial biomass density (metric tonnes/square kilometre",french,custom=rosetta_terms,case = 'sentence')) + 
+                        ylab(paste0(en2fr("Commercial biomass density",french,custom=rosetta_terms,case = 'sentence'), "\n(", en2fr("metric tonnes/square kilometre",french,custom=rosetta_terms,case = 'lower'), ")")) + 
                         scale_fill_brewer(type = "qual", palette = "Paired", name=NULL, direction=-1, labels=c(en2fr("actual",french,custom=rosetta_terms,case = 'lower'), en2fr("year 1",french,custom=rosetta_terms,case = 'lower'), en2fr("year 2",french,custom=rosetta_terms,case = 'lower')))+
                         ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),  
                       out[[2]]$realized$zoom.pred.eval+ 
@@ -115,7 +115,7 @@ for (area in areas){
     
     # the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
     if(area=="GBa")  {
-      png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+      png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12/1.5, width=22/1.5, res=400, units="in")
       print(plot_grid(out[[1]]$realized$evaluation1 + 
                         ggtitle(NULL, subtitle=NULL) +ylab(en2fr("Difference in biomass (mt)",french,custom=rosetta_terms,case = 'sentence'))+ 
                         xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),  
@@ -126,16 +126,16 @@ for (area in areas){
                         ylab(NULL) + 
                         ggtitle(NULL, subtitle=NULL) + xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),
                       out[[1]]$realized$evaluation2 + 
-                        ylim(-1.4,1.4) + 
+                        ylim(-1,1.4) + 
                         ggtitle(NULL, subtitle=NULL) + xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence'))+ 
                         ylab(en2fr("Proportional difference in biomass",french,custom=rosetta_terms,case = 'sentence')), 
                       out[[2]]$realized$evaluation2+ 
                         ylab(NULL) + 
-                        ylim(-1.4,1.4) + 
+                        ylim(-1,1.4) + 
                         ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
                       out[[3]]$realized$evaluation2+ 
                         ylab(NULL) + 
-                        ylim(-1.4,1.4)  + 
+                        ylim(-1,1.4)  + 
                         ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
                       ncol=3, align="v"))
       dev.off()
@@ -215,7 +215,7 @@ for (area in areas){
     
     # the difference (and proportional difference) in biomass based on realized catch for a given year between the 1 year and 2 year projections.
      if(area=="GBa")  {
-      png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12, width=22, res=400, units="in")
+      png(paste0("./figures/", folder, "/", area, "/biomass_diff_eval.png"), height=12/1.5, width=22/1.5, res=300, units="in")
       print(plot_grid(out[[1]]$realized$evaluation1 + 
                         ggtitle(NULL, subtitle=NULL) +
                         ylab(en2fr("Difference in biomass (mt)",french,custom=rosetta_terms,case = 'sentence'))+
@@ -227,16 +227,16 @@ for (area in areas){
                         ylab(NULL) + 
                         ggtitle(NULL, subtitle=NULL) + xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')),
                       out[[1]]$realized$evaluation2 + 
-                        ylim(-1.4,1.4) + 
+                        ylim(-1,1.4) + 
                         ggtitle(NULL, subtitle=NULL) + xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence'))+ 
                         ylab(en2fr("Proportional difference in biomass",french,custom=rosetta_terms,case = 'sentence')), 
                       out[[2]]$realized$evaluation2+ 
                         ylab(NULL) + 
-                        ylim(-1.4,1.4) + 
+                        ylim(-1,1.4) + 
                         ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
                       out[[3]]$realized$evaluation2+ 
                         ylab(NULL) + 
-                        ylim(-1.4,1.4)  + 
+                        ylim(-1,1.4)  + 
                         ggtitle(NULL, subtitle=NULL)+ xlab(en2fr("Year",french,custom=rosetta_terms,case = 'sentence')), 
                       ncol=3, align="v"))
       dev.off()

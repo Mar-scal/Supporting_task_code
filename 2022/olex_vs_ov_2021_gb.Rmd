@@ -1,0 +1,649 @@
+---
+title: Comparing Olex and OV navigational systems for Offshore Scallop Survey
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+### Comparisons to prepare for transition to Olex
+
+Comparative tow tracking occurred on Middle, Browns North, Georges Bank Monitoring Stations, and German Bank in Spring 2022. 
+
+```{r, echo=F, include=F}
+# read in functions and load packages
+funs <- c("https://raw.githubusercontent.com/freyakeyser/Assessment_fns/master/Survey_and_OSAC/getdis.r",
+          "https://raw.githubusercontent.com/freyakeyser/Assessment_fns/master/Survey_and_OSAC/olex_import.R")
+# Now run through a quick loop to load each one, just be sure that your working directory is read/write!
+for(fun in funs) 
+{
+  download.file(fun,destfile = basename(fun))
+  source(paste0(getwd(),"/",basename(fun)))
+  file.remove(paste0(getwd(),"/",basename(fun)))
+} 
+
+require(sf)
+require(dplyr)
+require(tidyverse)
+require(plotly)
+require(lubridate)
+```
+
+```{r, echo=F, include=F, eval=F}
+# Starting with OV, grab the folder names in which the logs are saved
+
+folders <- c("GBalog", "GBaextraslog", "GBblog")
+
+# now we're going to loop through the OV log files applying both the getdis function, and mave calculations in order to do high-res comparisons
+ovd_raw <- NULL 
+ovd_track <- NULL
+ovd_se <- NULL
+ovd_mave <- NULL
+mave1 <- NULL
+for(i in folders){
+  print(i)
+  
+  ## OLD WAY
+  townums <- gsub(x=list.files(paste0("Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14/", i, "/")), pattern=".log", replacement="")
+  ovd_sub <- dist.coef(tows=townums, 
+                       path=paste0("Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14/", i, "/"),
+                       w=c(1:10,9:1),rule=8,smooth=T,plt=F)
+  ovd_sub[[2]]$folder <- i
+  ovd_sub[[1]]$PID <- 1:nrow(ovd_sub[[1]])
+  ovd_sub[[2]] <- left_join(ovd_sub[[2]], ovd_sub[[1]][, c("PID", "tow")])
+  
+  ovd_track <- rbind(ovd_track, ovd_sub[[2]])
+  ovd_se <- rbind(ovd_se, ovd_sub[[1]])
+  
+  # using sf and mave function manually on OVD data
+  for(j in townums){
+    print(j)
+    sf_use_s2(FALSE)
+    towlog <- read.table(paste0("Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14/", i, "/", j, ".log"), skip=5)
+    
+    towlog$lon <- as.numeric(gsub(x=towlog$V2, pattern=",", replacement=""))
+    towlog$lat <- as.numeric(gsub(x=towlog$V3, pattern=",", replacement=""))
+    towlog$datetime <- paste0(towlog$V5, towlog$V4)
+    towlog$datetime <- gsub(towlog$datetime, pattern=",", replacement ="")
+    # OV is in UTC-3
+    towlog$datetime <- dmy_hms(towlog$datetime)
+    towlog$datetime <- towlog$datetime + hours(3)
+    starttime <- towlog$datetime[1]
+    endtime <- towlog$datetime[length(towlog$datetime)]
+    
+    # create a raw object for use later
+    towlog_raw <- towlog
+    towlog$mave_lon <- mave(towlog$lon,w=c(1:10,9:1))
+    towlog$mave_lat <- mave(towlog$lat,w=c(1:10,9:1))
+    towlog <- towlog[seq(1, nrow(towlog), 2),]
+    mave1 <- towlog[, c("mave_lon", "mave_lat", "datetime")] %>%
+      st_as_sf(coords=c("mave_lon", "mave_lat"), crs=4326) %>%
+      st_transform(32620) %>%
+      group_by() %>%
+      summarize(do_union=FALSE) %>%
+      st_cast("LINESTRING") %>%
+      st_transform(4326)
+    
+    # add some more columns to the mave object
+    mave1$tow <- j
+    mave1$start <- starttime
+    mave1$end <- endtime
+    mave1$townum <- which(townums==j)
+    mave1$length <- st_length(st_transform(mave1, 32620))
+    mave1$dis <- 800/mave1$length
+    
+    # tidy up the raw object
+    towlog_raw <- towlog_raw[, c("lon", "lat", "datetime")] %>%
+      st_as_sf(coords=c("lon", "lat"), crs=4326) %>%
+      st_transform(32620) %>%
+      group_by() %>%
+      summarize(do_union=FALSE) %>%
+      st_cast("LINESTRING") %>%
+      st_transform(4326)
+    
+    # adding more columns to the raw object
+    towlog_raw$tow <- j
+    towlog_raw$start <- starttime
+    towlog_raw$end <- endtime
+    towlog_raw$townum <- which(townums==j)
+    towlog_raw$length <- st_length(st_transform(towlog_raw, 32620))
+    towlog_raw$dis <- 800/towlog_raw$length
+    
+    ovd_mave <- rbind(ovd_mave, mave1)
+    ovd_raw <- rbind(ovd_raw, towlog_raw)
+    print(dim(ovd_mave))
+    print(dim(ovd_raw))
+  }
+}
+
+## looking at how old code works
+# ovd <- dist.coef(#stringr::str_pad(1:200, width = 3, side = "left", pad = "0"), 
+#                 tows=c(201:300), path="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE15/LE15BBNlog/",w=c(1:10,9:1),rule=8,smooth=T,plt=F)
+```
+
+
+```{r, echo=F, include=F, eval=F}
+# Next we'll do the same to the Olex data, using sf and and the mave calculations
+# I have to test out different mave parameters (time frames/windows), so I'm looping through 15 times.
+windows <- 5:20
+olex_mave <- NULL
+mave1 <- NULL
+# this actually contains all middle and sable tracks too
+tracks <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14GBtesttracks.gz", type="track")
+tracks_df <- as.data.frame(st_coordinates(tracks))
+for(w in windows){
+  for(i in 1:nrow(tracks)){
+    sf_use_s2(FALSE)
+    mave1 <- tracks_df[tracks_df$L1==i,]
+    mave1$POS <- 1:nrow(mave1)
+
+    # apply moving average smoothing
+    mave1$mave_lon <- mave(mave1$X,w=c(1:w,(w-1):1))
+    mave1$mave_lat <- mave(mave1$Y,w=c(1:w,(w-1):1))
+    if(nrow(mave1)>2) mave1 <- mave1[seq(1, nrow(mave1), 2),]
+    mave1 <- mave1[, c("mave_lon", "mave_lat")] %>%
+      st_as_sf(coords=c("mave_lon", "mave_lat"), crs=4326) %>%
+      st_transform(32620) %>%
+      group_by() %>%
+      summarize(do_union=FALSE) %>%
+      st_cast("LINESTRING") %>%
+      st_transform(4326)
+
+    # more columns needed
+    mave1$ID <- i
+    mave1$length <- st_length(st_transform(mave1, 32620))
+    mave1$dis <- 800/mave1$length
+    mave1$window <- w
+
+    olex_mave <- rbind(olex_mave, mave1)
+  }
+}
+
+```
+
+
+```{r, echo=F, include=F, eval=F}
+# Create object and save
+nav_obj <- list(tracks=tracks, olex_mave = olex_mave, ovd_raw=ovd_raw, ovd_mave=ovd_mave, ovd_track=ovd_track, ovd_se=ovd_se)
+
+save(nav_obj, file = "C:/Users/keyserf/Documents/temp_data/nav_obj.RData")
+
+```
+
+```{r, echo=F, include=F}
+# load object
+load("C:/Users/keyserf/Documents/temp_data/nav_obj.RData")
+
+tracks <- nav_obj$tracks
+olex_mave <- nav_obj$olex_mave
+ovd_raw <- nav_obj$ovd_raw
+ovd_mave <- nav_obj$ovd_mave
+ovd_track <- nav_obj$ovd_track
+ovd_se <- nav_obj$ovd_se
+
+```
+
+```{r, echo=F, include=F}
+# match olex tows to OV tows to get tow ID. Tows aren't always done in the order of their numbering.
+sf_use_s2(FALSE)
+# find the tows in Olex that are nearest the OV tows.
+tow_match <- st_nearest_feature(tracks, ovd_mave)
+# names(tracks)[1] <- "ID"
+tracks$ID <- tow_match
+
+# joiner contains the tow number from OV matched to the tow ID from olex
+joiner <- tracks[,c("tow", "ID")]
+st_geometry(joiner) <- NULL
+# joining the OV tow numbers to the Olex data (first the smoothed, then the unsmoothed "tracks")
+#olex_mave <- left_join(olex_mave, joiner)
+#
+ovd_mave$ID <- 1:nrow(ovd_mave)
+ovd_raw$ID <- 1:nrow(ovd_raw)
+tracks <- left_join(tracks, joiner)
+
+# getting the points from raw/unsmoothed data
+# need the L1 column
+tracks$L1 <- 1:nrow(tracks)
+ovd_raw$L1 <- 1:nrow(ovd_raw)
+
+# ov first
+ovd_pts <- as.data.frame(st_coordinates(ovd_raw)) %>%
+  group_by(L1) %>%
+  mutate(POS=1:n(), 
+         L1=L1) %>%
+  left_join(ovd_raw) %>%
+  ungroup() %>%
+  dplyr::select(-geometry) %>%
+  group_by(tow) %>%
+  st_as_sf(coords=c("X", "Y"), crs=4326) %>%
+  filter(!is.na(tow))
+
+# then olex
+olex_pts <- as.data.frame(st_coordinates(tracks)) %>%
+  group_by(L1) %>%
+  mutate(POS = 1:n(),
+         L1=L1) %>%
+  left_join(tracks) %>%
+  ungroup() %>%
+  dplyr::select(-geometry) %>%
+  # left_join(olex_mave) %>%
+  # ungroup() %>%
+  # dplyr::select(-geometry) %>%
+  group_by(tow) %>%
+  st_as_sf(coords=c("X", "Y"), crs=4326) %>%
+  filter(!is.na(tow))
+
+# remove rows from olex data that don't match a OV tow (Sable!)
+olex_mave <- olex_mave[!is.na(olex_mave$tow),]
+tracks <- tracks[!is.na(tracks$tow),]
+```
+
+### Plot
+
+Yellow is the raw Olex track. Red is the smoothed Olex track.    
+Black is the raw OV track. Blue is the smoothed OV track.    
+Raw Olex and OV _points_ were also plotted, but are not included here due to processing time.   
+```{r, echo=F}
+# plot em up, change tow number or window number to explore.
+#towplot <- c("028", "030", "053", 110, 28, 30, 53)
+towplot <- unique(tracks$tow)
+g <- ggplot() + 
+  geom_sf(data=tracks[tracks$ID %in% towplot,], aes(group=tow), lwd=4, colour="yellow")+
+  geom_sf(data=ovd_raw[ovd_raw$tow %in% towplot,], aes(group=tow), lwd=3, colour="black") + 
+  geom_sf(data=ovd_mave[ovd_mave$tow %in% towplot,], aes(group=tow), lwd=2, colour="blue") 
+  #geom_sf(data=olex_mave[olex_mave$window==14 & olex_mave$tow %in% towplot,], aes(group=tow), colour="red") # +
+  # geom_sf_text(data=olex_pts[olex_pts$tow %in% towplot,], aes(label=POS)) +
+  # geom_sf_text(data=ovd_pts[ovd_pts$tow %in% towplot,], aes(label=POS), colour="pink") 
+  #facet_wrap(~tow)
+ggplotly(g, tooltip="tow")
+
+```
+Smoothed tows are shorter than raw tows. 
+
+
+### Tow lengths (in distance and time)     
+Distance first    
+Using raw values      
+```{r, echo=F}
+tracks <- tracks %>%
+  st_transform(32620) %>%
+  mutate(length=st_length(.)) %>%
+  st_transform(4326) 
+
+ggplot() + geom_histogram(data=tracks, aes(as.numeric(length)))
+
+tracks[as.numeric(tracks$length)<500,]
+tracks[as.numeric(tracks$length)>10000,]
+
+# remove any super long or super short tows
+summary(tracks$length)
+summary(ovd_raw$length)
+
+rawlengthcomp <- as.data.frame(tracks) %>%
+  dplyr::select(tow, length) %>%
+  dplyr::mutate(length_olex=length) %>%
+  dplyr::select(-length) %>%
+  left_join(dplyr::select(as.data.frame(ovd_raw), tow, length), by="tow")
+
+print("Raw olex length - raw OV length")
+summary(rawlengthcomp$length_olex-rawlengthcomp$length)
+
+ggplot() + geom_text(data=rawlengthcomp, aes(as.numeric(length_olex), as.numeric(length), label=tow)) +
+  theme_bw() + theme(panel.grid=element_blank()) + xlab("olex length (m)") + ylab("OV length (m)") +
+  geom_abline(aes(slope=1, intercept=0)) + ggtitle("Raw (before smoothing)")
+```  
+
+Raw OV tows are longer in distance than raw Olex tows.     
+
+Compare raw Olex tows to smoothed OV tows
+```{r, echo=F}
+lengthcomp <- as.data.frame(tracks) %>%
+  dplyr::select(tow, length) %>%
+  dplyr::mutate(length_olex=length) %>%
+  dplyr::select(-length) %>%
+  left_join(dplyr::select(as.data.frame(ovd_mave), tow, length), by = "tow") %>%
+  mutate(length_ovd = length) %>%
+  select(-length)
+
+lengthcomp_sum <- lengthcomp %>%
+  summarize(olex_med = median(length_olex, na.rm=T), 
+            olex_sd = sd(length_olex, na.rm=T),
+            ov_med = median(length_ovd, na.rm=T),
+            ov_sd = sd(length_ovd, na.rm=T),
+            diff_med = median(length_olex-length_ovd, na.rm=T),
+            diff_min = min(length_olex-length_ovd, na.rm=T),
+            diff_max = max(length_olex-length_ovd, na.rm=T),
+            diff_sd = sd(length_olex-length_ovd, na.rm=T),
+            prop_med = median(length_olex/length_ovd, na.rm=T),
+            prop_min = min(length_olex/length_ovd, na.rm=T),
+            prop_max = max(length_olex/length_ovd, na.rm=T),
+            prop_sd = sd(length_olex/length_ovd, na.rm=T))
+
+ggplot() + geom_point(data=lengthcomp, aes(as.numeric(length_olex), as.numeric(length_ovd))) +
+  theme_bw() + theme(panel.grid=element_blank()) + xlab("Raw olex length (m)") + ylab("Smoothed OV length (m)") +
+  geom_abline(data=lengthcomp, aes(slope=1, intercept=0)) #+
+  #facet_wrap(~window)
+ 
+print("Summary of raw Olex length - smoothed OV length and raw Olex length/smoothed OV length")
+print(lengthcomp_sum)
+# correction factor is 
+lengthcomp_sum$prop_med
+
+```
+
+
+Applying the correction factor from above to Olex
+```{r, echo=F}
+lengthcomp$length_olex_corr <- lengthcomp$length_olex/1.04
+
+# replot against ov smooth
+ggplot() + geom_text(data=lengthcomp, aes(as.numeric(length_olex_corr), as.numeric(length_ovd), label=tow)) +
+  theme_bw() + theme(panel.grid=element_blank()) + xlab("Corrected olex length (m)") + ylab("Smoothed OV length (m)") +
+  geom_abline(data=lengthcomp, aes(slope=1, intercept=0)) #+
+
+lengthcomp_corr <- lengthcomp %>%
+  summarize(olex_med = median(length_olex, na.rm=T), 
+            olex_sd = sd(length_olex, na.rm=T),
+            ov_med = median(length_ovd, na.rm=T),
+            ov_sd = sd(length_ovd, na.rm=T),
+            olex_corr_med = median(length_olex_corr, na.rm=T),
+            olex_corr_sd = sd(length_olex_corr, na.rm=T),
+            diff_med = median(length_olex-length_ovd, na.rm=T),
+            diff_min = min(length_olex-length_ovd, na.rm=T),
+            diff_max = max(length_olex-length_ovd, na.rm=T),
+            diff_sd = sd(length_olex-length_ovd, na.rm=T),
+            diff_med_corr = median(length_olex_corr-length_ovd, na.rm=T),
+            diff_min_corr = min(length_olex_corr-length_ovd, na.rm=T),
+            diff_max_corr = max(length_olex_corr-length_ovd, na.rm=T),
+            diff_sd_corr = sd(length_olex_corr-length_ovd, na.rm=T),
+            prop_med = median(length_olex/length_ovd, na.rm=T),
+            prop_min = min(length_olex/length_ovd, na.rm=T),
+            prop_max = max(length_olex/length_ovd, na.rm=T),
+            prop_sd = sd(length_olex/length_ovd, na.rm=T),
+            prop_med_corr = median(length_olex_corr/length_ovd, na.rm=T),
+            prop_min_corr = min(length_olex_corr/length_ovd, na.rm=T),
+            prop_max_corr = max(length_olex_corr/length_ovd, na.rm=T),
+            prop_sd_corr = sd(length_olex_corr/length_ovd, na.rm=T))
+
+print(lengthcomp_corr)  
+
+print("Check these tows in the interactive plot at the top. The difference between Olex and OV was >5%. ")
+lengthcomp$tow[as.numeric(lengthcomp$length_olex_corr)/as.numeric(lengthcomp$length_ovd)<0.95 | 
+                 as.numeric(lengthcomp$length_olex_corr)/as.numeric(lengthcomp$length_ovd)>1.05]
+
+```
+
+
+What happens when we smooth them though?     
+Use the table to figure out the best moving average window for Olex (aim for prop=1 and diff=0)    
+```{r, echo=F}
+lengthcomp <- as.data.frame(olex_mave) %>%
+  dplyr::select(tow, length, window) %>%
+  dplyr::mutate(length_olex=length) %>%
+  dplyr::select(-length) %>%
+  left_join(dplyr::select(as.data.frame(ovd_mave), tow, length), by = "tow") %>%
+  mutate(length_ovd = length) %>%
+  select(-length) %>%
+  filter(!is.na(tow))
+
+lengthcomp %>%
+  group_by(window) %>%
+  summarize(olex_med = median(length_olex, na.rm=T), 
+            ov_med = median(length_ovd, na.rm=T),
+            diff_med = median(length_olex-length_ovd, na.rm=T),
+            diff_min = min(length_olex-length_ovd, na.rm=T),
+            diff_max = max(length_olex-length_ovd, na.rm=T),
+            prop_med = median(length_olex/length_ovd, na.rm=T),
+            prop_min = min(length_olex/length_ovd, na.rm=T),
+            prop_max = max(length_olex/length_ovd, na.rm=T))
+
+ggplot() + geom_point(data=lengthcomp, aes(as.numeric(length_olex), as.numeric(length_ovd))) +
+  theme_bw() + theme(panel.grid=element_blank()) + xlab("olex length (m)") + ylab("OV length (m)") +
+  geom_abline(data=lengthcomp, aes(slope=1, intercept=0)) + 
+  ggtitle("After smoothing (faceted by smoothing parameter)") + 
+  facet_wrap(~window)
+
+ggplot() + geom_text(data=lengthcomp[lengthcomp$window==14,], aes(as.numeric(length_olex), as.numeric(length_ovd), label=tow)) +
+  theme_bw() + theme(panel.grid=element_blank()) + xlab("olex length (m)") + ylab("OV length (m)") +
+  geom_abline(data=lengthcomp, aes(slope=1, intercept=0)) + 
+  ggtitle("After smoothing (for smoothing parameter of 14)") 
+
+print("Summary of smoothed Olex length (smoothing parameter = 14) - smoothed OV length (smoothing parameter = 10)")
+summary(lengthcomp$length_olex[lengthcomp$window==14]-lengthcomp$length_ovd)
+print("Summary of smoothed Olex length (smoothing parameter = 14) / smoothed OV length (smoothing parameter = 10)")
+summary(lengthcomp$length_olex[lengthcomp$window==14]/lengthcomp$length_ovd)
+
+```
+
+Check outlier tows in plotly above.      
+Tows differ in length by up to 69m when Olex uses a smoothing parameter of 14.      
+Tows differ in length by up to 8% when Olex uses a smoothing parameter of 14.    
+Olex tows are generally shorter than OV tows.
+
+
+
+Tow duration (time) comparison     
+```{r, echo=F}
+ovd_times <- select(ovd_mave, tow, start, end) %>%
+  mutate(start_ov = start,
+         end_ov = end) %>%
+  select(-start, -end)
+
+olex_times <- select(tracks, tow, start, end) %>%
+  mutate(start_olex = start,
+         end_olex = end) %>%
+  select(-start, -end)
+
+st_geometry(ovd_times) <- NULL
+st_geometry(olex_times) <- NULL
+
+times <- full_join(ovd_times, olex_times, by="tow")
+
+# ggplot() + geom_point(data=times, aes(start_olex, start_ov)) + geom_abline(aes(slope=1, intercept=0))
+# ggplot() + geom_point(data=times, aes(end_olex, end_ov)) + geom_abline(aes(slope=1, intercept=0))
+
+# had to do a manual fix to some Middle Bank tows that were on the wrong day in OV?
+times[as.numeric(times$tow) %in% 5:15,]$start_ov <- times[as.numeric(times$tow) %in% 5:15,]$start_ov + days(1)
+times[as.numeric(times$tow) %in% 5:15,]$end_ov <- times[as.numeric(times$tow) %in% 5:15,]$end_ov + days(1)
+
+times$diff <- times$start_olex-times$start_ov
+
+# ggplot() + geom_text(data=times[times$start_ov<"2022-05-23",], aes(start_olex, start_ov, label=tow)) +
+#   geom_abline(aes(slope=1, intercept=0))
+# 
+# ggplot() + geom_text(data=times[times$start_ov<"2022-05-23",], aes(tow, start_olex), label="olex") + 
+#   geom_text(data=times[times$start_ov<"2022-05-23",], aes(tow, start_ov), label="ov")
+
+# ggplot() + geom_text(data=times, aes(tow, y=start_ov-start_olex, label=tow))
+print("Start_ov - Start_olex in seconds")
+summary(as.numeric(times$start_ov) - as.numeric(times$start_olex))
+# Olex was started 5 seconds EARLIER (median)
+print("End_ov - End_olex in seconds")
+summary(as.numeric(times$end_ov) - as.numeric(times$end_olex))
+# Olex was ended 2 seconds EARLIER (median)
+
+times$duration_ov <- times$end_ov-times$start_ov
+times$duration_olex <- times$end_olex-times$start_olex
+
+ggplot() + geom_text(data=times, aes(as.numeric(duration_olex), as.numeric(duration_ov), label=tow)) +
+  geom_abline(aes(slope=1, intercept=0)) + theme_bw() + theme(panel.grid=element_blank()) +
+  xlab("Duration of Olex tow (minutes)") + 
+  ylab("Duration of OV tow (minutes)")
+
+print("Summary of olex duration")
+summary(as.numeric(times$duration_olex))
+print("Summary of OV duration")
+summary(as.numeric(times$duration_ov))
+
+times <- times %>% select(tow, duration_olex, duration_ov, diff) %>%
+  pivot_longer(!tow)
+
+ggplot() + geom_line(data=times[!times$name=="diff",], aes(x=tow, y=as.numeric(value)/60, colour=name, group=name)) + 
+  theme_bw() + theme(panel.grid=element_blank()) +
+  scale_colour_manual(name="System", labels=c("Olex", "OV"), values=c("red", "blue"))+
+  ylab("Duration of tow (minutes)")
+
+# ggplot() + geom_point(data=times, aes(x=tow, y=as.numeric(duration_olex)), colour="red") + 
+#   geom_point(data=times, aes(x=tow, y=as.numeric(duration_ov), group=1), colour="blue") 
+```       
+
+Raw olex tows were longer in time duration than raw OV tows.         
+Olex was started 5 seconds earlier (median).    
+Olex was ended 2 seconds earlier (median).     
+
+
+### Number of points logged by each system     
+```{r, echo=F, message=F}
+pt_sum <- olex_pts %>%
+  group_by(ID,tow) %>%
+  summarize(npoints_olex = max(POS))
+
+print("Summary of number of points for Olex")
+summary(pt_sum$npoints_olex)
+
+pt_sum <- as.data.frame(ovd_pts) %>%
+  group_by(tow) %>%
+  summarize(npoints_ov = max(POS)) %>%
+  left_join(as.data.frame(pt_sum), by="tow")
+# Olex is polling more frequently, and ov often has 189 records? Huh? Why...
+
+print("Summary of number of points for OV")
+summary(pt_sum$npoints_ov)
+
+#ggplot() + geom_histogram(data=pt_sum, aes(npoints_ov), binwidth=1)
+#ggplot() + geom_histogram(data=pt_sum, aes(npoints_olex), binwidth=1)
+
+pts_olex <- left_join(olex_mave, data.frame(tow=pt_sum$tow, npoints_olex=pt_sum$npoints_olex), by="tow")
+pts_tracks <- left_join(tracks, data.frame(tow=pt_sum$tow, npoints_olex=pt_sum$npoints_olex), by="tow")
+pts_tracks$length <- st_length(pts_tracks)
+pts_ov <- left_join(ovd_mave, data.frame(tow=pt_sum$tow, npoints_ov=pt_sum$npoints_ov), by="tow")
+pts_ov_before <- left_join(ovd_raw, data.frame(tow=pt_sum$tow, npoints_ov=pt_sum$npoints_ov), by="tow")
+
+olex_comp <- full_join(data.frame(tow=pts_tracks$tow, raw_length = pts_tracks$length, npoints_olex=pts_tracks$npoints_olex),
+                       data.frame(tow=pts_olex$tow, window=pts_olex$window, smooth_length = pts_olex$length, npoints_olex=pts_olex$npoints_olex), by=c("tow", "npoints_olex"))
+
+olex_comp$diff <- olex_comp$raw_length - olex_comp$smooth_length
+
+ggplot() + geom_point(data=pts_tracks, aes(as.numeric(length), npoints_olex)) + ggtitle("Olex before smoothing") + xlab("Length before smoothing")
+ggplot() + geom_point(data=pts_olex, aes(as.numeric(length), npoints_olex)) + ggtitle("Olex after smoothing") + facet_wrap(~window) + xlab("Length after smoothing")
+ggplot() + geom_point(data=pts_ov_before, aes(as.numeric(length), npoints_ov)) + ggtitle("OV before smoothing") + xlab("Length before smoothing")
+ggplot() + geom_point(data=pts_ov, aes(as.numeric(length), npoints_ov)) + ggtitle("OV after smoothing")
+ggplot() + geom_point(data=olex_comp, aes(as.numeric(diff), npoints_olex)) + ggtitle("Difference between Olex before and after smoothing") + facet_wrap(~window)
+```      
+
+OV almost always record 190 points for a tow, whereas Olex is much more variable.    
+
+
+```{r, echo=F, include=F, eval=F}
+### Historical distance coefficients from SCALOFF     
+source("C:/Users/keyserf/Documents/Github/Assessment_fns/Other_functions/ScallopQuery.R")
+dis_hist <- ScallopQuery("ROracle", db.con="ptran", SQLtext = "Select * from SCALOFF.OSTOWS")
+head(dis_hist)
+require(lubridate)
+dis_hist$year <- year(ymd_hms(dis_hist$TOW_DATE))
+
+dis_hist_means <- dis_hist %>%
+  group_by(year) %>%
+  summarize(mean_dis_coef = mean(DIS_COEF),
+            sd_dis_coef = sd(DIS_COEF))
+
+ggplot() + geom_point(data=dis_hist, aes(ymd_hms(TOW_DATE), DIS_COEF, colour=as.factor(TECH_ID), shape=as.factor(DIS_COEF_ID)))
+
+ggplot() + geom_point(data=dis_hist[dis_hist$year==2016,], aes(ymd_hms(TOW_DATE), DIS_COEF, colour=as.factor(TECH_ID), shape=as.factor(DIS_COEF_ID)), alpha=0.5)
+
+ggplot() + geom_boxplot(data=dis_hist, aes(year, DIS_COEF, group=year), outlier.shape=NA) + ylim(0.3,1.3)
+
+ggplot() + geom_point(data=dis_hist_means, aes(year, mean_dis_coef))
+
+# check dis_coef_id
+ggplot() + geom_point(data=dis_hist, aes(ymd_hms(TOW_DATE), DIS_COEF_ID))
+```
+
+### comparing final distance coefs
+```{r, echo=F, message=F, warning=F}
+tracks_corr <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2022/Database loading/LE16/LE16tracks.gz", type="load", correction_factor = 1.04)
+
+corr_compare <- tracks_corr %>%
+  rename(ID=tow,
+         dis_coef_corr=dis_coef) %>%
+  left_join(.,ovd_mave) %>%
+  filter(!is.na(tow)) %>%
+  select(ID, tow, dis_coef_corr, bearing, dis)
+
+ggplot() + geom_point(data=corr_compare, aes(as.numeric(dis_coef_corr), as.numeric(dis))) +
+  geom_abline(slope=1, intercept=0) + 
+  ggtitle("LE15")
+
+corr_compare$prop <- corr_compare$dis_coef_corr/corr_compare$dis
+print("Olex distance coef / OV distance coef")
+summary(corr_compare$prop)
+print("standard deviation of proportional difference")
+sd(corr_compare$prop)
+print("dis is OV distance coefficient; dis_coef_corr is Olex distance coefficient")
+print(summary(lm(data=corr_compare, as.numeric(dis_coef_corr) ~ as.numeric(dis))))
+
+# same for GB2021 data
+print("Testing on GB2021 LE14 data")
+tracks_corr_21 <- olex_import(filename="Y:/Offshore/Assessment/Data/Survey_data/2021/Database loading/LE14GBtesttracks.gz", type="load")
+
+#source("C:/Users/keyserf/Documents/Github/Assessment_fns/Other_functions/ScallopQuery.R")
+# dis_hist21 <- ScallopQuery("ROracle", db.con="ptran", SQLtext = "Select * from SCALOFF.OSTOWS t, SCALOFF.ossurveys o where t.survey_seq=o.survey_seq AND o.cruise='LE14'")
+#write.csv(file="C:/Users/keyserf/Documents/temp_data/dis_hist21.csv", x = dis_hist21)
+dis_hist21 <- read.csv("C:/Users/keyserf/Documents/temp_data/dis_hist21.csv")
+
+dis_hist_21_sf <- dis_hist21 %>% 
+  st_as_sf(coords=c("START_LON", "START_LAT"), crs=4326)
+  
+tracks_corr_21_sf <- tracks_corr_21 %>% 
+  st_as_sf(coords=c("start_lon", "start_lat"), crs=4326)
+
+tow_match <- st_nearest_feature(tracks_corr_21_sf, dis_hist_21_sf)
+tracks_corr_21$ID <- tow_match
+dis_hist21$ID <- 1:nrow(dis_hist21)
+
+# ggplot() + geom_sf_text(data=dis_hist_21_sf, aes(label=TOW_NO)) +
+#   geom_sf_text(data=tracks_corr_21_sf, aes(label=tow), colour="red")
+
+corr_compare21 <- dis_hist21 %>%
+  select(TOW_NO, DIS_COEF, ID) %>%
+  left_join(., tracks_corr_21) %>%
+  filter(!is.na(tow)) %>%
+  rename(dis_coef_corr=dis_coef,
+         dis = DIS_COEF) %>%
+  filter(as.numeric(dis_coef_corr) <10) %>%
+  filter(as.numeric(dis_coef_corr) >0.2) 
+
+ggplot() + geom_point(data=corr_compare21, aes(as.numeric(dis_coef_corr), as.numeric(dis))) +
+  geom_abline(aes(slope=1, intercept=0)) + 
+  ggtitle("LE14 GB")
+
+corr_compare21$prop <- corr_compare21$dis_coef_corr/corr_compare21$dis
+print("Olex distance coef / OV distance coef")
+summary(corr_compare21$prop)
+print("standard deviation of proportional difference")
+sd(corr_compare21$prop)
+print("dis is OV distance coefficient; dis_coef_corr is Olex distance coefficient")
+print(summary(lm(data=corr_compare21, as.numeric(dis_coef_corr) ~ as.numeric(dis))))
+
+#overall
+head(corr_compare)
+head(corr_compare21)
+
+corr_compare$dis <- as.numeric(corr_compare$dis)
+corr_compare$tow <- as.numeric(corr_compare$tow)
+corr_compare21$prop <- as.numeric(corr_compare21$prop)
+overall <- rbind(data.frame(corr_compare, cruise="LE15"), data.frame(select(corr_compare21, ID, tow, dis_coef_corr, bearing, dis, prop), cruise="LE14"))
+
+ggplot() + geom_point(data=overall, aes(as.numeric(dis_coef_corr), as.numeric(dis), colour=cruise)) +
+  geom_abline(aes(slope=1, intercept=0))
+
+```
+
+Observations from Trish:      
+ - GPS could be off by 1 hundredth. Olex has a separate feed (not a splitter).   
+ - We had a freezing issue last year when we tried to use a splitter.    
+ - TPD has nautical miles for each tow in Olex.    
+ - Speeds varied between systems too.    
+ - Slight difference in vessel location between olex and OV, noticed when "on station"      
+ - OV starts first, timer, then olex      
+ - 3 second intervals for OV      
+ - Also have data on warp length (fathoms)     
+
