@@ -91,9 +91,112 @@ MW.dat.sum <- MW.dat %>%
   dplyr::mutate(dataset="old")
 
 # MW.dat.new contains all survey samples (incl historical)
+# it does NOT include wgw, so need to borrow code from get.offshore.survey to get it back!
+
+require(ROracle) || stop("Package ROracle cannot be found")
+require(lubridate) || stop("Package lubridate cannot be found")
+
+funs <- c("https://raw.githubusercontent.com/Mar-Scal/Assessment_fns/master/Survey_and_OSAC/convert.dd.dddd.r")
+# Now run through a quick loop to load each one, just be sure that your working directory is read/write!
+for(fun in funs) 
+{
+  download.file(fun,destfile = basename(fun))
+  source(paste0(getwd(),"/",basename(fun)))
+  file.remove(paste0(getwd(),"/",basename(fun)))
+} # end for(un in funs)
+
+#DK August 20, 2015 Note: Need this to open the channel, we need to get one more view, or more general access to the OSTOWS table
+# so that the .rProfile method works, for now the workaround would be to put the general (admin?) un/pw into your rprofile...
+# DK revised April 2018 to ROracle
+un=""
+pw=""
+db.con="ptran"
+chan <-dbConnect(dbDriver("Oracle"),username=un, password=pw,db.con)
+
+#####################################################################################################################
+# Jessica has new views for these calls, ,all this prorating is not necessary anymore as she's taken care of it in SQL
+# Key is to import those tables and send it out of this file looking identical!  
+######################################################################################################################
+db <- "SCALOFF" ### CHANGE HUMF TO SCALOFF!!!
+#message("reminder that this is pulling data from HUMF views, not production SCALOFF")
+
+#qu.strata <- "select * from SCALOFF.OSSTRATA"
+# DK Oct 29, 2015, don't need tow data either, we don't ever use it.... 
+qu.sample <- paste0("select * from ", db, ".OSSAMPLES_SS_VW")
+qu.sample.ice <- paste0("select * from ", db, ".OSSAMPLES_ICE_VW")
+#qu.tow <- "select * from HUMF.OSTOWS"
+
+# Grab the SQL data from the respective database tables
+#strata <- sqlQuery(chan, qu.strata)
+# Revised to be ROracle query
+samp <- dbGetQuery(chan, qu.sample)
+sampice <- dbGetQuery(chan, qu.sample.ice)
+#tow <- sqlQuery(chan, qu.tow)
+dbDisconnect(chan)
+
+samp$species <- "seascallop"
+
+if(dim(sampice)[1] >0) sampice$species <- "icelandic"
+
+samp <- rbind(samp, sampice)
+
+# first we need to convert the locations into decimal degree and then calculate the mid-point of the tow as before.
+#Source1 source("fn/Survey/convert.dd.dddd.r")
+samp$slat<-convert.dd.dddd(samp$START_LAT)
+samp$slon<-convert.dd.dddd(samp$START_LON)
+samp$elat<-convert.dd.dddd(samp$END_LAT)
+samp$elon<-convert.dd.dddd(samp$END_LON)
+
+# Take the start/end postion and takes the mid-point of the tow as strata
+samp$lon<-with(samp,apply(cbind(elon,slon),1,mean))
+samp$lat<-with(samp,apply(cbind(elat,slat),1,mean))
+
+# Convert the depth from fathoms to meters.
+samp$depth<-samp$DEPTH_F*1.8288
+
+# correct for time zone
+samp$TOW_DATE <- ymd_hms(samp$TOW_DATE)
+
+if(tz(samp$TOW_DATE) == "UTC"){
+  samp$TOW_DATE <- samp$TOW_DATE + hours(4)
+}
+if(!tz(samp$TOW_DATE) == "UTC"){
+  stop("In get.offshore.survey, data were read in using a timezone other than UTC. You need to correct time zone in get.offshore.survey.")
+}
+
+MWs <- samp
+names(MWs)[which(names(MWs) %in% c("TOW_NO", "slat", "slon", "elat", "elon", 
+                                   "DEPTH_F", "YEAR", "lon", "lat", "depth", "CRUISE", 
+                                   "SCALLOP_NUM", "WET_MEAT_WGT", "SHELL_HEIGHT", "SPECIES_ID"))] <- c("year", "cruise","tow", 
+                                                                                                       "species", "depth.f", "scalnum",
+                                                                                                       "sh", "wmw", 
+                                                                                                       "slat","slon","elat","elon",
+                                                                                                       "lon","lat",
+                                                                                                       "depth")
+names(MWs)[which(names(MWs) %in% c("SEX_ID", "MATURITY_ID", "WET_GONAD_WGT", "DRY_MEAT_WGT", 
+                                   "DRY_GONAD_WGT", "WET_SOFT_PARTS_WGT"))] <- c("sex", "mat", "wgw", "dmw", "dgw", "wspw")
+need <- unique(c(names(MW.dat.new), names(MW.dat), "AREA_CD"))
+need <- need[!need == "bank"]
+need <- need[!need %in% c("slat", "slon", "elat", "elon")]
+MWs <- dplyr::select(MWs, names(MWs)[which(names(MWs) %in% need)])
+MWs$dataset <- "survey"
+MWs$species[MWs$species==1] <- 'seascallop'
+MWs$species[MWs$species==2] <- 'icelandic'
+dim(MWs)
+
 dim(MW.dat.new)
 head(MW.dat.new)
 MW.dat.new$dataset <- "survey"
+
+# table(MWs$year, is.na(MWs$wgw))
+# table(MWs$year, is.na(MWs$dmw))
+# table(MWs$year, is.na(MWs$sex))
+# table(MWs$year, MWs$tow==0)
+# table(MW.dat.new$year, MW.dat.new$tow==0)
+
+# join database results to MW.dat.new
+MW.dat.new <- left_join(MW.dat.new, MWs)
+
 MW.dat.new.sum <- MW.dat.new %>%
   dplyr::group_by(bank, cruise, year=as.numeric(year)) %>%
   dplyr::summarize(samples = n()) %>%
@@ -139,7 +242,7 @@ mw_dat_all <- mw_dat_all[!is.na(mw_dat_all$lon),]
 mw_dat_all_sf <- st_as_sf(x=mw_dat_all, coords=c(X="lon", Y="lat"), crs=4326)
 
 # intersect with GBa/GBb polys (subset to GB)
-mw_dat_all_sf_gb <- st_intersection(mw_dat_all_sf, offshore[offshore$ID %in% c("GBa", "GBb"),])
+mw_dat_all_sf_gb <- st_intersection(mw_dat_all_sf, offshore[offshore$ID %in% c("SFA27A", "SFA27B"),])
 
 head(mw_dat_all_sf_gb)
 
@@ -167,7 +270,7 @@ st_geometry(mw_dat_all_gb) <- NULL
 mw_dat_all_gb <- cbind(mw_dat_all_gb, st_coordinates(mw_dat_all_sf_gb))
 
 mw_dat_all_gb_hons <- mw_dat_all_gb %>%
-  select(cruise, year, month, day, tow, X, Y, bank, depth, scalnum, sh, wmw, dataset)
+  select(cruise, year, month, day, tow, X, Y, bank, depth, scalnum, sh, wmw, wgw, dmw, wspw, sex, mat, dataset)
 
 mw_dat_all_gb_hons$file <- "ss"
 
@@ -175,10 +278,15 @@ mw_dat_all_gb_hons$file <- "ss"
 mw_dat_all_gb_hons <- mw_dat_all_gb_hons[mw_dat_all_gb_hons$year<2010,]
 
 mw_dat_all_gb_hons <- mw_dat_all_gb_hons %>%
-  select(cruise, year, month, day, tow, X, Y, bank, depth, scalnum, sh, wmw, dataset)
+  select(cruise, year, month, day, tow, X, Y, bank, depth, scalnum, sh, wmw, wgw, dmw, wspw, sex, mat, dataset)
 
 # For honours student:
-write.csv(mw_dat_all_gb_hons, "Y:/Offshore/Assessment/2022/Supporting_tasks/DR2022_09/Hydration_GB_1982-2009.csv")
+write.csv(mw_dat_all_gb_hons, "Y:/Offshore/Assessment/2022/Supporting_tasks/DR2022_09/Hydration_GB_1982-2009_rev.csv")
+
+ggplot() + geom_point(data=mw_dat_all_gb_hons, aes(wmw, wspw))
+
+head(mw_dat_all_gb_hons[!is.na(mw_dat_all_gb_hons$wspw),])
+
 
 month_yr_tow <- mw_dat_all_gb_hons %>%
   group_by(cruise, year, month, dataset) %>%
