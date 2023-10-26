@@ -1,4 +1,6 @@
-cruise <- "LE17"
+# for DR2023_06 and DR2023_13
+
+cruise <- "LE18"
 yr <- 2023
 require(ROracle) || stop("Package plyr cannot be found")
 require(plyr) || stop("Package plyr cannot be found")
@@ -61,7 +63,7 @@ surv_tows_samp_hf <- surv_tows_samp_hf %>%
   group_by(SURVEY_NAME, MGT_AREA_CD, TOW_NO, TOW_TYPE_ID, 
            START_LAT, START_LON, END_LAT, END_LON, 
            DEPTH_F, SPECIES_ID, LIVECODE, BIN_ID) %>%
-  summarize(NUMBER_IN_BIN = sum(NUMBER_IN_BIN))
+  dplyr::summarize(NUMBER_IN_BIN = sum(NUMBER_IN_BIN))
 
 # surv_tows_samp_hf <- surv_tows_samp_hf[!is.na(surv_tows_samp_hf$LIVECODE),]
 
@@ -96,5 +98,5 @@ surv_tows_samp_hf <- dplyr::select(surv_tows_samp_hf, SURVEY_NAME, MGT_AREA_CD, 
 
 surv_tows_samp_hf <- dplyr::arrange(surv_tows_samp_hf, SURVEY_NAME, TOW_NO, BIN_ID)
 
-# And make the CSV...
-write.csv(surv_tows_samp_hf, "Y:/Offshore/Data requests/2023/DR2023_06_SPANS/DR2023_06.csv",row.names=F)
+# And make the CSV... 
+write.csv(surv_tows_samp_hf, "Y:/Offshore/Data requests/2023/DR2023_13_SPANS/DR2023_13.csv",row.names=F)
