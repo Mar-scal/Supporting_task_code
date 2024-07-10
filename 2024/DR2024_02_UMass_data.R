@@ -69,10 +69,10 @@ GBsummer_bins <- GBsummer_bins[,c("lat", "lon", "date", "depth", "bin", "n", "sq
 
 names(GBsummer_bins) <- c("latitude_dd.ddddd", "longitude_dd.ddddd", "date_yyyy-mm-dd", "depth_m", "bin_mm", "n", "density_sq_m")
 GBsummer_bins$year <- year(GBsummer_bins$`date_yyyy-mm-dd`)
-GBsummer_bins_78_97 <- GBsummer_bins[GBsummer_bins$year %in% 1978:1997,]
-GBsummer_bins_13_23 <- GBsummer_bins[GBsummer_bins$year %in% 2013:2023,]
-GBsummer_bins_78_97 <- dplyr::select(GBsummer_bins_78_97, -year)
-GBsummer_bins_13_23 <- dplyr::select(GBsummer_bins_13_23, -year)
+GBsummer_bins_84_97 <- GBsummer_bins[GBsummer_bins$year %in% 1984:1997,]
+GBsummer_bins_13_19 <- GBsummer_bins[GBsummer_bins$year %in% 2013:2019,]
+GBsummer_bins_84_97 <- dplyr::select(GBsummer_bins_84_97, -year)
+GBsummer_bins_13_19 <- dplyr::select(GBsummer_bins_13_19, -year)
 
-write.csv(GBsummer_bins_78_97, "Y:/Offshore/Data Requests/2024/DR2024_02_UMass/GBsummer_densities_DFOSurvey_5mm_1978-1997.csv")
-write.csv(GBsummer_bins_13_23, "Y:/Offshore/Data Requests/2024/DR2024_02_UMass/GBsummer_densities_DFOSurvey_5mm_2013-2023.csv")
+write.csv(GBsummer_bins_84_97, "Y:/Offshore/Data Requests/2024/DR2024_02_UMass/GBsummer_densities_DFOSurvey_5mm_1984-1997.csv")
+write.csv(GBsummer_bins_13_19, "Y:/Offshore/Data Requests/2024/DR2024_02_UMass/GBsummer_densities_DFOSurvey_5mm_2013-2019.csv")
