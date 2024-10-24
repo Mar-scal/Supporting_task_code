@@ -1,6 +1,6 @@
 # for DR2024_09
 
-cruise <- "LE19"
+cruise <- "LE20"
 yr <- 2024
 require(ROracle) || stop("Package plyr cannot be found")
 require(plyr) || stop("Package plyr cannot be found")
@@ -99,4 +99,4 @@ surv_tows_samp_hf <- dplyr::select(surv_tows_samp_hf, SURVEY_NAME, MGT_AREA_CD, 
 surv_tows_samp_hf <- dplyr::arrange(surv_tows_samp_hf, SURVEY_NAME, TOW_NO, BIN_ID)
 
 # And make the CSV... 
-write.csv(surv_tows_samp_hf, "Y:/Offshore/Data requests/2024/DR2024_09_SPANS/DR2024_09.csv",row.names=F)
+write.csv(surv_tows_samp_hf, "Y:/Offshore/Data requests/2024/DR2024_13_SPANS/DR2024_13_rev.csv",row.names=F)
