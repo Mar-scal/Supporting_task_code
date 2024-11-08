@@ -176,6 +176,12 @@ temp.res <- temp.res[c(-rm1,-rm2),]
 ggplot(temp.res) + geom_text(aes(x=year,y=temperature,label=tow),size=4) + facet_wrap(~bank)
 
 
-write.csv(temp.res,"Y:/Offshore/Assessment/2024/Supporting_tasks/temperature/cleaned_temperature_data_2018_to_2024.csv")
+#write.csv(temp.res,"Y:/Offshore/Assessment/2024/Supporting_tasks/temperature/cleaned_temperature_data_2018_to_2024.csv")
+temp.res <- read.csv("Y:/Offshore/Assessment/2024/Supporting_tasks/temperature/cleaned_temperature_data_2018_to_2024.csv")
 
+
+# Load in the entire dataset which I cleaned up externally.  The 2015-2017 data was pulled from the Database and cleaned seperately as well.
+temp.dat <- read.csv("Y:/Offshore/Assessment/2024/Supporting_tasks/temperature/temperature_by_tow_2015_to_2024.csv")
+
+ggplot(temp.dat) + geom_text(aes(x=year,y=temperature,label=tow),size=4) + facet_wrap(~bank)
 
