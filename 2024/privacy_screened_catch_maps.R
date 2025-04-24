@@ -230,7 +230,7 @@ log_mike$lon <- coords$X
 log_mike$lat <- coords$Y
 st_geometry(log_mike) <- NULL
 #log_mike$SFA <- "25A"
-log_mike <- dplyr::select(log_mike, sfa, year, kgs, lon, lat)
+log_mike <- dplyr::select(log_mike, year, sfa, kgs, lon, lat)
 names(log_mike) <- c("year", "SFA", "landings_kg", "lon_centroid", "lat_centroid")
 log_mike <- arrange(log_mike, SFA, year, lon_centroid, lat_centroid)
 log_mike$lon_centroid <- round(log_mike$lon_centroid, 5)
