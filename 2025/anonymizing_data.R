@@ -2,6 +2,7 @@
 
 #anonymize fleet dat
 off.fleet <- read.csv(paste0("Y:/Offshore/Assessment/","Data/Offshore_fleet.csv"))
+#off.fleet <- read.csv("C:/Users/keyserf/Documents/temp_data/Data/Offshore_fleet.csv")
 off.fleet$anon_id <- sample(100:(100+nrow(off.fleet)), nrow(off.fleet), replace=FALSE)
 off.fleet <- dplyr::select(off.fleet, Pre_2008_ID, ID, ID_alt_Port_Sampling, ASM_date, ring_size_2024, gear_size, anon_id)
 names(off.fleet) <- c("vesid", "vrnum", "boat", "ASM_date", "ring_size_2024", "gear_size_typical", "anon_id")
@@ -9,7 +10,8 @@ names(off.fleet) <- c("vesid", "vrnum", "boat", "ASM_date", "ring_size_2024", "g
 off.fleet$vrnum[off.fleet$boat=="GUAR" & !is.na(off.fleet$boat)] <- 105912.1
 off.fleet$boat[off.fleet$boat=="COME" & !is.na(off.fleet$boat) & off.fleet$vesid==4211] <- "COME1"
 off.fleet$vesid[off.fleet$vesid==5004 & is.na(off.fleet$boat)] <- 5004.1
-
+off.fleet$vrnum[off.fleet$vrnum==1516 & off.fleet$boat=="COME1"] <- 1516.1
+# so all the 1516 records are getting assigned MER7
 
 #fishery data
 source("C:/Users/keyserf/Documents/GitHub/Assessment_fns/Fishery/logs_and_fishery_data.r")
@@ -29,6 +31,7 @@ new.log.dat2$date <- ymd(new.log.dat2$date)
 old.log.dat2$date <- ymd(old.log.dat2$date)
 
 fish.dat <- dplyr::full_join(new.log.dat2, old.log.dat2)
+nrow(fish.dat)==(nrow(new.log.dat2) + nrow(old.log.dat2))
 #save(fish.dat, file = "C:/Users/keyserf/Documents/temp_data/fishdat_1981-2024.RData")
 #load("C:/Users/keyserf/Documents/temp_data/fishdat_1981-2024.RData")
 
@@ -49,7 +52,7 @@ head(fish.dat)
 # if year<2020, COME = 188
 port.dat$boat[year(ymd(port.dat$date))<2020 & port.dat$boat=="COME"] <- "COME1"
 
-dim(port.dat) == dim(dplyr::left_join(port.dat, dplyr::select(off.fleet, boat, anon_id)))
+nrow(port.dat) == nrow(dplyr::left_join(port.dat, dplyr::select(off.fleet, boat, anon_id)))
 port.dat2 <- dplyr::left_join(port.dat, dplyr::select(off.fleet, boat, anon_id))
 
 port.dat2 <- dplyr::select(port.dat2, -boat, -port, -trip.id)
@@ -58,8 +61,13 @@ save(port.dat2, file = "C:/Users/keyserf/Documents/temp_data/portdat_2006-2024_a
 
 ##############################################################################################################
 # survey
-load("Y:/Offshore/Assessment/Data/Survey_data/2024/Survey_summary_output/Survey_all_results.Rdata")
-# mw_dat_all
-# survey.obj$GB
-# survey.obj$GBa
-# survey.obj$GBb
+load("C:/Users/keyserf/Documents/temp_data/Survey_all_results.Rdata")
+mw.dat.all.gb <- list(GBa=mw.dat.all$GBa, 
+                      GB=mw.dat.all$GB,
+                      GBb=mw.dat.all$GBb)
+all.surv.dat.gb <- all.surv.dat[all.surv.dat$bank %in% c("GB", "GBa", "GBb"),]
+
+save(mw.dat.all.gb, file = "C:/Users/keyserf/Documents/temp_data/mwdatallgb.RData")
+save(all.surv.dat.gb, file = "C:/Users/keyserf/Documents/temp_data/allsurvdatgb.RData")
+
+
