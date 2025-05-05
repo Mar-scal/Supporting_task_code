@@ -58,6 +58,28 @@ port.dat2 <- dplyr::left_join(port.dat, dplyr::select(off.fleet, boat, anon_id))
 port.dat2 <- dplyr::select(port.dat2, -boat, -port, -trip.id)
 save(port.dat2, file = "C:/Users/keyserf/Documents/temp_data/portdat_2006-2024_anon.RData")
 
+# OLD PS data
+oldps <- read.csv("C:/Users/keyserf/Documents/temp_data/Old_PS_data_clean_1981-2005.csv")
+unique(oldps[!oldps$boat %in% off.fleet$vesid,]$boat) 
+# these aren't anywhere in off.fleet, and only match 14 records + 156 records
+# check them for typos
+tail(oldps[(min(which(oldps$boat == 4077))-5):(max(which(oldps$boat == 4077))+5),])
+oldps[1012550:1012620,]
+table(oldps[oldps$boat==4007 & year(oldps$fished)==1998,]$date, oldps[oldps$boat==4007 & year(oldps$fished)==1998,]$id)
+table(oldps[oldps$boat==407,]$id, oldps[oldps$boat==4077,]$scalnum)
+oldps[oldps$boat==4077,]
+# pretty sure that 4077 should be 4007
+oldps$boat[oldps$boat==4077] <- 4007
+
+oldps[(min(which(oldps$boat == 4368))-5):(max(which(oldps$boat == 4368))+5),]
+# should be 4369
+oldps$boat[oldps$boat==4368] <- 4369
+
+#join fleet to this
+oldps$vesid <- oldps$boat
+oldps2 <- left_join(select(oldps, -boat), off.fleet)
+nrow(oldps)==nrow(oldps2)
+oldps2 <- select(oldps2, -X, -date2, -vesid, -vrnum, -boat, -port, -ASM_date, -ring_size_2024, -gear_size_typical)
 
 ##############################################################################################################
 # survey
