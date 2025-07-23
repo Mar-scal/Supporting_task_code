@@ -527,16 +527,16 @@ pred.ts <- rbind(crab.ts,ss.ts)
 
 # Now make the plots
 
-ggplot(pred.ts) + geom_line(aes(x=year,y=mn.num,color=Species,group=Species),size=1.5) + 
-  xlab("") + ylab("Mean Number per tow") + scale_y_log10() +
-  scale_color_manual(values=c("blue","firebrick2"))
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Sea_stars_ts_new_vessles.png",pred.ts,base_height = 8,base_width = 9)
+nv.pred.num <- ggplot(pred.ts) + geom_line(aes(x=year,y=mn.num,color=Species,group=Species),size=1.5) + 
+                                 xlab("") + ylab("Mean Number per tow") + scale_y_log10() +
+                                  scale_color_manual(values=c("blue","firebrick2"))
+save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Predators_num_ts_new_vessls.png",nv.pred.num,base_height = 8,base_width = 9)
 
 
 
-ggplot(pred.ts) + geom_line(aes(x=year,y=mn.wgt,color=Species,group=Species),size=1.5) + 
-  xlab("") + ylab("Mean Weight per tow (kg)") + scale_y_log10() +
-  scale_color_manual(values=c("blue","firebrick2"))
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Sea_stars_ts_new_vessles.png",pred.ts,base_height = 8,base_width = 9)
+nv.pred.wgt <- ggplot(pred.ts) + geom_line(aes(x=year,y=mn.wgt,color=Species,group=Species),size=1.5) + 
+                                 xlab("") + ylab("Mean Weight per tow (kg)") + scale_y_log10() +
+                                 scale_color_manual(values=c("blue","firebrick2"))
+save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Predators_wgt_ts_new_vessls.png",nv.pred.wgt,base_height = 8,base_width = 9)
 
 
