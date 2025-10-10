@@ -11,6 +11,8 @@ off.fleet$vrnum[off.fleet$boat=="GUAR" & !is.na(off.fleet$boat)] <- 105912.1
 off.fleet$boat[off.fleet$boat=="COME" & !is.na(off.fleet$boat) & off.fleet$vesid==4211] <- "COME1"
 off.fleet$vesid[off.fleet$vesid==5004 & is.na(off.fleet$boat)] <- 5004.1
 off.fleet$vrnum[off.fleet$vrnum==1516 & off.fleet$boat=="COME1"] <- 1516.1
+#write.csv(off.fleet, "Y:/Offshore/Data requests/2025/Offshore_fleet_anon_key.csv")
+write.csv(off.fleet, "C:/Users/keyserf/Documents/temp_data/Offshore_fleet_anon_key.csv")
 # so all the 1516 records are getting assigned MER7
 
 #fishery data
@@ -18,6 +20,8 @@ source("C:/Users/keyserf/Documents/GitHub/Assessment_fns/Fishery/logs_and_fisher
 logs_and_fish(loc="offshore", get.local=T, direct="Y:/Offshore/Assessment/", year = 1981:2024)
 #save(new.log.dat, file = "C:/Users/keyserf/Documents/temp_data/newlogdat_1981-2024.RData")
 #save(old.log.dat, file = "C:/Users/keyserf/Documents/temp_data/oldlogdat_1981-2024.RData")
+load("C:/Users/keyserf/Documents/temp_data/newlogdat_1981-2024.RData")
+load("C:/Users/keyserf/Documents/temp_data/oldlogdat_1981-2024.RData")
 
 new.log.dat2 <- dplyr::left_join(new.log.dat, dplyr::select(off.fleet, vrnum, anon_id))
 old.log.dat2 <- dplyr::left_join(old.log.dat, dplyr::select(off.fleet, vesid, anon_id))
@@ -40,6 +44,10 @@ fish.dat <- dplyr::select(fish.dat, -ves, -vrnum, -licence, -vesid)
 fish.dat$trip.id <- paste0(year(fish.dat$date), ".", fish.dat$anon_id, ".", fish.dat$tripnum)
 save(fish.dat, file = "C:/Users/keyserf/Documents/temp_data/fishdat_1981-2024_anon.RData")
 
+fish.dat.gb <- fish.dat[fish.dat$bank %in% c("GB", "GBa", "GBb"),]
+write.csv(fish.dat.gb, "C:/Users/keyserf/Documents/temp_data/fishdat_gb_1981-2024_anon.csv")
+fish.dat.gb <- read.csv("C:/Users/keyserf/Documents/temp_data/fishdat_gb_1981-2024_anon.csv")
+save(fish.dat.gb, file="C:/Users/keyserf/Documents/temp_data/fishdat_gb_1981-2024_anon.RData")
 #load("C:/Users/keyserf/Documents/temp_data/fishdat_1981-2024_anon.RData")
 
 head(fish.dat)
@@ -57,16 +65,21 @@ port.dat2 <- dplyr::left_join(port.dat, dplyr::select(off.fleet, boat, anon_id))
 
 port.dat2 <- dplyr::select(port.dat2, -boat, -port, -trip.id)
 save(port.dat2, file = "C:/Users/keyserf/Documents/temp_data/portdat_2006-2024_anon.RData")
+write.csv(port.dat2, "C:/Users/keyserf/Documents/temp_data/portdat_gb_2006-2024_anon.csv")
+port.dat2 <- read.csv("C:/Users/keyserf/Documents/temp_data/portdat_gb_2006-2024_anon.csv")
+port.dat2 <- port.dat2[port.dat2$bank %in% c("GB", "GBa", "GBb"),]
+save(port.dat2, file = "C:/Users/keyserf/Documents/temp_data/portdat_gb_2006-2024_anon.RData")
+
 
 # OLD PS data
-oldps <- read.csv("C:/Users/keyserf/Documents/temp_data/Old_PS_data_clean_1981-2005.csv")
+oldps <- read.csv("C:/Users/keyserf/Documents/temp_data/Old_PS_data_clean_1981-2005_bank.csv")
 unique(oldps[!oldps$boat %in% off.fleet$vesid,]$boat) 
 # these aren't anywhere in off.fleet, and only match 14 records + 156 records
 # check them for typos
 tail(oldps[(min(which(oldps$boat == 4077))-5):(max(which(oldps$boat == 4077))+5),])
 oldps[1012550:1012620,]
 table(oldps[oldps$boat==4007 & year(oldps$fished)==1998,]$date, oldps[oldps$boat==4007 & year(oldps$fished)==1998,]$id)
-table(oldps[oldps$boat==407,]$id, oldps[oldps$boat==4077,]$scalnum)
+table(oldps[oldps$boat==4077,]$id, oldps[oldps$boat==4077,]$scalnum)
 oldps[oldps$boat==4077,]
 # pretty sure that 4077 should be 4007
 oldps$boat[oldps$boat==4077] <- 4007
@@ -80,6 +93,15 @@ oldps$vesid <- oldps$boat
 oldps2 <- left_join(select(oldps, -boat), off.fleet)
 nrow(oldps)==nrow(oldps2)
 oldps2 <- select(oldps2, -X, -date2, -vesid, -vrnum, -boat, -port, -ASM_date, -ring_size_2024, -gear_size_typical)
+oldps2$trip.id <- as.factor(oldps2$trip.id)
+levels(oldps2$trip.id) <- c(1:length(unique(oldps2$trip.id)))
+oldps2$trip.id <- as.numeric(oldps2$trip.id)
+save(oldps2, file = "C:/Users/keyserf/Documents/temp_data/portdat_1981-2005_anon.RData")
+write.csv(oldps2, "C:/Users/keyserf/Documents/temp_data/portdat_gb_1981-2005_anon.csv")
+oldps2 <- read.csv("C:/Users/keyserf/Documents/temp_data/portdat_gb_1981-2005_anon.csv")
+oldps2 <- oldps2[oldps2$bank %in% c("GB", "GBb", "GBa"),]
+save(oldps2, file="C:/Users/keyserf/Documents/temp_data/portdat_gb_1981-2005_anon.RData")
+
 
 ##############################################################################################################
 # survey
@@ -92,4 +114,8 @@ all.surv.dat.gb <- all.surv.dat[all.surv.dat$bank %in% c("GB", "GBa", "GBb"),]
 save(mw.dat.all.gb, file = "C:/Users/keyserf/Documents/temp_data/mwdatallgb.RData")
 save(all.surv.dat.gb, file = "C:/Users/keyserf/Documents/temp_data/allsurvdatgb.RData")
 
+load("Y:/Offshore/Data requests/2025/DR2025_05_FKDal_Survey/mwdatallgb.RData")
+head(mw.dat.all.gb)
+save("Y:/Offshore/Data requests/2025/DR2025_05_FKDal_Survey/allsurvdatgb.RData")
+head(all.surv.dat.gb)
 

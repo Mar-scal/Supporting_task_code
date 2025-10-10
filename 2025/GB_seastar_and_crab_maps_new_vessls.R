@@ -540,3 +540,10 @@ nv.pred.wgt <- ggplot(pred.ts) + geom_line(aes(x=year,y=mn.wgt,color=Species,gro
 save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Predators_wgt_ts_new_vessls.png",nv.pred.wgt,base_height = 8,base_width = 9)
 
 
+
+
+
+load("C:/Users/keyserf/Documents/temp_data/Data/survey_data/2025/Survey_summary_output/Survey_all_results.Rdata")
+
+joined <- left_join(survey.obj$GBa$model.dat, pred.ts[pred.ts$Species=="Astropecten and Asterias Species",])
+ggplot() + geom_text(data=joined, aes(mn.wgt, clappers, label=year)) + xlab("mean weight of seastars per tow") + ylab("clapper index")
