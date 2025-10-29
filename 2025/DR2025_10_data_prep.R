@@ -109,9 +109,9 @@ log_mike <- NULL
 poly_kg <- NULL
 for(i in unique(fish_sf$year)){
   print(i)
-  log_mike_yr <- Mar.utils::assess_privacy(fish_sf[fish_sf$year ==i,], agg.fields=c("pro.repwt"),
+  log_mike_yr <- Mar.utils::assess_privacy(fish_sf[fish_sf$year ==i,], agg.fields=c("pro.repwt", "hm"),
                                            calculate = "SUM", 
-                                           sens.fields = c("vrnum"),
+                                           sens.fields = c("vrnum", "licence"),
                                            lat.field = "lat",
                                            lon.field = "lon",
                                            for.public=T, create.spatial=T)
@@ -119,47 +119,53 @@ for(i in unique(fish_sf$year)){
     log_mike_yr$Grid2Min$year <- i
     log_mike_yr$Grid2Min <- st_transform(log_mike_yr$Grid2Min, 4326)
     log_mike <- rbind(log_mike, log_mike_yr$Grid2Min)
+    
     log_mike_yr$POLY_AGG$year <- i
     log_mike_yr$POLY_AGG <- st_transform(log_mike_yr$POLY_AGG, 4326)
     poly_kg <- rbind(poly_kg, log_mike_yr$POLY_AGG)
   }
 }
 
-log_mike_hm <- NULL
-poly_hm <- NULL
-for(i in unique(fish_sf$year)){
-  print(i)
-  log_mike_yr <- Mar.utils::assess_privacy(fish_sf[fish_sf$year ==i & !is.na(fish_sf$hm),], agg.fields=c("hm"),
-                                           calculate = "SUM", 
-                                           sens.fields = c("vrnum"),
-                                           lat.field = "lat",
-                                           lon.field = "lon",
-                                           for.public=T, create.spatial=T)
-  if(!is.null(log_mike_yr$Grid2Min)) {
-    log_mike_yr$Grid2Min$year <- i
-    log_mike_yr$Grid2Min <- st_transform(log_mike_yr$Grid2Min, 4326)
-    log_mike_hm <- rbind(log_mike_hm, log_mike_yr$Grid2Min)
-    log_mike_yr$POLY_AGG$year <- i
-    log_mike_yr$POLY_AGG <- st_transform(log_mike_yr$POLY_AGG, 4326)
-    poly_hm <- rbind(poly_hm, log_mike_yr$POLY_AGG)
-  }
-}
+# log_mike_hm <- NULL
+# poly_hm <- NULL
+# for(i in unique(fish_sf$year)){
+#   print(i)
+#   log_mike_yr <- Mar.utils::assess_privacy(fish_sf[fish_sf$year ==i & !is.na(fish_sf$hm),], agg.fields=c("hm"),
+#                                            calculate = "SUM", 
+#                                            sens.fields = c("vrnum"),
+#                                            lat.field = "lat",
+#                                            lon.field = "lon",
+#                                            for.public=T, create.spatial=T)
+#   if(!is.null(log_mike_yr$Grid2Min)) {
+#     log_mike_yr$Grid2Min$year <- i
+#     log_mike_yr$Grid2Min <- st_transform(log_mike_yr$Grid2Min, 4326)
+#     log_mike_hm <- rbind(log_mike_hm, log_mike_yr$Grid2Min)
+#     log_mike_yr$POLY_AGG$year <- i
+#     log_mike_yr$POLY_AGG <- st_transform(log_mike_yr$POLY_AGG, 4326)
+#     poly_hm <- rbind(poly_hm, log_mike_yr$POLY_AGG)
+#   }
+# }
 
-joined <- cbind(log_mike, log_mike_hm)
+# joined <- cbind(log_mike, log_mike_hm)
+dim(log_mike)
+sum(fish_sf$pro.repwt[fish_sf$year==2024])
+sum(log_mike$pro.repwt[log_mike$year==2024])
+sum(poly_kg$pro.repwt[poly_kg$year==2024], na.rm=T)
+unique(poly_kg$pro.repwt[poly_kg$year==2024 & poly_kg$CAN_SHOW=="NO"])
+dim(poly_kg)
 
 ggplot() + geom_sf(data=log_mike[log_mike$pro.repwt>0,], aes(fill=pro.repwt), colour=NA) + facet_wrap(~year) +
   geom_sf(data=poly_kg[poly_kg$CAN_SHOW=="NO",])
-ggplot() + geom_sf(data=log_mike_hm[log_mike_hm$hm>0,], aes(fill=hm), colour=NA) + facet_wrap(~year) +
-  geom_sf(data=poly_hm[poly_hm$CAN_SHOW=="NO",])
+# ggplot() + geom_sf(data=log_mike_hm[log_mike_hm$hm>0,], aes(fill=hm), colour=NA) + facet_wrap(~year) +
+#   geom_sf(data=poly_hm[poly_hm$CAN_SHOW=="NO",])
 
 
 # compare screening to unscreened
-screened <- log_mike %>% dplyr::group_by(year) %>%
-  dplyr::summarize(screen_kg=sum(pro.repwt, na.rm=T)) %>% 
-  st_drop_geometry()  
-screened_hm <- log_mike_hm %>% dplyr::group_by(year) %>%
-  dplyr::summarize(screen_hm=sum(hm, na.rm=T)) %>% 
-  st_drop_geometry()  
+screened <- log_mike %>%  
+  st_drop_geometry() %>%
+  dplyr::group_by(year) %>%
+  dplyr::summarize(screen_kg=sum(pro.repwt, na.rm=T),
+                   screen_hm=sum(hm, na.rm=T))
 
 unscreened <- fish_sf %>% dplyr::group_by(year) %>%
   dplyr::summarize(kg=sum(pro.repwt, na.rm=T),
@@ -167,7 +173,6 @@ unscreened <- fish_sf %>% dplyr::group_by(year) %>%
   st_drop_geometry()
 
 compare <- full_join(screened, unscreened)
-compare <- full_join(compare, screened_hm)
 compare$screen_kg[is.na(compare$screen_kg)] <- 0
 compare$screen_hm[is.na(compare$screen_hm)] <- 0
 compare$kg[is.na(compare$kg)] <- 0
@@ -229,24 +234,23 @@ print(bp +
 
 # for CSV
 log_mike$kgs <- log_mike$pro.repwt
-st_geometry(log_mike_hm) <- NULL
-log_mike <- full_join(log_mike, log_mike_hm)
 #log_mike <- log_mike[!is.na(log_mike$kgs),]
 log_mike <- st_centroid(log_mike)
 log_mike <- st_transform(log_mike, 4326)
+#st_geometry(log_mike) <- NULL
 
-log_mike <- st_intersection(log_mike, offshore)
-#log_mike_hm <- st_intersection(log_mike_hm, offshore)
+sum(log_mike$pro.repwt[log_mike$year==2024])
+sum(log_mike_off$kgs[log_mike_off$year==2024])
+log_mike_off <- st_intersection(log_mike, offshore)
+st_geometry(log_mike_off) <- NULL
+log_mike <- left_join(log_mike, log_mike_off)
 log_mike$sfa <- gsub(x=log_mike$ID, pattern=".shp", replacement="", fixed=T)
-#log_mike_hm$sfa <- gsub(x=log_mike_hm$ID, pattern=".shp", replacement="", fixed=T)
-log_mike$sfa <- gsub(x=log_mike$sfa, pattern="SFA", replacement="", fixed=T)
-#log_mike_hm$sfa <- gsub(x=log_mike_hm$sfa, pattern="SFA", replacement="", fixed=T)
 log_mike <- dplyr::select(log_mike, -ID)
-#log_mike_hm <- dplyr::select(log_mike_hm, -ID)
 
 coords <- as.data.frame(st_coordinates(log_mike))
 log_mike$lon <- coords$X
 log_mike$lat <- coords$Y
+log_mike_sf <- log_mike
 st_geometry(log_mike) <- NULL
 #log_mike$SFA <- "25A"
 log_mike <- dplyr::select(log_mike, year, sfa, kgs, hm, lon, lat)
@@ -256,24 +260,32 @@ log_mike$lon_centroid <- round(log_mike$lon_centroid, 5)
 log_mike$lat_centroid <- round(log_mike$lat_centroid, 5)
 log_mike <- log_mike[!(log_mike$landings_kg==0 & log_mike$effort_hm==0),]
 
-# log_mike_hm <- log_mike_hm[!is.na(log_mike_hm$hm),]
-# log_mike_hm <- st_centroid(log_mike_hm)
-# log_mike_hm <- st_transform(log_mike_hm, 4326)
-# coords <- as.data.frame(st_coordinates(log_mike_hm))
-# log_mike_hm$lon <- coords$X
-# log_mike_hm$lat <- coords$Y
-# st_geometry(log_mike_hm) <- NULL
-# #log_mike_hm$SFA <- "25A"
-# log_mike_hm <- dplyr::select(log_mike_hm, year, sfa, hm, lon, lat) 
-# names(log_mike_hm) <- c("year", "SFA","effort_hm", "lon_centroid", "lat_centroid") 
-# log_mike_hm <- arrange(log_mike_hm, SFA, year, lon_centroid, lat_centroid) 
-# log_mike_hm$lon_centroid <- round(log_mike_hm$lon_centroid, 5)
-# log_mike_hm$lat_centroid <- round(log_mike_hm$lat_centroid, 5)
-# log_mike_hm <- log_mike_hm[log_mike_hm$effort_hm>0,]
-
-
 log_mike <- log_mike %>% dplyr::arrange(year, SFA, lon_centroid, lat_centroid, landings_kg, effort_hm) %>%
   dplyr::select(year, SFA, lon_centroid, lat_centroid, landings_kg, effort_hm)
 
-# NOT QUITE RIGHT! NEED TO FIGURE OUT WHY THIS DOESN'T MATCH PLOTS?! Something with joining of hm to kg?
+ggplot() + geom_point(data=log_mike[is.na(log_mike$SFA),], aes(lon_centroid, lat_centroid)) +
+  geom_sf(data=poly_kg[poly_kg$CAN_SHOW=="NO",], fill="black", alpha=0.1)
+
+log_mike <- log_mike[!is.na(log_mike$SFA),]
+
 write.csv(x=log_mike, file = "Y:/Offshore/Assessment/2025/Supporting_tasks/Mersey_DR2025_10/logdata_2009-2024_gridded_screened_Science.csv")
+
+print(bp + 
+        #geom_sf(data=foot_grid[!is.na(foot_grid$kg) & !is.na(foot_grid$year),], fill="transparent", colour=NA, show.legend=T) +
+        geom_sf(data=log_mike, aes(colour=ID), show.legend=T) +
+        #geom_text(data=compare[!is.na(compare$year),], aes(x=-Inf, y=-Inf, label=paste0("kg screened in: ", round(screen_kg,0), "\nkg screened out: ", round(diff_kg,0))), hjust = -0.1, vjust = -0.1)+
+        geom_sf(data=poly_kg[poly_kg$CAN_SHOW=="NO",], fill="black", alpha=0.1)+
+        theme(legend.position="right") +
+        scale_fill_viridis_c(name=paste0("Catch", " (t)"), option="rocket", begin=0.95, end=0)+
+        coord_sf(expand=F)#+
+        # geom_sf_text(data = nonGB[nonGB$SFA %in% base$ID,],
+        #              aes(label = final),
+        #              size=6,
+        #              fun.geometry = sf::st_centroid,
+        #              nudge_x = nonGB[nonGB$SFA %in% base$ID,]$nudgex,
+        #              nudge_y = nonGB[nonGB$SFA %in% base$ID,]$nudgey
+        # )+
+        #facet_wrap(~year)
+)
+
+
