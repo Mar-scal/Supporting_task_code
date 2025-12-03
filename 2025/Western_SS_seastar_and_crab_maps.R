@@ -2,6 +2,7 @@ library(Mar.datawrangling)
 library(tidyverse)
 library(ggthemes)
 library(cowplot)
+library(sf)
 
 theme_set(theme_few(base_size = 16))
 
@@ -77,12 +78,12 @@ length
 
 names(all.tmp) <- tolower(names(all.tmp))
 
-all.new.vessel <- all.tmp |> collapse::fsubset(mission %in% c("CAR2025002","CAR2024010",
+all.new.vessel <- all.tmp |> collapse::fsubset(mission %in% c("CAR2025002","CAR2024010", "CAR2025010",
                                                             "CAB2024003","CAR2023011","CAR2023002",
                                                             "CAB2022010", "CAR2022102",
                                                             "CAR2021241","CAR2021240"))
 
-all <- all.tmp |> collapse::fsubset(!mission %in% c("CAR2025002","CAR2024010",
+all <- all.tmp |> collapse::fsubset(!mission %in% c("CAR2025002","CAR2024010","CAR2025010",
                                                "CAB2024003","CAR2023011","CAR2023002",
                                                "CAB2022010", "CAR2022102",
                                                "CAR2021241","CAR2021240"))

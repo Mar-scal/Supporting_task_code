@@ -56,8 +56,8 @@ years <- 2007:2025
 
 ######### Sea stars
 
-get_data("rv",usepkg = 'roracle',data.dir = data.dir.wrangled,fn.oracle.username=un.ID,fn.oracle.password =pwd.ID,
-         force.extract = F)
+cxn <- ROracle::dbConnect(DBI::dbDriver("Oracle"), un.ID, pwd.ID, "PTRAN")
+get_data("rv",force.extract = F,cxn=cxn)
 # Lets pull ASTROPECTEN AND ASTERIAS SPECIES
 sea.stars <- c(grep("ASTERIAS",GSSPECIES$SPEC),grep("ASTROPECTEN",GSSPECIES$SPEC))
 
@@ -74,12 +74,12 @@ length
 
 names(all.tmp) <- tolower(names(all.tmp))
 
-all.new.vessel <- all.tmp |> collapse::fsubset(mission %in% c("CAR2025002","CAR2024010",
+all.new.vessel <- all.tmp |> collapse::fsubset(mission %in% c("CAR2025002","CAR2024010", "CAR2025010","CAR2025002",
                                                             "CAB2024003","CAR2023011","CAR2023002",
                                                             "CAB2022010", "CAR2022102",
                                                             "CAR2021241","CAR2021240"))
 
-all <- all.tmp |> collapse::fsubset(!mission %in% c("CAR2025002","CAR2024010",
+all <- all.tmp |> collapse::fsubset(!mission %in% c("CAR2025002","CAR2024010","CAR2025010","CAR2025002",
                                                "CAB2024003","CAR2023011","CAR2023002",
                                                "CAB2022010", "CAR2022102",
                                                "CAR2021241","CAR2021240"))
@@ -139,8 +139,8 @@ ss.nv.ind.wgt.plt <- basemap + geom_sf(data=gb.nv.ss.all, aes(size=Ind.wgt),pch=
 # Now try crabs...
 
 
-get_data("rv",usepkg = 'roracle',data.dir = data.dir.wrangled)
-# Crab time.
+cxn <- ROracle::dbConnect(DBI::dbDriver("Oracle"), un.ID, pwd.ID, "PTRAN")
+get_data("rv",force.extract = F,cxn=cxn)# Crab time.
 crabs <- c(grep("CANCER",GSSPECIES$SPEC))
 
 GSSPECIES = GSSPECIES[crabs,]
@@ -156,13 +156,13 @@ sppCounter_CAT <- aggregate(
 
 names(all.crabs) <- tolower(names(all.crabs))
 
-all.crab <- all.crabs |> collapse::fsubset(!mission %in% c("CAR2025002","CAR2024010",
+all.crab <- all.crabs |> collapse::fsubset(!mission %in% c("CAR2025002","CAR2024010","CAR2025010",
                                                               "CAB2024003","CAR2023011","CAR2023002",
                                                               "CAB2022010", "CAR2022102",
                                                               "CAR2021241","CAR2021240"))
 # new vessels only
 
-all.nv.crab <- all.crabs |> collapse::fsubset(!mission %in% c("CAR2025002","CAR2024010",
+all.nv.crab <- all.crabs |> collapse::fsubset(mission %in% c("CAR2025002","CAR2024010","CAR2025010",
                                                            "CAB2024003","CAR2023011","CAR2023002",
                                                            "CAB2022010", "CAR2022102",
                                                            "CAR2021241","CAR2021240"))
@@ -214,20 +214,21 @@ crab.nv.ind.wgt.plt <- basemap + geom_sf(data=gb.nv.crab.all, aes(size=Ind.wgt),
 
 # I can do a basic time series too, but need all the data to figure out how many tows there were within the domain I'm covering here...
 
-get_data("rv",usepkg = 'roracle',data.dir = data.dir.wrangled)
-# All sets for all species...
+
+cxn <- ROracle::dbConnect(DBI::dbDriver("Oracle"), un.ID, pwd.ID, "PTRAN")
+get_data("rv",force.extract = F,cxn=cxn)# Crab time.# All sets for all species...
 self_filter(keep_nullsets = T)
 all.tow <- summarize_catches()
 
 names(all.tow) <- tolower(names(all.tow))
 
 all.tow <- all.tow |> collapse::fsubset(!is.na(longitude) | !is.na(latitude))
-all.tows <- all.tow |> collapse::fsubset(!mission %in% c("CAR2025002","CAR2024010",
+all.tows <- all.tow |> collapse::fsubset(!mission %in% c("CAR2025002","CAR2024010","CAR2025010",
                                                          "CAB2024003","CAR2023011","CAR2023002",
                                                          "CAB2022010", "CAR2022102",
                                                          "CAR2021241","CAR2021240"))
 
-all.nv.tows <- all.tow |> collapse::fsubset(mission %in% c("CAR2025002","CAR2024010",
+all.nv.tows <- all.tow |> collapse::fsubset(mission %in% c("CAR2025002","CAR2024010","CAR2025010",
                                                          "CAB2024003","CAR2023011","CAR2023002",
                                                          "CAB2022010", "CAR2022102",
                                                          "CAR2021241","CAR2021240"))
