@@ -6,7 +6,7 @@ year <- 2018
 
 qu.log <- paste("select * from marfissci.P_OFFSHORE_SCALLOP_LOG_2008 where DATE_FISHED like '%-",year-2000,"'",sep="")
 
-log <- ScallopQuery(package="ROracle", un="keyserf", pw="Decade06", db.con="ptran", SQLtext= qu.log)
+log <- ScallopQuery(package="ROracle", un="keyserf", pw="", db.con="ptran", SQLtext= qu.log)
 
 names(log)
 

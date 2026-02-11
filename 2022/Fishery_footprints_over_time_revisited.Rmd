@@ -13,8 +13,9 @@ runtime: shiny
 # This script is used to get the fishery footprint over time and to see how it changes.
 # Started by DK in Sept 2017, modified by FK in Nov 2021
 
-yr <- 2022
-years.t <- 2015:2022 # The years of interest make temporary as this could be overwritten when I bring in the survey results...
+yr <- 2023
+years.t <- 2019:2023 # The years of interest make temporary as this could be overwritten when I bring in the survey results...
+bank <- "GBa"
 ```
 
 ```{r, include=F}
@@ -49,12 +50,12 @@ for(i in 1:length(other$ID)){
 }
 
 years <- years.t
-logs_and_fish(loc="offshore",year = years,direct=direct)
+logs_and_fish(loc="offshore",year = years,direct=direct, get.marfis = F)
 fish.dat<-new.log.dat
 #fish.dat <- read.csv("C:/Users/keyserf/Desktop/newlogdat.csv")
 fish.dat$ID<-1:nrow(fish.dat)
 
-out2 <- fishery_footprint_history(years=2015:2022, bnk="BBn", high=5, highcpue=20, subarea=NULL,
+out2 <- fishery_footprint_history(years=years.t, bnk=bank, high=5, highcpue=20, subarea=NULL,
                                 survey=survey, other=other, fish.dat=fish.dat, direct_fns = direct_fns)
 ```
 
@@ -85,7 +86,7 @@ Column {data-width=700}
 ```{r, fig.height=8}
 require(ggrepel)
 survey$bank <- survey$ID
-ggplotly(ggplot() + geom_sf(data=survey[survey$bank=="GBa", c("geometry", "bank")]) + theme_bw() +
+ggplotly(ggplot() + geom_sf(data=survey[survey$bank==bank, c("geometry", "bank")]) + theme_bw() +
            geom_sf(data=other_poly, fill=NA) +
            facet_wrap(~ID))
 
@@ -134,7 +135,7 @@ startyear <- reactive(input$startyear)
 months <- reactive(input$months)
 
 out <- eventReactive(input$go_out, {
-  fishery_footprint_history(years=input$startyear:2022, bnk="GBa",
+  fishery_footprint_history(years=input$startyear:2023, bnk="GBa",
                             high=input$high,
                             highcpue=input$highcpue,
                             subarea=input$subarea,

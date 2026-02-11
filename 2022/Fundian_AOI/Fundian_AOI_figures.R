@@ -111,7 +111,7 @@ ggplot() + geom_sf(data=fundian.aoi.2022) +
   geom_sf(data=fish.locs) 
 
 # And pull the data
-inside.dat <- fish.dat[1:nrow(fish.dat) %in% fish.locs$EID,c("lon","lat","pro.repwt","year","depth.m","depth","vesid","vrnum","kg.hm","hm",'date')]
+inside.dat <- fish.dat[1:nrow(fish.dat) %in% fish.locs$EID,c("lon","lat","pro.repwt","year","depth.m","depth","vesid","vrnum","kg.hm","hm",'date', "licence")]
 inside.dat$month <- month(inside.dat$date)
 # How many vessels on the bank each year...
 aggregate(pro.repwt ~ year + vrnum,inside.dat,length)
@@ -123,7 +123,7 @@ table(aggregate(pro.repwt ~ year + vesid,inside.dat,length)$year)
 # need the vessel info since Dave provided it last year
 # In 2022, they asked for 1980-2021 for this new bbox
 inside.dat <- inside.dat %>%
-  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, vesid)
+  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, vesid, licence)
 
 fleet <- read.csv(paste0(direct, "Data/Offshore_Fleet.csv"))
 
@@ -131,7 +131,7 @@ inside.dat.2007 <- inside.dat %>%
   filter(year<2008) %>%
   dplyr::select(-vrnum) %>%
   rename(vrnum = vesid) %>%
-  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum)
+  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, licence)
 # fleet.2007 <- fleet %>% rename(vrnum=Pre_2008_ID) %>% dplyr::select(vrnum, ID, Vessel, Company) %>%
 #   filter(!Vessel=="Cape Blomidon")
 # inside.dat.2007 <- left_join(inside.dat.2007, fleet.2007) %>%
@@ -141,13 +141,13 @@ inside.dat.2008 <- inside.dat %>%
   filter(year>2007 & year<2016)
 fleet.2008 <- fleet %>% rename(vrnum=ID) %>% filter(!Vessel=="MAUDE ADAMS")
 inside.dat.2008 <- left_join(inside.dat.2008, fleet.2008) %>%
-  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, Vessel, Company)
+  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, Vessel, Company, licence)
 
 inside.dat.2016 <- inside.dat %>%
   filter(year>2015)
 fleet.2016 <- fleet %>% rename(vrnum=ID) %>% filter(!Vessel=="ATLANTIC GUARDIAN")
 inside.dat.2016 <- left_join(inside.dat.2016, fleet.2016) %>%
-  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, Vessel, Company)
+  dplyr::select(year, lon, lat, pro.repwt, kg.hm, hm, depth.m, vrnum, Vessel, Company, licence)
 
 inside.dat <- full_join(inside.dat.2007, rbind(inside.dat.2008, inside.dat.2016)) %>%
   dplyr::arrange(year, Company, vrnum, lon, lat)
@@ -183,7 +183,11 @@ png(file=paste0(direct,"2022/Supporting_tasks/Fundian_AOI/fishing_locations_1980
 maps
 dev.off()
 
-write.csv(inside.dat,paste0(direct,"2022/Supporting_tasks/Fundian_AOI/FGB_fishery_locations_with_vessel_names_1980-2021.csv"))
+write.csv(inside.dat,paste0(direct,"2022/Supporting_tasks/Fundian_AOI/FGB_fishery_locations_with_vessel_names_and_lic_1980-2021.csv"))
+# inside.dat <- read.csv(paste0(direct,"2022/Supporting_tasks/Fundian_AOI/FGB_fishery_locations_with_vessel_names_1980-2021.csv"))
+# inside.dat <- left_join(inside.dat, fleet)
+# tail(inside.dat)
+
 
 # then append to last year in excel
 
