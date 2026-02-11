@@ -69,29 +69,29 @@ self_filter(keep_nullsets = F)
 all.tmp <- summarize_catches()
 
 sppCounter_CAT <- aggregate(
-x = list(N_OCCURENCES_GSCAT = GSCAT$SPEC),
-by = list(CODE = GSCAT$SPEC,
-year = substr(GSCAT$MISSION, start = 4,7)),
-length
+  x = list(N_OCCURENCES_GSCAT = GSCAT$SPEC),
+  by = list(CODE = GSCAT$SPEC,
+            year = substr(GSCAT$MISSION, start = 4,7)),
+  length
 )
 
 names(all.tmp) <- tolower(names(all.tmp))
 all.tmp <- all.tmp |> collapse::fsubset(!(is.na(longitude) | is.na(latitude)))
 all.new.vessel <- all.tmp |> collapse::fsubset(mission %in% c("CAR2025010", "CAR2025002","CAR2024010",
-                                                            "CAB2024003","CAR2023011","CAR2023002",
-                                                            "CAB2022010", "CAR2022102",
-                                                            "CAR2021241","CAR2021240"))
+                                                              "CAB2024003","CAR2023011","CAR2023002",
+                                                              "CAB2022010", "CAR2022102",
+                                                              "CAR2021241","CAR2021240"))
 
 all <- all.tmp |> collapse::fsubset(!mission %in% c("CAR2025010", "CAR2025002","CAR2024010",
-                                               "CAB2024003","CAR2023011","CAR2023002",
-                                               "CAB2022010", "CAR2022102",
-                                               "CAR2021241","CAR2021240"))
+                                                    "CAB2024003","CAR2023011","CAR2023002",
+                                                    "CAB2022010", "CAR2022102",
+                                                    "CAR2021241","CAR2021240"))
 
 all.combo <- all |> collapse::fgroup_by(setno,year,longitude,latitude,season,mission,type,xtype) |> collapse::fsummarise(totno = sum(totno,na.rm=T),
-                                                                                         totwgt = sum(totwgt,na.rm=T))
+                                                                                                                         totwgt = sum(totwgt,na.rm=T))
 
 all.nv.combo <-   all.new.vessel |> collapse::fgroup_by(setno,year,longitude,latitude,mission,season,type,xtype) |> collapse::fsummarise(totno = sum(totno,na.rm=T),
-                                                                                                                      totwgt = sum(totwgt,na.rm=T))
+                                                                                                                                         totwgt = sum(totwgt,na.rm=T))
 
 all.sf <- st_as_sf(all.combo,coords = c("longitude","latitude"))
 st_crs(all.sf) <- 4326
@@ -100,7 +100,7 @@ st_crs(all.nv.sf) <- 4326
 
 gb.ss.sf <- st_intersection(all.sf,gb.spa)
 gb.nv.ss.sf <- st_intersection(all.nv.sf,gb.spa)
-  
+
 gb.ss.all <- gb.ss.sf[gb.ss.sf$year >= 2007,]
 gb.ss.all$Ind.wgt <- gb.ss.all$totwgt / gb.ss.all$totno
 gb.ss.type.1.winter <- gb.ss.all[gb.ss.all$type ==1 & gb.ss.all$season == "SPRING",]
@@ -162,21 +162,21 @@ sppCounter_CAT <- aggregate(
 names(all.crabs) <- tolower(names(all.crabs))
 all.crabs <- all.crabs |> collapse::fsubset(!(is.na(longitude) | is.na(latitude)))
 all.crab <- all.crabs |> collapse::fsubset(!mission %in% c("CAR2025010", "CAR2025002","CAR2024010",
-                                                              "CAB2024003","CAR2023011","CAR2023002",
-                                                              "CAB2022010", "CAR2022102",
-                                                              "CAR2021241","CAR2021240"))
-# new vessels only
-
-all.nv.crab <- all.crabs |> collapse::fsubset(mission %in% c("CAR2025010", "CAR2025002","CAR2024010",
                                                            "CAB2024003","CAR2023011","CAR2023002",
                                                            "CAB2022010", "CAR2022102",
                                                            "CAR2021241","CAR2021240"))
+# new vessels only
+
+all.nv.crab <- all.crabs |> collapse::fsubset(mission %in% c("CAR2025010", "CAR2025002","CAR2024010",
+                                                             "CAB2024003","CAR2023011","CAR2023002",
+                                                             "CAB2022010", "CAR2022102",
+                                                             "CAR2021241","CAR2021240"))
 
 crab.combo <- all.crab |> collapse::fgroup_by(setno,year,longitude,latitude,mission,season,type,xtype) |> collapse::fsummarise(totno = sum(totno,na.rm=T),
-                                                                                                                       totwgt = sum(totwgt,na.rm=T))
+                                                                                                                               totwgt = sum(totwgt,na.rm=T))
 
 crab.nv.combo <- all.nv.crab |> collapse::fgroup_by(setno,year,longitude,latitude,mission,season,type,xtype) |> collapse::fsummarise(totno = sum(totno,na.rm=T),
-                                                                                                                       totwgt = sum(totwgt,na.rm=T))
+                                                                                                                                     totwgt = sum(totwgt,na.rm=T))
 all.crab.sf <- st_as_sf(all.crab,coords = c("longitude","latitude"))
 st_crs(all.crab.sf) <- 4326
 gb.crab <- st_intersection(all.crab.sf,gb.spa)
@@ -234,9 +234,9 @@ all.tows <- all.tow |> collapse::fsubset(!mission %in% c("CAR2025010", "CAR20250
                                                          "CAR2021241","CAR2021240"))
 
 all.nv.tows <- all.tow |> collapse::fsubset(mission %in% c("CAR2025010", "CAR2025002","CAR2024010",
-                                                         "CAB2024003","CAR2023011","CAR2023002",
-                                                         "CAB2022010", "CAR2022102",
-                                                         "CAR2021241","CAR2021240"))
+                                                           "CAB2024003","CAR2023011","CAR2023002",
+                                                           "CAB2022010", "CAR2022102",
+                                                           "CAR2021241","CAR2021240"))
 
 
 all.tows <- all.tows |> collapse::fsubset(year >= 2007) # Need to do that separately from the na's for logic reason...
@@ -375,42 +375,42 @@ pred.ts <- rbind(crab.ts,ss.ts)
 # Now make the plots
 
 ggplot(pred.ts) + geom_line(aes(x=year,y=mn.num,color=Species,group=Species),size=1.5) + 
-                  xlab("") + ylab("Mean Number per tow") + scale_y_log10() +
-                  scale_color_manual(values=c("blue","firebrick2"))
+  xlab("") + ylab("Mean Number per tow") + scale_y_log10() +
+  scale_color_manual(values=c("blue","firebrick2"))
 
 ggplot(pred.ts) + geom_line(aes(x=year,y=mn.wgt,color=Species,group=Species),size=1.5) + 
-                  xlab("") + ylab("Mean Weight per tow (kg)") + scale_y_log10() +
-                  scale_color_manual(values=c("blue","firebrick2"))
-    
+  xlab("") + ylab("Mean Weight per tow (kg)") + scale_y_log10() +
+  scale_color_manual(values=c("blue","firebrick2"))
+
 
 
 # These plots make the presentation cut...
 
 crab.ts.plt <- ggplot(pred.ts[pred.ts$Species == "Cancer Species",]) + geom_line(aes(x=year,y=mn.wgt),size=1.5) + 
-                        xlab("") + ylab("Mean Weight per tow (kg)") + ggtitle("Crab species (Cancer genus) on Georges Bank") +
-                        scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2024,by=2))
+  xlab("") + ylab("Mean Weight per tow (kg)") + ggtitle("Crab species (Cancer genus) on Georges Bank") +
+  scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2024,by=2))
 save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crab_wgt_ts.png",crab.ts.plt,base_height = 8,base_width = 8)
-                        
+
 
 ss.ts.plt <-   ggplot(pred.ts[pred.ts$Species == "Astropecten and Asterias Species",]) + geom_line(aes(x=year,y=mn.wgt),size=1.5) + 
-                        xlab("") + ylab("Mean Weight per tow (kg)") + ggtitle("Astropecten and Asterias Species on Georges Bank")+
-                        scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2024,by=2))
+  xlab("") + ylab("Mean Weight per tow (kg)") + ggtitle("Astropecten and Asterias Species on Georges Bank")+
+  scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2024,by=2))
 save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Sea_stars_wgt_ts.png",ss.ts.plt,base_height = 8,base_width = 8)
-                        
-  
+
+
 gb.crab.2018.onwards <- gb.crab.type.1.winter |> collapse::fsubset(year >=2018)
 
 crab.spat.wgt.plt <- basemap + geom_sf(data=gb.crab.2018.onwards , aes(size=totwgt),pch=19,colour ="red") + facet_wrap(~year) + labs(size = "Kg per tow")+
-                                           ggtitle("Crab species (Cancer genus) on Georges Bank (winter)") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))+
-                                            theme(legend.position = "bottom",legend.direction = 'horizontal')
+  ggtitle("Crab species (Cancer genus) on Georges Bank (winter)") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))+
+  theme(legend.position = "bottom",legend.direction = 'horizontal')
 save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_wgt_spatial_2018_2024.png",crab.spat.wgt.plt,base_height = 8,base_width = 9)
 
-  
+
 gb.ss.2018.onwards <- gb.ss.type.1.winter |> collapse::fsubset(year >=2018)
 
 ss.spat.wgt.plt <- basemap + geom_sf(data=gb.ss.2018.onwards , aes(size=totwgt),pch=19,colour ="red") + facet_wrap(~year) + labs(size = "Kg per tow") +
-                                           ggtitle("Astropecten and Asterias Species on Georges Bank (winter)") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3)) +
-                                           theme(legend.position = "bottom",legend.direction = 'horizontal')
+  ggtitle("Astropecten and Asterias Species on Georges Bank (winter)") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3)) +
+  theme(legend.position = "bottom",legend.direction = 'horizontal')
 save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Sea_stars_wgt_spatial_2018_2024.png",ss.spat.wgt.plt,base_height = 8,base_width = 9)
 
 # Repeat the index calculations for the New vessels only, using all data for a year for this instead of just winter######
@@ -539,15 +539,15 @@ pred.ts <- rbind(crab.ts,ss.ts)
 # Now make the plots
 
 nv.pred.num <- ggplot(pred.ts) + geom_line(aes(x=year,y=mn.num,color=Species,group=Species),size=1.5) + 
-                                 xlab("") + ylab("Mean Number per tow") + scale_y_log10() +
-                                  scale_color_manual(values=c("blue","firebrick2"))
+  xlab("") + ylab("Mean Number per tow") + scale_y_log10() +
+  scale_color_manual(values=c("blue","firebrick2"))
 save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Predators_num_ts_new_vessls.png",nv.pred.num,base_height = 8,base_width = 9)
 
 
 
 nv.pred.wgt <- ggplot(pred.ts) + geom_line(aes(x=year,y=mn.wgt,color=Species,group=Species),size=1.5) + 
-                                 xlab("") + ylab("Mean Weight per tow (kg)") + scale_y_log10() +
-                                 scale_color_manual(values=c("blue","firebrick2"))
+  xlab("") + ylab("Mean Weight per tow (kg)") + scale_y_log10() +
+  scale_color_manual(values=c("blue","firebrick2"))
 save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Predators_wgt_ts_new_vessls.png",nv.pred.wgt,base_height = 8,base_width = 9)
 
 
