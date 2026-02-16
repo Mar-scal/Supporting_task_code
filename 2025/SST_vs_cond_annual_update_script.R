@@ -243,11 +243,11 @@ p <- ggplot(dat.combo,aes(y=may,x=SST.sum)) +
                                           geom_text(data=dat.new %>% dplyr::filter(year >= 2023),aes(y=may,x=SST.sum,label = substr(year,3,4)),color='blue',size = 4) +
                                           #geom_text(aes(y=may.2025.pred,x=25.99),label = 25,color='black') +
                                           geom_vline(xintercept = dat.new$SST.sum[dat.new$year == 2026],size=1.5,alpha=0.2) +
-                                          theme_bw(base_size = 18)+ xlab("Sea Surface Temperature Index (°C)") + ylab("May Scallop condition (g\u22C5m\u207B\u00B3)")
+                                          theme_bw(base_size = 18)+ xlab("Sea Surface Temperature Index (°C)") + ylab("Scallop condition (g\u22C5m\u207B\u00B3)")
 save_plot(filename = "Y:/Offshore/Assessment/2025/Supporting_tasks/temperature/Condition_SST_May_2025.png",p,base_height = 6,base_width = 8)
 save_plot(filename = "Y:/Offshore/Assessment/2025/Supporting_tasks/temperature/Condition_SST_May_2025.tiff",p,base_height = 6,base_width = 8)
-save_plot(filename = "D:/Github/GB_SEAM/Figures/Productivity_paper/Condition_SST_May_2025.png",p,base_height = 6,base_width = 8)
-save_plot(filename = "D:/Github/GB_SEAM/Figures/Productivity_paper/Condition_SST_May_2025.tiff",p,base_height = 6,base_width = 8)
+# save_plot(filename = "D:/Github/GB_SEAM/Figures/Productivity_paper/Condition_SST_May_2025.png",p,base_height = 6,base_width = 8)
+# save_plot(filename = "D:/Github/GB_SEAM/Figures/Productivity_paper/Condition_SST_May_2025.tiff",p,base_height = 6,base_width = 8)
 
 #####################################################################################################
 #End script
