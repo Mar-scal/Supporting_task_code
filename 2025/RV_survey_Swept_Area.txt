@@ -1,0 +1,19 @@
+#Here is the procedure from Ryan Martin on how to get standardized tow lengths. Basically, apply conversions for each set, 
+# get a swept area in km2 (so length times width of tow), and divide the biomass/numbers by the swept area to get that right
+# If you want to go and scale that up to area I would recommend following this, but calculating your areas yourself.
+# Load in set-level catch data from gscat
+# Apply the biomass conversion factors to the TOTWGT columns
+# Applying conversion factors at the set level is important as numerous times throughout the time series multiple vessels have sampled the same strata in a given survey year. During the stratification process (described below), an average biomass is taken for a given strata, thus all set-level data within that strata has to be in the same vessel/gear units.
+# Standardize the TOTWGT into an area of 1 KM2. This is done by taking distance towed in nautical miles and dividing it by 1.852 (Changes it into km) then dividing that by the wing spread of the net, which gives you area sampled in km2. You then divide TOTWGT by the area sampled to get TOTWGT by km2.
+# Calculate the average TOTWGTKM2 from all sets within a strata/area.
+# Next you need to calculate the area of a given strata in KM2 (in gsstratum the area is in nautical miles). This is done by just taking the area times 3.429904.
+# Times the average TOTWGTKM2 within a strata by its area in KM2 to get biomass for the strata.
+
+# The wingspan is assumed to be fixed for both gears
+# This is gear type 9 (note there is some type 1 data on the new vessel using the W11A gear), so going with gear as the differentiation throughout this.
+# The W2a is a 1.8 NM tow
+w2a.ws.km <- 12.5/1000 # This is the gear width in meters, more commonly this is given as 41 feet.
+nm.to.km <- 1.852
+# Nest conversions... these are type 15 data, Ryan Martin got me this conversion, it is in meters
+# Note the NEST is a 1 NM tow
+nest.ws.km <- 12.49/1000
