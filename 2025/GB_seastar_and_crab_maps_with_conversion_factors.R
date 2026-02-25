@@ -440,17 +440,35 @@ save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_sp
 # These plots make the presentation cut...
 # first the Sea stars
 ss.ts.plt <- ggplot(pred.spring.ts[pred.spring.ts$Species == "Astropecten and Asterias Species",]) + geom_line(aes(x=year,y=mn.wgt.km2),size=1.5) + 
-  xlab("") + ylab("Mean Weight per km2") + ggtitle("Astropecten and Asterias Species (Spring)") +
+  xlab("") + ylab("Seastar Biomass Index (kg\u22C5km\u207B\u00B2)") + ggtitle("Astropecten and Asterias Species (Spring)") +
   scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2024,by=2))
 save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars_spring_wgt_ts_with_conversion_factor.png",ss.ts.plt,base_height = 8,base_width = 8)
 
 
 # Now the crabs
 crab.ts.plt <- ggplot(pred.spring.ts[pred.spring.ts$Species == "Crab species",]) + geom_line(aes(x=year,y=mn.wgt.km2),size=1.5) + 
-  xlab("") + ylab("Mean Weight per km2") + ggtitle("Crab species (Spring)") +
+  xlab("") + ylab("Crab Biomass Index (kg\u22C5km\u207B\u00B2)") + ggtitle("Crab species (Spring)") +
   scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2024,by=2))
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crab_spring_wgt_ts_with_conversion_factor.png",crab.ts.plt,base_height = 8,base_width = 8)
+save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crab_spring_wgt_ts_with_conversion_factor.png",crab.ts.plt,base_height = 9,base_width = 8)
 
+# Combine these figures....
+theme_set(theme_few(base_size=18))
+ss.ts.plt.4.combo <- ggplot(pred.spring.ts[pred.spring.ts$Species == "Astropecten and Asterias Species",]) + geom_line(aes(x=year,y=mn.wgt.km2),size=1.5) + 
+  xlab("") + ylab("Seastar Biomass Index (kg\u22C5km\u207B\u00B2)") + 
+  scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2025,by=3),labels=NULL)
+
+crab.ts.plt.4.combo <- ggplot(pred.spring.ts[pred.spring.ts$Species == "Crab species",]) + geom_line(aes(x=year,y=mn.wgt.km2),size=1.5) + 
+  xlab("") + ylab("Crab Biomass Index (kg\u22C5km\u207B\u00B2)") +
+  scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2025,by=3))
+
+pred.ts.plt <- plot_grid(ss.ts.plt.4.combo,crab.ts.plt.4.combo,nrow=2)
+save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/pred_ts_with_conversion_factor.png",pred.ts.plt,base_height = 9,base_width = 6)
+#save_plot("D:/Github/GB_SEAM/Figures/Productivity_paper/pred_ts_with_conversion_factor.png",pred.ts.plt,base_height = 9,base_width = 6)
+#save_plot("D:/Github/GB_SEAM/Figures/Productivity_paper/pred_ts_with_conversion_factor.tiff",pred.ts.plt,base_height = 9,base_width = 6)
+
+
+# Save the data used for these two figures.
+saveRDS(pred.spring.ts,"D:/Github/GB_SEAM/data/RV_pred_data_spring_with_conversion.Rds")
 
 ###############################################################
 ### SUPPLEMENTAL #1
@@ -541,22 +559,6 @@ save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_al
 
 # Time series
 
-ss.ts.plt <- ggplot(pred.summer.ts[pred.summer.ts$Species == "Crab species",]) + geom_line(aes(x=year,y=mn.wgt.km2),size=1.5) + 
-  xlab("") + ylab("Mean Weight per km2") + ggtitle("Crab species (Summer)") +
-  scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2024,by=2))
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars_summer_wgt_ts_with_conversion_factor.png",ss.ts.plt,base_height = 8,base_width = 8)
-
-crab.ts.plt <- ggplot(pred.summer.ts[pred.summer.ts$Species == "Crab species",]) + geom_line(aes(x=year,y=mn.wgt),size=1.5) + 
-  xlab("") + ylab("Mean Weight per km2") + ggtitle("Crab species (Summer)") +
-  scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2024,by=2))
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crab_summer_wgt_ts_with_conversion_factor.png",crab.ts.plt,base_height = 8,base_width = 8)
-
-
-
-ss.ts.plt <-   ggplot(pred.ts[pred.ts$Species == "Astropecten and Asterias Species",]) + geom_line(aes(x=year,y=mn.wgt),size=1.5) + 
-  xlab("") + ylab("Mean Weight per tow (kg)") + ggtitle("Astropecten and Asterias Species on Georges Bank")+
-  scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2024,by=2))
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Sea_stars_wgt_ts_with_conversion_factor.png",ss.ts.plt,base_height = 8,base_width = 8)
 
 
 
