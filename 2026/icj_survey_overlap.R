@@ -373,3 +373,32 @@ print(overlap_perc) #0.554%
 (vhighN_diff/vhighN_area)*100 # 0.0004% of "Very High North" stratum over the ICJ line
 (vhighS_diff/vhighS_area)*100 # 1.698% of "Very High South" stratum over the ICJ line
 
+# Put percentages into a DF and export to csv file
+strata_differences <- list(low_diff, mediumN_diff, mediumS_diff, highN_diff, highS_diff, vhighN_diff, vhighS_diff, icj_overlap_area)
+strata_area <- list(low_area, mediumN_area, mediumS_area, highN_area, highS_area, vhighN_area, vhighS_area, icj_area)
+
+# Convert to numeric safely
+strata_differences <- as.numeric(as.character(strata_differences))
+strata_area <- as.numeric(as.character(strata_area))
+
+# Check for NA values after conversion
+if (anyNA(strata_differences) || anyNA(strata_area)) {
+  stop("Conversion to numeric introduced NA values. Check your data for non-numeric entries.")
+}
+
+strata_overlap <- data.frame(
+  Stratum = c("Low Catch", "Medium Catch, North", "Medium Catch, South", "High Catch, North", "High Catch, South", "Very High Catch, North", "Very High Catch, South", "Total ICJ Overlap"), 
+  Stratum_Overlap_Area_Km2 = strata_differences,
+  Stratum_Area_Km2 = strata_area , 
+  Percent_Stratum_Overlap = round((strata_differences/strata_area) *100, 3),  # Round to 3 decimal places
+  stringsAsFactors = FALSE # Prevent automatic factor conversion
+)
+
+# Write to csv file
+write.csv(
+  strata_overlap, 
+  file = "Y:/Offshore/Assessment/2026/Supporting_tasks/ICJreview2026.csv", 
+  row.names = FALSE, 
+  na = ""
+)
+cat("Dataframe successfully written to 'ICJreview2026.csv'\n")
