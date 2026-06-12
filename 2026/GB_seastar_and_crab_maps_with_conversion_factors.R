@@ -52,8 +52,8 @@ basemap <- pecjector(area = "GB",
 gb.spa <- st_read("D:/GitHub/GIS_layers/other_boundaries/GB_survey.shp")
 
 #gb.spa <- offshore.spa[offshore.spa$ID %in% c("GB_survey.shp"),]
-data.dir.wrangled <- "Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/"
-years <- 2007:2025
+data.dir.wrangled <- "Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/"
+years <- 2007:2026
 
 
 ###################################################
@@ -410,21 +410,21 @@ ss.con.fac.wgt.plt <- basemap + geom_sf(data=ss.spring.all[ss.spring.all$totwgt 
                                 ggtitle("ASTROPECTEN + ASTERIAS (with conversion factors)") + 
                                 xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3)) + labs(size = "Kg per km2") +
                                 theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars_spring_wgt_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Seastars_spring_wgt_spatial_with_conversion_factors.png",
           ss.con.fac.wgt.plt,base_height = 8,base_width = 9)
 
 ss.con.fac.num.plt <- basemap + geom_sf(data=ss.spring.all, aes(size=n.km2),pch=19,colour ="blue") + facet_wrap(~year) + 
                                 ggtitle("ASTROPECTEN + ASTERIAS (with conversion factors)") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))  + 
                                 labs(size = "N per km2") +
                                 theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars_spring_num_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Seastars_spring_num_spatial_with_conversion_factors.png",
           ss.con.fac.wgt.plt,base_height = 8,base_width = 9)
 
 ss.ind.wgt.plt <- basemap + geom_sf(data=ss.spring.all, aes(size=Ind.wgt),pch=19,colour ="grey15") + facet_wrap(~year) + 
                             ggtitle("ASTROPECTEN + ASTERIAS (with conversion factors)") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))  + 
                             labs(size = "Mean individual weight per tow (kg)") + #scale_size_continuous(transform = "log10")
                             theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars_spring_ind_wgt_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Seastars_spring_ind_wgt_spatial_with_conversion_factors.png",
           ss.ind.wgt.plt,base_height = 8,base_width = 9)
 
 
@@ -436,19 +436,19 @@ crab.con.fac.wgt.plt <- basemap + geom_sf(data=crab.spring.all[crab.spring.all$t
                                   facet_wrap(~year) + 
                                   ggtitle("Crab Species") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3)) + labs(size = "Kg per km2") +
                                   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_spring_wgt_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Crabs_spring_wgt_spatial_with_conversion_factors.png",
           crab.con.fac.wgt.plt,base_height = 8,base_width = 9)
 
 crab.con.fac.num.plt <- basemap + geom_sf(data=crab.spring.all, aes(size=n.km2),pch=19,colour ="blue") + facet_wrap(~year) + 
   ggtitle("Crab Species") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))  + labs(size = "N per km2") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_spring_num_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Crabs_spring_num_spatial_with_conversion_factors.png",
           crab.con.fac.wgt.plt,base_height = 8,base_width = 9)
 
 crab.ind.wgt.plt <- basemap + geom_sf(data=crab.spring.all, aes(size=Ind.wgt),pch=19,colour ="orange") + facet_wrap(~year) + 
   ggtitle("Crab Species") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))  + labs(size = "Mean individual \nwgt per tow (kg)") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_spring_ind_wgt_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Crabs_spring_ind_wgt_spatial_with_conversion_factors.png",
           crab.ind.wgt.plt,base_height = 8,base_width = 9)
 
 
@@ -458,27 +458,27 @@ save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_sp
 ss.ts.plt <- ggplot(pred.spring.ts[pred.spring.ts$Species == "Astropecten and Asterias Species",]) + geom_line(aes(x=year,y=mn.wgt.km2),size=1.5) + 
   xlab("") + ylab("Seastar Biomass Index (kg\u22C5km\u207B\u00B2)") + ggtitle("Astropecten and Asterias Species (Spring)") +
   scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2027,by=2))
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars_spring_wgt_ts_with_conversion_factor.png",ss.ts.plt,base_height = 8,base_width = 8)
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Seastars_spring_wgt_ts_with_conversion_factor.png",ss.ts.plt,base_height = 8,base_width = 8)
 
 
 # Now the crabs
 crab.ts.plt <- ggplot(pred.spring.ts[pred.spring.ts$Species == "Crab species",]) + geom_line(aes(x=year,y=mn.wgt.km2),size=1.5) + 
   xlab("") + ylab("Crab Biomass Index (kg\u22C5km\u207B\u00B2)") + ggtitle("Crab species (Spring)") +
   scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2027,by=2))
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crab_spring_wgt_ts_with_conversion_factor.png",crab.ts.plt,base_height = 9,base_width = 8)
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Crab_spring_wgt_ts_with_conversion_factor.png",crab.ts.plt,base_height = 9,base_width = 8)
 
 # Combine these figures....
 theme_set(theme_few(base_size=18))
 ss.ts.plt.4.combo <- ggplot(pred.spring.ts[pred.spring.ts$Species == "Astropecten and Asterias Species",]) + geom_line(aes(x=year,y=mn.wgt.km2),size=1.5) + 
   xlab("") + ylab("Seastar Biomass Index (kg\u22C5km\u207B\u00B2)") + 
-  scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2025,by=3),labels=NULL)
+  scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2026,by=3),labels=NULL)
 
 crab.ts.plt.4.combo <- ggplot(pred.spring.ts[pred.spring.ts$Species == "Crab species",]) + geom_line(aes(x=year,y=mn.wgt.km2),size=1.5) + 
   xlab("") + ylab("Crab Biomass Index (kg\u22C5km\u207B\u00B2)") +
-  scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2025,by=3))
+  scale_color_manual(values=c("blue","firebrick2")) + scale_x_continuous(breaks=seq(2007,2026,by=3))
 
 pred.ts.plt <- plot_grid(ss.ts.plt.4.combo,crab.ts.plt.4.combo,nrow=2)
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/pred_ts_with_conversion_factor.png",pred.ts.plt,base_height = 9,base_width = 6)
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/pred_ts_with_conversion_factor.png",pred.ts.plt,base_height = 9,base_width = 6)
 #save_plot("D:/Github/GB_SEAM/Figures/Productivity_paper/pred_ts_with_conversion_factor.png",pred.ts.plt,base_height = 9,base_width = 6)
 #save_plot("D:/Github/GB_SEAM/Figures/Productivity_paper/pred_ts_with_conversion_factor.tiff",pred.ts.plt,base_height = 9,base_width = 6)
 
@@ -499,38 +499,38 @@ ss.con.fac.wgt.plt <- basemap + geom_sf(data=ss.summer.type.1[ss.summer.type.1$i
   ggtitle("ASTROPECTEN + ASTERIAS (with conversion factors)") + 
   xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3)) + labs(size = "Kg per km2") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars_summer_wgt_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Seastars_summer_wgt_spatial_with_conversion_factors.png",
           ss.con.fac.wgt.plt,base_height = 8,base_width = 9)
 
 ss.con.fac.num.plt <- basemap + geom_sf(data=ss.summer.type.1, aes(size=n.km2),pch=19,colour ="blue") + facet_wrap(~year) + 
   ggtitle("ASTROPECTEN + ASTERIAS (with conversion factors)") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))  + labs(size = "N per km2") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars_summer_num_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Seastars_summer_num_spatial_with_conversion_factors.png",
           ss.con.fac.wgt.plt,base_height = 8,base_width = 9)
 
 ss.ind.wgt.plt <- basemap + geom_sf(data=ss.summer.type.1, aes(size=Ind.wgt),pch=19,colour ="orange") + facet_wrap(~year) + 
   ggtitle("ASTROPECTEN + ASTERIAS (with conversion factors)") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))  + labs(size = "Mean individual \nwgt per tow (kg)") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars_summer_ind_wgt_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Seastars_summer_ind_wgt_spatial_with_conversion_factors.png",
           ss.ind.wgt.plt,base_height = 8,base_width = 9)
 
 #All data
 ss.con.fac.wgt.plt <- basemap + geom_sf(data=ss.all.tows.sf, aes(size=kg.km2),pch=19,colour ="red") + facet_wrap(~year) + 
   ggtitle("ASTROPECTEN + ASTERIAS (with conversion factors)") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3)) + labs(size = "Kg per km2") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars_all_data_wgt_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Seastars_all_data_wgt_spatial_with_conversion_factors.png",
           ss.con.fac.wgt.plt,base_height = 8,base_width = 9)
 
 ss.con.fac.num.plt <- basemap + geom_sf(data=ss.all.tows.sf, aes(size=n.km2),pch=19,colour ="blue") + facet_wrap(~year) + 
   ggtitle("ASTROPECTEN + ASTERIAS (with conversion factors)") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))  + labs(size = "N per km2") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars_all_data_num_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Seastars_all_data_num_spatial_with_conversion_factors.png",
           ss.con.fac.wgt.plt,base_height = 8,base_width = 9)
 
 ss.ind.wgt.plt <- basemap + geom_sf(data=ss.all.tows.sf, aes(size=Ind.wgt),pch=19,colour ="orange") + facet_wrap(~year) + 
   ggtitle("ASTROPECTEN + ASTERIAS (with conversion factors)") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))  + labs(size = "Mean individual \nwgt per tow (kg)") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars_all_data_ind_wgt_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Seastars_all_data_ind_wgt_spatial_with_conversion_factors.png",
           ss.ind.wgt.plt,base_height = 8,base_width = 9)
 
 # Now the other crab figures
@@ -538,38 +538,38 @@ save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Seastars
 crab.con.fac.wgt.plt <- basemap + geom_sf(data=crab.summer.type.1, aes(size=kg.km2),pch=19,colour ="red") + facet_wrap(~year) + 
   ggtitle("Crab Species") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3)) + labs(size = "Kg per km2") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_summer_wgt_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Crabs_summer_wgt_spatial_with_conversion_factors.png",
           crab.con.fac.wgt.plt,base_height = 8,base_width = 9)
 
 crab.con.fac.num.plt <- basemap + geom_sf(data=crab.summer.type.1, aes(size=n.km2),pch=19,colour ="blue") + facet_wrap(~year) + 
   ggtitle("Crab Species") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))  + labs(size = "N per km2") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_summer_num_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Crabs_summer_num_spatial_with_conversion_factors.png",
           crab.con.fac.wgt.plt,base_height = 8,base_width = 9)
 
 crab.ind.wgt.plt <- basemap + geom_sf(data=crab.summer.type.1, aes(size=Ind.wgt),pch=19,colour ="orange") + facet_wrap(~year) + 
   ggtitle("Crab Species") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))  + labs(size = "Mean individual \nwgt per tow (kg)") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_summer_ind_wgt_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Crabs_summer_ind_wgt_spatial_with_conversion_factors.png",
           crab.ind.wgt.plt,base_height = 8,base_width = 9)
 
 #All data
 crab.con.fac.wgt.plt <- basemap + geom_sf(data=crab.all.tows.sf, aes(size=kg.km2),pch=19,colour ="red") + facet_wrap(~year) + 
   ggtitle("Crab Species") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3)) + labs(size = "Kg per km2") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_all_data_wgt_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Crabs_all_data_wgt_spatial_with_conversion_factors.png",
           crab.con.fac.wgt.plt,base_height = 8,base_width = 9)
 
 crab.con.fac.num.plt <- basemap + geom_sf(data=crab.all.tows.sf, aes(size=n.km2),pch=19,colour ="blue") + facet_wrap(~year) + 
   ggtitle("Crab Species") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))  + labs(size = "N per km2") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_all_data_num_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Crabs_all_data_num_spatial_with_conversion_factors.png",
           crab.con.fac.wgt.plt,base_height = 8,base_width = 9)
 
 crab.ind.wgt.plt <- basemap + geom_sf(data=crab.all.tows.sf, aes(size=Ind.wgt),pch=19,colour ="orange") + facet_wrap(~year) + 
   ggtitle("Crab Species") + xlim(c(-67.25,-65.6)) + ylim(c(41.12,42.3))  + labs(size = "Mean individual \nwgt per tow (kg)") +
   theme(legend.position = "bottom",legend.direction = 'horizontal')
-save_plot("Y:/Offshore/Assessment/2025/Supporting_tasks/predators_on_GB/Crabs_all_data_ind_wgt_spatial_with_conversion_factors.png",
+save_plot("Y:/Offshore/Assessment/2026/Supporting_tasks/predators_on_GB/Crabs_all_data_ind_wgt_spatial_with_conversion_factors.png",
           crab.ind.wgt.plt,base_height = 8,base_width = 9)
 
 
